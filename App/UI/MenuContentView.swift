@@ -19,8 +19,7 @@ struct MenuContentView: View {
 
     private var signedInContent: some View {
         VStack(spacing: 0) {
-            PanelHeader(subtitle: subtitle, isRefreshing: monitor.isRefreshing, refresh: { Task { await monitor.refresh() } }, showsSettings: $showsSettings)
-            PanelTabPicker(selection: $tab)
+            PanelHeader(tab: $tab, openBadge: OpenCountBadge(PanelSummary(monitor.pullRequests)), subtitle: subtitle, isRefreshing: monitor.isRefreshing, refresh: { Task { await monitor.refresh() } }, showsSettings: $showsSettings)
             Divider()
             if showsOrganizationBanner {
                 OrganizationAccessBanner(
