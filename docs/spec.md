@@ -17,7 +17,7 @@ approved. Open or copy a PR link in one click.
   token can read. Drafts are shown with a "Draft" label.
 - Per PR: repository, number, title, CI status, review status, number of
   unanswered review threads.
-- Refreshes on a timer (default 2 minutes, configurable 1/2/5/10/15) and on
+- Refreshes on a timer (default 30 minutes, configurable 5/10/15/30/60) and on
   demand.
 - Native notification when a PR's CI goes from not failing to failing, and when
   its unanswered thread count goes up.

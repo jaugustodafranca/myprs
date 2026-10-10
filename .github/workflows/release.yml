@@ -77,6 +77,8 @@ jobs:
           KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
+          KEY_ID="$(printf '%s' "$KEY_ID" | tr -d '[:space:]"')"
+          ISSUER_ID="$(printf '%s' "$ISSUER_ID" | tr -d '[:space:]"')"
           ditto -c -k --keepParent build/MyPRs.app "$RUNNER_TEMP/MyPRs.zip"
           xcrun notarytool submit "$RUNNER_TEMP/MyPRs.zip" \
             --key "$RUNNER_TEMP/AuthKey.p8" --key-id "$KEY_ID" --issuer "$ISSUER_ID" --wait
@@ -100,6 +102,8 @@ jobs:
           KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
+          KEY_ID="$(printf '%s' "$KEY_ID" | tr -d '[:space:]"')"
+          ISSUER_ID="$(printf '%s' "$ISSUER_ID" | tr -d '[:space:]"')"
           xcrun notarytool submit "$DMG" \
             --key "$RUNNER_TEMP/AuthKey.p8" --key-id "$KEY_ID" --issuer "$ISSUER_ID" --wait
           xcrun stapler staple "$DMG"
