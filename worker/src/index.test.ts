@@ -10,7 +10,7 @@ function mockGitHub(body: object) {
 }
 
 function appURLIn(response: Response, html: string): string {
-  const match = html.match(/<a href="([^"]*)">Open MyPRs<\/a>/);
+  const match = html.match(/<a class="button" href="([^"]*)">Open MyPRs<\/a>/);
   expect(match).not.toBeNull();
   return match![1].replaceAll("&amp;", "&");
 }
@@ -43,7 +43,13 @@ describe("GET /callback", () => {
     expect(appURL).toBe("myprs://auth?token=gho_abc&state=the-state");
     expect(html).toContain('<meta http-equiv="refresh" content="0;url=myprs://auth?token=gho_abc&amp;state=the-state">');
     expect(html).toContain('location.replace("myprs://auth?token=gho_abc&state=the-state")');
-    expect(html).toContain("Signed in — returning to MyPRs. You can close this tab.");
+    expect(html).toContain("<title>MyPRs</title>");
+    expect(html).toContain("You're signed in");
+    expect(html).toContain("Returning to MyPRs…");
+    expect(html).toContain("You can close this tab.");
+    expect(html).not.toContain("Sign-in didn't complete");
+    expect(html).toContain("Nothing is stored on our servers.");
+    expect(html).toContain('<a href="https://github.com/jaugustodafranca/myprs">Source code</a>');
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("https://github.com/login/oauth/access_token");
     expect(JSON.parse(init.body)).toEqual({
@@ -60,7 +66,10 @@ describe("GET /callback", () => {
     const { html, appURL } = await callback("/callback?code=old&state=s1");
 
     expect(appURL).toBe("myprs://auth?error=bad_verification_code&state=s1");
-    expect(html).toContain("Sign-in failed: bad_verification_code. Return to MyPRs and try again.");
+    expect(html).toContain("Sign-in didn't complete");
+    expect(html).toContain("bad_verification_code. Return to MyPRs and try again.");
+    expect(html).not.toContain("You're signed in");
+    expect(html).not.toContain("You can close this tab.");
   });
 
   it("escapes a malicious error value", async () => {
