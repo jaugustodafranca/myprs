@@ -46,7 +46,7 @@ Add these under GitHub repo Settings > Secrets and variables > Actions.
 ### Sparkle keys
 
 Download the Sparkle release tarball matching `SPARKLE_VERSION` in the workflow
-and run:
+and run (keep the SPM version in `project.yml` on the same release):
 
 ```bash
 ./bin/generate_keys            # stores the private key in your login keychain, prints the public key

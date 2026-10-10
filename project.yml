@@ -13,7 +13,7 @@ settings:
 packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
-    from: 2.6.0
+    exactVersion: 2.10.0
 targets:
   MyPRs:
     type: application

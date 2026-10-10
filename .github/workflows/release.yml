@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 env:
-  SPARKLE_VERSION: "2.6.4"
+  SPARKLE_VERSION: "2.10.0"
 
 jobs:
   release:
@@ -82,6 +82,11 @@ jobs:
             --key "$RUNNER_TEMP/AuthKey.p8" --key-id "$KEY_ID" --issuer "$ISSUER_ID" --wait
           xcrun stapler staple build/MyPRs.app
 
+      - name: Verify app signature and Gatekeeper
+        run: |
+          codesign --verify --deep --strict --verbose=2 build/MyPRs.app
+          spctl --assess --type execute --verbose build/MyPRs.app
+
       - name: Create DMG
         run: |
           mkdir dmg-root
@@ -107,15 +112,14 @@ jobs:
           mkdir "$RUNNER_TEMP/sparkle"
           curl -fsSL "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz" \
             | tar -xJ -C "$RUNNER_TEMP/sparkle"
-          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$RUNNER_TEMP/sparkle_key"
-          attributes=$("$RUNNER_TEMP/sparkle/bin/sign_update" --ed-key-file "$RUNNER_TEMP/sparkle_key" "$DMG")
-          rm "$RUNNER_TEMP/sparkle_key"
+          attributes=$(printf '%s' "$SPARKLE_PRIVATE_KEY" | "$RUNNER_TEMP/sparkle/bin/sign_update" --ed-key-file - "$DMG")
           echo "attributes=$attributes" >> "$GITHUB_OUTPUT"
 
       - name: Generate appcast
         env:
           BUILD_NUMBER: ${{ github.run_number }}
-        run: scripts/make-appcast.sh "$GITHUB_REF_NAME" "$VERSION" "$DMG" '${{ steps.sparkle.outputs.attributes }}'
+          SIGNATURE_ATTRIBUTES: ${{ steps.sparkle.outputs.attributes }}
+        run: scripts/make-appcast.sh "$GITHUB_REF_NAME" "$VERSION" "$DMG" "$SIGNATURE_ATTRIBUTES"
 
       - name: Publish release
         env:
