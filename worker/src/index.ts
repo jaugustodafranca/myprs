@@ -16,7 +16,7 @@ export default {
   },
 };
 
-export async function handleCallback(url: URL, env: Env): Promise<Response> {
+async function handleCallback(url: URL, env: Env): Promise<Response> {
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   if (!code || !state) {
@@ -32,7 +32,7 @@ export async function handleCallback(url: URL, env: Env): Promise<Response> {
 
 type TokenResult = { token: string } | { error: string };
 
-export async function exchangeCodeForToken(code: string, env: Env): Promise<TokenResult> {
+async function exchangeCodeForToken(code: string, env: Env): Promise<TokenResult> {
   try {
     const response = await fetch(GITHUB_TOKEN_URL, {
       method: "POST",
@@ -51,7 +51,7 @@ export async function exchangeCodeForToken(code: string, env: Env): Promise<Toke
   }
 }
 
-export function redirectToApp(params: Record<string, string>): Response {
+function redirectToApp(params: Record<string, string>): Response {
   const query = new URLSearchParams(params).toString();
   return new Response(null, {
     status: 302,
