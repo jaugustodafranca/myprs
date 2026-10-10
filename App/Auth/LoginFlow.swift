@@ -37,7 +37,7 @@ final class LoginFlow {
         components.queryItems = [
             URLQueryItem(name: "client_id", value: AppConfig.gitHubClientID),
             URLQueryItem(name: "redirect_uri", value: AppConfig.authCallbackURL),
-            URLQueryItem(name: "scope", value: "repo"),
+            URLQueryItem(name: "scope", value: "repo read:org"),
             URLQueryItem(name: "state", value: state),
         ]
         return components.url!
