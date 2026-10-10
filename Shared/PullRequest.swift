@@ -11,6 +11,16 @@ struct PullRequest: Codable, Hashable, Identifiable {
     let review: ReviewStatus
     let unansweredThreads: Int
     let updatedAt: Date
+    let createdAt: Date
+    let additions: Int
+    let deletions: Int
+    let changedFiles: Int
+    let headBranch: String
+    let baseBranch: String
+    let hasConflicts: Bool
+    let checksPassed: Int
+    let checksTotal: Int
+    let approvals: Int
 
     var needsAttention: Bool { checks == .failing || unansweredThreads > 0 }
 }

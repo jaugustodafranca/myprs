@@ -15,16 +15,9 @@ import Testing
 }
 
 private func makeSortablePullRequest(id: String, failing: Bool, updatedAt: TimeInterval) -> PullRequest {
-    PullRequest(
+    makePullRequest(
         id: id,
-        number: 1,
-        title: id,
-        url: URL(string: "https://github.com/octo/repo/pull/1")!,
-        repository: "octo/repo",
-        isDraft: false,
         checks: failing ? .failing : .passing,
-        review: .waiting,
-        unansweredThreads: 0,
         updatedAt: Date(timeIntervalSince1970: updatedAt)
     )
 }

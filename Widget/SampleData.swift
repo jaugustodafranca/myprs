@@ -36,7 +36,17 @@ extension PullRequestEntry {
             checks: checks,
             review: review,
             unansweredThreads: threads,
-            updatedAt: Date(timeIntervalSinceNow: -Double(number) * 3600)
+            updatedAt: Date(timeIntervalSinceNow: -Double(number) * 3600),
+            createdAt: Date(timeIntervalSinceNow: -Double(number) * 86400),
+            additions: 120,
+            deletions: 30,
+            changedFiles: 6,
+            headBranch: "feature/sample-\(number)",
+            baseBranch: "main",
+            hasConflicts: false,
+            checksPassed: 3,
+            checksTotal: 4,
+            approvals: review == .approved ? 1 : 0
         )
     }
 }
