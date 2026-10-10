@@ -21,6 +21,18 @@ struct GlassIconButtonStyle: ButtonStyle {
     }
 }
 
+struct GlassCapsuleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.callout)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+            .glassBackground(in: Capsule())
+            .opacity(configuration.isPressed ? 0.6 : 1)
+            .contentShape(Capsule())
+    }
+}
+
 struct GlassContainer<Content: View>: View {
     @ViewBuilder let content: Content
 
