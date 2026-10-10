@@ -32,15 +32,17 @@ struct MenuContentView: View {
             if showsSettings {
                 Divider()
                 SettingsSection(monitor: monitor, updater: updater)
+            } else {
+                quitShortcut
             }
-            Divider()
-            Button("Quit MyPRs") { NSApplication.shared.terminate(nil) }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
         }
+    }
+
+    private var quitShortcut: some View {
+        Button("Quit") { NSApplication.shared.terminate(nil) }
+            .keyboardShortcut("q")
+            .frame(width: 0, height: 0)
+            .opacity(0)
     }
 
     private var subtitle: String {
@@ -53,12 +55,25 @@ struct MenuContentView: View {
     @ViewBuilder
     private var pullRequestList: some View {
         if monitor.pullRequests.isEmpty {
-            Text(monitor.snapshot == nil ? "Loading…" : "No open pull requests")
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .padding(24)
+            emptyState
         } else {
             PullRequestList(pullRequests: monitor.pullRequests)
         }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 6) {
+            Text(monitor.snapshot == nil ? "Loading…" : "No open pull requests")
+                .foregroundStyle(.secondary)
+            if monitor.snapshot != nil {
+                Text("Missing PRs from an organization?")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Link("Grant MyPRs access", destination: AppConfig.organizationAccessURL)
+                    .font(.caption)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(24)
     }
 }

@@ -38,7 +38,7 @@ Requires macOS 14 or later. After the first install, updates arrive automaticall
 - Your token is stored in the macOS Keychain.
 - The app talks only to `api.github.com`.
 - A tiny Cloudflare Worker exchanges the OAuth code for a token and stores nothing.
-- Organizations that restrict third-party apps need to approve MyPRs once.
+- GitHub hides pull requests from organizations that restrict third-party apps until they approve MyPRs. If some are missing, use **Organization access…** in the settings (or the hint on the empty panel) to open [your authorized apps page](https://github.com/settings/connections/applications/Ov23li7Ghr091fkSv2eG) and grant access.
 
 ## Build from source
 
