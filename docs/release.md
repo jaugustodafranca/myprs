@@ -53,8 +53,8 @@ and run (keep the SPM version in `project.yml` on the same release):
 ./bin/generate_keys -x sparkle_private_key   # exports the private key to a file
 ```
 
-- Put the printed public key in `project.yml` as `SUPublicEDKey` (replacing
-  `REPLACE_WITH_SPARKLE_PUBLIC_KEY`).
+- Put the printed public key in `project.yml` as `SUPublicEDKey` (already done for the
+  current key pair; only needed again if the keys are rotated).
 - Put the contents of `sparkle_private_key` in `SPARKLE_PRIVATE_KEY`, then delete the file.
 
 ## Signing notes
