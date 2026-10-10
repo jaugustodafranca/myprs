@@ -71,7 +71,7 @@ final class PullRequestMonitor {
         snapshot = nil
         isSignedIn = false
         lastError = nil
-        WidgetCenter.shared.reloadAllTimelines()
+        WidgetCenter.shared.reloadTimelines(ofKind: AppConfig.widgetKind)
     }
 
     func refresh() async {
@@ -84,10 +84,13 @@ final class PullRequestMonitor {
             guard isSignedIn else { return }
             let changes = ChangeDetector.changes(from: snapshot?.pullRequests ?? [], to: fresh.pullRequests)
             notifier.notify(changes)
+            let pullRequestsChanged = snapshot?.pullRequests != fresh.pullRequests
             snapshotStore.save(fresh)
             snapshot = fresh
             lastError = nil
-            WidgetCenter.shared.reloadAllTimelines()
+            if pullRequestsChanged {
+                WidgetCenter.shared.reloadTimelines(ofKind: AppConfig.widgetKind)
+            }
         } catch GitHubError.unauthorized {
             signOut()
             lastError = "Your GitHub session expired. Sign in again."

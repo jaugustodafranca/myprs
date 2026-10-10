@@ -5,29 +5,30 @@ struct EntryView: View {
     @Environment(\.widgetFamily) private var family
     let entry: PullRequestEntry
 
-    private var maxRows: Int { family == .systemLarge ? 7 : 3 }
-
     var body: some View {
         if let snapshot = entry.snapshot {
             if snapshot.pullRequests.isEmpty {
                 message("No open PRs 🎉")
             } else {
-                list(of: snapshot)
+                content(for: snapshot)
             }
         } else {
             message("Sign in from the MyPRs menu bar app")
         }
     }
 
-    private func list(of snapshot: PullRequestSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(snapshot.pullRequests.sortedForDisplay().prefix(maxRows)) { pullRequest in
-                PullRequestRowView(pullRequest: pullRequest)
-            }
-            Spacer(minLength: 0)
-            Text("Updated \(snapshot.fetchedAt.formatted(date: .omitted, time: .shortened))")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+    @ViewBuilder private func content(for snapshot: PullRequestSnapshot) -> some View {
+        switch family {
+        case .systemSmall:
+            let summary = PanelSummary(snapshot.pullRequests)
+            SmallView(summary: summary)
+                .widgetURL(summary.mostUrgent?.url)
+        case .systemLarge:
+            ListView(snapshot: snapshot, rowLimit: 5, showsScoreboard: true, detail: .regular)
+        case .systemExtraLarge:
+            ListView(snapshot: snapshot, rowLimit: 6, showsScoreboard: true, detail: .full)
+        default:
+            ListView(snapshot: snapshot, rowLimit: 3, showsScoreboard: false, detail: .compact)
         }
     }
 
