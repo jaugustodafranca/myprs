@@ -3,6 +3,7 @@ import SwiftUI
 struct MenuContentView: View {
     let monitor: PullRequestMonitor
     let updater: Updater
+    @State private var showsSettings = false
 
     var body: some View {
         Group {
@@ -12,12 +13,12 @@ struct MenuContentView: View {
                 SignedOutView(monitor: monitor)
             }
         }
-        .frame(width: 360)
+        .frame(width: 400)
     }
 
     private var signedInContent: some View {
         VStack(spacing: 0) {
-            header
+            PanelHeader(subtitle: subtitle, isRefreshing: monitor.isRefreshing, refresh: { Task { await monitor.refresh() } }, showsSettings: $showsSettings)
             Divider()
             pullRequestList
             if let error = monitor.lastError {
@@ -25,42 +26,28 @@ struct MenuContentView: View {
                     .font(.caption)
                     .foregroundStyle(.red)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 14)
                     .padding(.bottom, 8)
             }
-            Divider()
-            SettingsSection(monitor: monitor, updater: updater)
+            if showsSettings {
+                Divider()
+                SettingsSection(monitor: monitor, updater: updater)
+            }
             Divider()
             Button("Quit MyPRs") { NSApplication.shared.terminate(nil) }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
         }
     }
 
-    private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 1) {
-                Text("MyPRs").font(.headline)
-                if let fetchedAt = monitor.snapshot?.fetchedAt {
-                    Text("Updated \(fetchedAt.formatted(.relative(presentation: .named)))")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Spacer()
-            if monitor.isRefreshing {
-                ProgressView().controlSize(.small)
-            } else {
-                Button { Task { await monitor.refresh() } } label: {
-                    Image(systemName: "arrow.clockwise")
-                }
-                .buttonStyle(.borderless)
-                .help("Refresh now")
-            }
-        }
-        .padding(12)
+    private var subtitle: String {
+        let summary = PanelSummary.text(for: monitor.pullRequests)
+        guard let fetchedAt = monitor.snapshot?.fetchedAt else { return summary }
+        let age = CompactFormat.age(from: fetchedAt)
+        return age == "now" ? "\(summary) · just updated" : "\(summary) · \(age) ago"
     }
 
     @ViewBuilder
@@ -71,13 +58,7 @@ struct MenuContentView: View {
                 .frame(maxWidth: .infinity)
                 .padding(24)
         } else {
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(monitor.pullRequests) { PullRequestRow(pullRequest: $0) }
-                }
-                .padding(.vertical, 4)
-            }
-            .frame(maxHeight: 420)
+            PullRequestList(pullRequests: monitor.pullRequests)
         }
     }
 }
