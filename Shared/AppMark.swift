@@ -1,14 +1,14 @@
 import SwiftUI
 import WidgetKit
 
-/// The app icon in miniature: the logo's blue gradient with a pull request glyph.
+/// The app icon in miniature: the logo's blue gradient with the MyPRs glyph.
 struct AppMark: View {
     var size: CGFloat = 19
 
     var body: some View {
-        Image(systemName: "arrow.triangle.pull")
-            .font(.system(size: size * 0.6, weight: .bold))
-            .foregroundStyle(.white)
+        BrandGlyph()
+            .fill(.white)
+            .padding(size * 0.22)
             .frame(width: size, height: size)
             .background(gradient, in: RoundedRectangle(cornerRadius: size * 0.26, style: .continuous))
             .widgetAccentable()
