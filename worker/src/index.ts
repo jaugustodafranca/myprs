@@ -58,6 +58,7 @@ function redirectToApp(params: Record<string, string>): Response {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
       "referrer-policy": "no-referrer",
+      "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'",
     },
   });
 }

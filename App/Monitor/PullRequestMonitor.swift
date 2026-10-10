@@ -43,6 +43,7 @@ final class PullRequestMonitor {
     }
 
     func signIn() async {
+        guard !isSigningIn else { return }
         lastError = nil
         isSigningIn = true
         defer { isSigningIn = false }

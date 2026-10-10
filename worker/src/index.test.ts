@@ -37,6 +37,9 @@ describe("GET /callback", () => {
     expect(response.headers.get("content-type")).toBe("text/html; charset=utf-8");
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(response.headers.get("content-security-policy")).toBe(
+      "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'",
+    );
     expect(appURL).toBe("myprs://auth?token=gho_abc&state=the-state");
     expect(html).toContain('<meta http-equiv="refresh" content="0;url=myprs://auth?token=gho_abc&amp;state=the-state">');
     expect(html).toContain('location.replace("myprs://auth?token=gho_abc&state=the-state")');
