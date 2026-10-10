@@ -9,6 +9,7 @@ final class PullRequestMonitor {
     private(set) var snapshot: PullRequestSnapshot?
     private(set) var isSignedIn: Bool
     private(set) var isRefreshing = false
+    private(set) var isSigningIn = false
     private(set) var lastError: String?
 
     var refreshInterval: TimeInterval {
@@ -26,7 +27,7 @@ final class PullRequestMonitor {
     @ObservationIgnored private let client = GitHubClient()
     @ObservationIgnored private let snapshotStore = SnapshotStore.shared
     @ObservationIgnored private let notifier = Notifier()
-    @ObservationIgnored private let loginFlow = LoginFlow()
+    @ObservationIgnored private let loginFlow = LoginFlow.shared
     @ObservationIgnored private let defaults = UserDefaults.standard
     @ObservationIgnored private var timerTask: Task<Void, Never>?
 
@@ -43,6 +44,8 @@ final class PullRequestMonitor {
 
     func signIn() async {
         lastError = nil
+        isSigningIn = true
+        defer { isSigningIn = false }
         do {
             let token = try await loginFlow.signIn()
             tokenStore.save(token)
@@ -52,8 +55,12 @@ final class PullRequestMonitor {
         } catch let error as LoginError {
             lastError = error.errorDescription
         } catch {
-            // Dismissing the sign-in sheet is not worth an error message.
+            // Cancelling a sign-in is not worth an error message.
         }
+    }
+
+    func cancelSignIn() {
+        loginFlow.cancel()
     }
 
     func signOut() {

@@ -15,11 +15,20 @@ struct SignedOutView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            Button("Sign in with GitHub") {
-                Task { await monitor.signIn() }
+            if monitor.isSigningIn {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Waiting for GitHub in your browser…")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                Button("Cancel") { monitor.cancelSignIn() }
+            } else {
+                Button("Sign in with GitHub") {
+                    Task { await monitor.signIn() }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
             if let error = monitor.lastError {
                 Text(error)
                     .font(.caption)
