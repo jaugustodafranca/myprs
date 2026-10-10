@@ -21,15 +21,14 @@ struct GlassIconButtonStyle: ButtonStyle {
     }
 }
 
-struct GlassCapsuleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.callout)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 4)
-            .glassBackground(in: Capsule())
-            .opacity(configuration.isPressed ? 0.6 : 1)
-            .contentShape(Capsule())
+extension View {
+    @ViewBuilder
+    func glassButtonStyle() -> some View {
+        if #available(macOS 26, *) {
+            buttonStyle(.glass)
+        } else {
+            buttonStyle(.bordered)
+        }
     }
 }
 
