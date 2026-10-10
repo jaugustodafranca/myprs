@@ -31,7 +31,7 @@ targets:
       properties:
         LSUIElement: true
         SUFeedURL: https://github.com/jaugustodafranca/myprs/releases/latest/download/appcast.xml
-        SUPublicEDKey: REPLACE_WITH_SPARKLE_PUBLIC_KEY
+        SUPublicEDKey: RKgHI37mknm9PYCdlcikcW57jfIf9xoAQtlCTXjNLvE=
         SUEnableAutomaticChecks: true
         SUScheduledCheckInterval: 86400
         CFBundleShortVersionString: $(MARKETING_VERSION)
