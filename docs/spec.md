@@ -167,8 +167,7 @@ query {
                 state
                 contexts(first: 100) {
                   nodes {
-                    __typename
-                    ... on CheckRun { status conclusion }
+                    ... on CheckRun { conclusion }
                     ... on StatusContext { state }
                   }
                 }

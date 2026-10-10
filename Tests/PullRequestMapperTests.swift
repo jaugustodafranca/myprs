@@ -79,7 +79,7 @@ private let fixture = #"""
           "headRefName": "feature/one", "baseRefName": "main", "mergeable": "MERGEABLE",
           "latestReviews": { "nodes": [{ "state": "APPROVED" }, { "state": "COMMENTED" }, { "state": "APPROVED" }] },
           "repository": { "nameWithOwner": "acme/web" },
-          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "SUCCESS", "contexts": { "nodes": [{ "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SUCCESS" }, { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "NEUTRAL" }, { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SKIPPED" }, { "__typename": "StatusContext", "state": "SUCCESS" }, { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "FAILURE" }] } } } } ] },
+          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "SUCCESS", "contexts": { "nodes": [{ "conclusion": "SUCCESS" }, { "conclusion": "NEUTRAL" }, { "conclusion": "SKIPPED" }, { "state": "SUCCESS" }, { "conclusion": "FAILURE" }] } } } } ] },
           "reviewThreads": { "nodes": [] }
         },
         {
@@ -91,7 +91,7 @@ private let fixture = #"""
           "headRefName": "feature/one", "baseRefName": "main", "mergeable": "CONFLICTING",
           "latestReviews": { "nodes": [{ "state": "CHANGES_REQUESTED" }] },
           "repository": { "nameWithOwner": "acme/web" },
-          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "FAILURE", "contexts": { "nodes": [{ "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SUCCESS" }, { "__typename": "StatusContext", "state": "FAILURE" }, { "__typename": "StatusContext", "state": "PENDING" }] } } } } ] },
+          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "FAILURE", "contexts": { "nodes": [{ "conclusion": "SUCCESS" }, { "state": "FAILURE" }, { "state": "PENDING" }] } } } } ] },
           "reviewThreads": { "nodes": [
             { "isResolved": false, "comments": { "nodes": [ { "author": { "login": "reviewer" } } ] } },
             { "isResolved": false, "comments": { "nodes": [ { "author": { "login": "me" } } ] } },
@@ -132,7 +132,7 @@ private let fixture = #"""
           "headRefName": "feature/one", "baseRefName": "main", "mergeable": "MERGEABLE",
           "latestReviews": { "nodes": [] },
           "repository": { "nameWithOwner": "acme/api" },
-          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "ERROR", "contexts": { "nodes": [{ "__typename": "StatusContext", "state": "ERROR" }] } } } } ] },
+          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "ERROR", "contexts": { "nodes": [{ "state": "ERROR" }] } } } } ] },
           "reviewThreads": { "nodes": [
             { "isResolved": false, "comments": { "nodes": [ { "author": null } ] } }
           ] }
