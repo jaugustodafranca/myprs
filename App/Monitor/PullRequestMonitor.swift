@@ -11,6 +11,7 @@ final class PullRequestMonitor {
     private(set) var isRefreshing = false
     private(set) var isSigningIn = false
     private(set) var lastError: String?
+    private(set) var organizationAccess = OrganizationAccess()
 
     var refreshInterval: TimeInterval {
         didSet {
@@ -22,6 +23,7 @@ final class PullRequestMonitor {
     var pullRequests: [PullRequest] { snapshot?.pullRequests.sortedForDisplay() ?? [] }
 
     private static let intervalKey = "refreshInterval"
+    private static let organizationCheckInterval: TimeInterval = 30 * 60
 
     @ObservationIgnored private let tokenStore = TokenStore()
     @ObservationIgnored private let client = GitHubClient()
@@ -30,6 +32,7 @@ final class PullRequestMonitor {
     @ObservationIgnored private let loginFlow = LoginFlow.shared
     @ObservationIgnored private let defaults = UserDefaults.standard
     @ObservationIgnored private var timerTask: Task<Void, Never>?
+    @ObservationIgnored private var lastOrganizationCheck: Date?
 
     init() {
         let stored = defaults.double(forKey: Self.intervalKey)
@@ -69,6 +72,8 @@ final class PullRequestMonitor {
         tokenStore.delete()
         snapshotStore.clear()
         snapshot = nil
+        organizationAccess = OrganizationAccess()
+        lastOrganizationCheck = nil
         isSignedIn = false
         lastError = nil
         WidgetCenter.shared.reloadTimelines(ofKind: AppConfig.widgetKind)
@@ -91,12 +96,30 @@ final class PullRequestMonitor {
             if pullRequestsChanged {
                 WidgetCenter.shared.reloadTimelines(ofKind: AppConfig.widgetKind)
             }
+            await checkOrganizationAccess(token: token)
         } catch GitHubError.unauthorized {
             signOut()
             lastError = "Your GitHub session expired. Sign in again."
         } catch {
             lastError = "Could not refresh. Will retry."
         }
+    }
+
+    func checkOrganizationAccess(force: Bool = false) async {
+        guard let token = tokenStore.load() else { return }
+        await checkOrganizationAccess(token: token, force: force)
+    }
+
+    private func checkOrganizationAccess(token: String, force: Bool = false) async {
+        if !force, let last = lastOrganizationCheck, Date().timeIntervalSince(last) < Self.organizationCheckInterval { return }
+        guard let access = try? await client.fetchOrganizationAccess(token: token), isSignedIn else { return }
+        lastOrganizationCheck = Date()
+        organizationAccess = access
+    }
+
+    func signInAgain() async {
+        signOut()
+        await signIn()
     }
 
     private func startTimer() {

@@ -31,6 +31,20 @@ import Testing
         #expect(snapshot.login == "me")
         #expect(StubURLProtocol.lastRequest?.value(forHTTPHeaderField: "Authorization") == "bearer abc")
     }
+
+    private let restrictedBody = #"{"data":{"viewer":{"organizations":{"nodes":[{"login":"locked","repositories":null}]}}},"errors":[{"type":"FORBIDDEN","message":"OAuth App access restrictions","path":["viewer","organizations","nodes",0,"repositories"]}]}"#
+
+    @Test func reportsRestrictedOrganizations() async throws {
+        StubURLProtocol.respond(status: 200, body: restrictedBody, headers: ["X-OAuth-Scopes": "repo, read:org"])
+        let access = try await client.fetchOrganizationAccess(token: "token")
+        #expect(access == OrganizationAccess(restrictedOrganizations: ["locked"]))
+    }
+
+    @Test func asksToSignInAgainWithoutReadOrgScope() async throws {
+        StubURLProtocol.respond(status: 200, body: restrictedBody, headers: ["X-OAuth-Scopes": "repo"])
+        let access = try await client.fetchOrganizationAccess(token: "token")
+        #expect(access == OrganizationAccess(needsReauth: true))
+    }
 }
 
 private final class StubURLProtocol: URLProtocol {
@@ -38,9 +52,12 @@ private final class StubURLProtocol: URLProtocol {
     nonisolated(unsafe) private static var body = ""
     nonisolated(unsafe) static var lastRequest: URLRequest?
 
-    static func respond(status: Int, body: String) {
+    nonisolated(unsafe) private static var headers: [String: String] = [:]
+
+    static func respond(status: Int, body: String, headers: [String: String] = [:]) {
         self.status = status
         self.body = body
+        self.headers = headers
     }
 
     override class func canInit(with request: URLRequest) -> Bool { true }
@@ -48,7 +65,7 @@ private final class StubURLProtocol: URLProtocol {
 
     override func startLoading() {
         Self.lastRequest = request
-        let response = HTTPURLResponse(url: request.url!, statusCode: Self.status, httpVersion: nil, headerFields: nil)!
+        let response = HTTPURLResponse(url: request.url!, statusCode: Self.status, httpVersion: nil, headerFields: Self.headers)!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: Data(Self.body.utf8))
         client?.urlProtocolDidFinishLoading(self)
