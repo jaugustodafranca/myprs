@@ -5,5 +5,6 @@ enum AppConfig {
     static let widgetKind = "MyPRsWidget"
     static let urlScheme = "myprs"
     static let gitHubClientID = "Ov23li7Ghr091fkSv2eG"
+    static let organizationAccessURL = URL(string: "https://github.com/settings/connections/applications/\(gitHubClientID)")!
     static let authCallbackURL = "https://myprs-auth.zaintech.com.br/callback"
 }
