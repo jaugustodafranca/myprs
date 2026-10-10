@@ -42,16 +42,19 @@ struct SettingsSection: View {
     }
 
     private var footer: some View {
-        VStack(spacing: 10) {
-            HStack {
+        VStack(spacing: 6) {
+            HStack(spacing: 8) {
                 CheckForUpdatesButton(updater: updater)
-                Spacer()
-                Button("Sign out") { monitor.signOut() }
-                Spacer()
-                Button("Quit") { NSApplication.shared.terminate(nil) }
-                    .keyboardShortcut("q")
+                Button { monitor.signOut() } label: {
+                    FooterButtonLabel(title: "Sign out", systemImage: "rectangle.portrait.and.arrow.right")
+                }
+                Button { NSApplication.shared.terminate(nil) } label: {
+                    FooterButtonLabel(title: "Quit", systemImage: "power")
+                }
+                .keyboardShortcut("q")
             }
-            .buttonStyle(GlassCapsuleButtonStyle())
+            .glassButtonStyle()
+            .controlSize(.large)
             Text(versionText)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -83,5 +86,18 @@ struct SettingsSection: View {
         } catch {
             launchAtLogin = SMAppService.mainApp.status == .enabled
         }
+    }
+}
+
+struct FooterButtonLabel: View {
+    let title: String
+    let systemImage: String
+
+    var body: some View {
+        Label(title, systemImage: systemImage)
+            .labelStyle(.titleAndIcon)
+            .font(.callout)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
     }
 }
