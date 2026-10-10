@@ -47,6 +47,21 @@ filters.
   check for updates, sign out.
 - Signed out: a single "Sign in with GitHub" button.
 
+### Recent tab
+
+- The panel has an "Open | Recent" segmented control under the title. Open is
+  the list above.
+- Recent lists the user's closed and merged PRs (newest activity first) so an
+  old PR's link or branch is one click away. Rows show a "Merged" or "Closed"
+  badge, `head → base`, `repo#number · merged 3d ago`, diff size and file
+  count, with the same open / copy branch / copy link actions as Open rows.
+- Loaded lazily the first time the tab opens, 20 at a time. Scrolling to the
+  last row fetches the next page until `hasNextPage` is false. Reopening the
+  tab after more than 10 minutes fetches the first page again.
+- A failed page shows "Couldn't load. Retry" inline.
+- Kept in memory only: never written to the snapshot or shown in the widget.
+  Signing out clears it.
+
 ### Widget
 
 - Small, medium, large and extra large. Small shows counts, the others a list from the shared cache.
@@ -186,6 +201,29 @@ query {
 
 A snapshot cached by an older version lacks the newer fields, so it fails to
 decode: `SnapshotStore.load()` returns nil and the next refresh replaces it.
+
+### Recent query
+
+Sent on demand by the Recent tab, one request per page (`$after` is the
+previous page's `endCursor`, null for the first page):
+
+```graphql
+query($after: String) {
+  search(query: "is:pr author:@me is:closed archived:false sort:updated-desc", type: ISSUE, first: 20, after: $after) {
+    pageInfo { hasNextPage endCursor }
+    nodes {
+      ... on PullRequest {
+        id number title url state mergedAt closedAt
+        additions deletions changedFiles headRefName baseRefName
+        repository { nameWithOwner }
+      }
+    }
+  }
+}
+```
+
+`state` is `MERGED` or `CLOSED`; the time shown is `mergedAt` or `closedAt`
+accordingly.
 
 ### Organization access check
 
