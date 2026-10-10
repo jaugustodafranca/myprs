@@ -93,7 +93,7 @@ filters.
 | App Group | `688YYDN5Z4.com.zaintech.myprs` |
 | Team | Zaintech LTDA, `688YYDN5Z4`, Developer ID |
 | URL scheme | `myprs` |
-| Worker | `myprs-auth` on workers.dev |
+| Worker | `myprs-auth`, served at `https://myprs-auth.zaintech.com.br` |
 | OAuth scope | `repo` (needed to read private repos) |
 | Update feed | `https://github.com/jaugustodafranca/myprs/releases/latest/download/appcast.xml` |
 
