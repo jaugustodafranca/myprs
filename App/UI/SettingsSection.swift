@@ -12,7 +12,7 @@ struct SettingsSection: View {
                 Text("Refresh every")
                 Spacer()
                 Picker("Refresh every", selection: $monitor.refreshInterval) {
-                    ForEach(PullRequestMonitor.intervalOptions, id: \.self) { interval in
+                    ForEach(RefreshInterval.options, id: \.self) { interval in
                         Text("\(Int(interval / 60)) min").tag(interval)
                     }
                 }
@@ -31,32 +31,39 @@ struct SettingsSection: View {
             }
             Divider()
             row {
+                Text("Organization access")
+                Spacer()
+                Link("Manage…", destination: AppConfig.organizationAccessURL)
+                    .font(.callout)
+            }
+            Divider()
+            footer
+        }
+    }
+
+    private var footer: some View {
+        VStack(spacing: 10) {
+            HStack {
                 CheckForUpdatesButton(updater: updater)
                 Spacer()
                 Button("Sign out") { monitor.signOut() }
-            }
-            Divider()
-            row {
-                Link("Organization access…", destination: AppConfig.organizationAccessURL)
-                Spacer()
-            }
-            Divider()
-            row {
-                Text(versionText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 Spacer()
                 Button("Quit") { NSApplication.shared.terminate(nil) }
-                    .buttonStyle(GlassCapsuleButtonStyle())
                     .keyboardShortcut("q")
             }
+            .buttonStyle(GlassCapsuleButtonStyle())
+            Text(versionText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
     }
 
     private func row<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         HStack(content: content)
             .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .padding(.vertical, 12)
     }
 
     private var versionText: String {
