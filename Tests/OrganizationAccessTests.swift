@@ -36,3 +36,11 @@ struct OrganizationAccessTests {
         #expect(try restricted(#"{"data":\#(nodes),"errors":[\#(error)]}"#).isEmpty)
     }
 }
+
+struct OrganizationAccessAttentionTests {
+    @Test func needsAttentionOnlyWhenRestrictedOrReauth() {
+        #expect(!OrganizationAccess().needsAttention)
+        #expect(OrganizationAccess(restrictedOrganizations: ["locked"]).needsAttention)
+        #expect(OrganizationAccess(needsReauth: true).needsAttention)
+    }
+}

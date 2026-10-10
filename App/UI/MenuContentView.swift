@@ -61,8 +61,7 @@ struct MenuContentView: View {
     }
 
     private var showsOrganizationBanner: Bool {
-        let access = monitor.organizationAccess
-        return access.needsReauth || !access.restrictedOrganizations.isEmpty
+        monitor.organizationAccess.needsAttention
     }
 
     @ViewBuilder
