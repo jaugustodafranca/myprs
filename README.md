@@ -9,6 +9,10 @@
 </p>
 
 <p align="center">
+  <img src="assets/media/demo.gif" alt="MyPRs demo: the menu bar panel, a CI failure notification, copying a branch and the desktop widget" width="800">
+</p>
+
+<p align="center">
   <a href="https://github.com/jaugustodafranca/myprs/actions/workflows/ci.yml"><img src="https://github.com/jaugustodafranca/myprs/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/jaugustodafranca/myprs/releases/latest"><img src="https://img.shields.io/github/v/release/jaugustodafranca/myprs" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS 14+">
