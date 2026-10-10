@@ -14,6 +14,10 @@ struct PullRequestRow: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                 branchLine
+                Text(details)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
                 PullRequestBadges(pullRequest: pullRequest)
             }
             Spacer(minLength: 0)
@@ -32,20 +36,20 @@ struct PullRequestRow: View {
     }
 
     private var branchLine: some View {
-        HStack(spacing: 6) {
-            Text("\(pullRequest.headBranch) → \(pullRequest.baseBranch)")
-                .font(.caption.monospaced())
+        HStack(spacing: 4) {
+            Text(pullRequest.headBranch)
                 .lineLimit(1)
                 .truncationMode(.middle)
-            Text(location)
-                .font(.caption)
+            Text("→")
+            Text(pullRequest.baseBranch)
                 .lineLimit(1)
-                .layoutPriority(1)
+                .fixedSize()
         }
+        .font(.caption.monospaced())
         .foregroundStyle(.secondary)
     }
 
-    private var location: String {
+    private var details: String {
         let age = CompactFormat.age(from: pullRequest.createdAt)
         let text = "\(pullRequest.repository)#\(pullRequest.number) · \(age)"
         return pullRequest.isDraft ? "Draft · \(text)" : text
