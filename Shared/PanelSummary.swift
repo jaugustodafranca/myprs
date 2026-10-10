@@ -28,6 +28,16 @@ struct PanelSummary {
     }
 }
 
+extension PanelSummary {
+    init(open: Int, failing: Int, toAnswer: Int, ready: Int) {
+        self.open = open
+        self.failing = failing
+        self.toAnswer = toAnswer
+        self.ready = ready
+        mostUrgent = nil
+    }
+}
+
 extension PullRequest {
     var isReadyToMerge: Bool {
         review == .approved && checks == .passing && !hasConflicts
