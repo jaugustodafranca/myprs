@@ -21,18 +21,15 @@
   <img src="assets/screenshots/hero.png" alt="MyPRs menu bar panel and widget" width="800">
 </p>
 
+<p align="center"><em>The menu bar panel next to the desktop widget.</em></p>
+
+### Desktop widget
+
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/panel-dark.png">
-    <img src="assets/screenshots/panel-light.png" alt="The menu bar panel" width="300">
-  </picture>
+  <img src="assets/screenshots/widgets.png" alt="MyPRs widgets in small, medium, large and extra large sizes" width="800">
 </p>
 
-| Small | Medium |
-| :---: | :---: |
-| <img src="assets/screenshots/widget-small.png" alt="Small widget" width="170"> | <img src="assets/screenshots/widget-medium.png" alt="Medium widget" width="364"> |
-| **Large** | **Extra large** |
-| <img src="assets/screenshots/widget-large.png" alt="Large widget" width="364"> | <img src="assets/screenshots/widget-extralarge.png" alt="Extra large widget" width="382"> |
+<p align="center"><em>Small, medium, large and extra large.</em></p>
 
 ## What it does
 
