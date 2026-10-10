@@ -58,9 +58,9 @@ filters.
 ```
 ┌──────────────── Mac ────────────────┐         ┌──────── Cloudflare ────────┐
 │ MyPRs.app (menu bar)                │  login  │ myprs-auth Worker          │
-│  LoginFlow ── ASWebAuthSession ─────┼────────▶│ GET /callback              │
-│  TokenStore (Keychain)              │◀────────┼ code → token, redirect to  │
-│  PullRequestMonitor (timer)         │ myprs:// │ myprs://auth?token&state   │
+│  LoginFlow ── default browser ──────┼────────▶│ GET /callback              │
+│  TokenStore (Keychain)              │◀────────┼ code → token, HTML page    │
+│  PullRequestMonitor (timer)         │ myprs:// │ opens myprs://auth?token…  │
 │   └ GitHubClient ──── GraphQL ──────┼──▶ api.github.com                    │
 │   └ ChangeDetector → Notifier       │         └────────────────────────────┘
 │   └ SnapshotStore.shared.save ─┐           │
@@ -70,8 +70,14 @@ filters.
 ```
 
 - **Worker** holds the OAuth client secret. It only exchanges the authorization
-  code for a token and redirects to `myprs://auth?token=…&state=…` (or
-  `?error=…&state=…`). It stores nothing.
+  code for a token and answers with a small HTML page that navigates to
+  `myprs://auth?token=…&state=…` (or `?error=…&state=…`), with an "Open MyPRs"
+  link as a manual fallback. It stores nothing.
+- **Login** happens in the user's default browser: the app opens the GitHub
+  authorize URL with `NSWorkspace`, then waits for the `myprs://auth` callback,
+  delivered to `AppDelegate.application(_:open:)` and routed to `LoginFlow`.
+  Starting a new sign-in cancels a pending one; callbacks with no pending
+  sign-in are ignored; the state must match.
 - **App** talks to GitHub directly with the token. It is the only process that
   holds the token and does network calls.
 - **Widget** never calls the network. It reads `snapshot.json` from the App

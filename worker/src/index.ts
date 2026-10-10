@@ -52,9 +52,50 @@ async function exchangeCodeForToken(code: string, env: Env): Promise<TokenResult
 }
 
 function redirectToApp(params: Record<string, string>): Response {
-  const query = new URLSearchParams(params).toString();
-  return new Response(null, {
-    status: 302,
-    headers: { Location: `${APP_REDIRECT}?${query}` },
+  const appURL = `${APP_REDIRECT}?${new URLSearchParams(params)}`;
+  return new Response(returnPage(appURL, params.error), {
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'",
+    },
   });
+}
+
+function returnPage(appURL: string, error?: string): string {
+  const message = error
+    ? `Sign-in failed: ${escapeHTML(error)}. Return to MyPRs and try again.`
+    : "Signed in — returning to MyPRs. You can close this tab.";
+  const href = escapeHTML(appURL);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="0;url=${href}">
+<title>MyPRs</title>
+<style>
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; font: 16px system-ui, sans-serif; text-align: center; color-scheme: light dark; }
+  main { max-width: 28rem; padding: 1.5rem; }
+  a { display: inline-block; margin-top: 1rem; }
+</style>
+</head>
+<body>
+<main>
+<p>${message}</p>
+<a href="${href}">Open MyPRs</a>
+</main>
+<script>location.replace(${JSON.stringify(appURL).replace(/</g, "\\u003c")});</script>
+</body>
+</html>`;
+}
+
+function escapeHTML(text: string): string {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
