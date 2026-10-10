@@ -20,6 +20,14 @@ struct MenuContentView: View {
         VStack(spacing: 0) {
             PanelHeader(subtitle: subtitle, isRefreshing: monitor.isRefreshing, refresh: { Task { await monitor.refresh() } }, showsSettings: $showsSettings)
             Divider()
+            if showsOrganizationBanner {
+                OrganizationAccessBanner(
+                    access: monitor.organizationAccess,
+                    checkAgain: { Task { await monitor.checkOrganizationAccess(force: true) } },
+                    signInAgain: { Task { await monitor.signInAgain() } }
+                )
+                Divider()
+            }
             pullRequestList
             if let error = monitor.lastError {
                 Text(error)
@@ -52,6 +60,11 @@ struct MenuContentView: View {
         return age == "now" ? "\(summary) · just updated" : "\(summary) · \(age) ago"
     }
 
+    private var showsOrganizationBanner: Bool {
+        let access = monitor.organizationAccess
+        return access.needsReauth || !access.restrictedOrganizations.isEmpty
+    }
+
     @ViewBuilder
     private var pullRequestList: some View {
         if monitor.pullRequests.isEmpty {
@@ -65,7 +78,7 @@ struct MenuContentView: View {
         VStack(spacing: 6) {
             Text(monitor.snapshot == nil ? "Loading…" : "No open pull requests")
                 .foregroundStyle(.secondary)
-            if monitor.snapshot != nil {
+            if monitor.snapshot != nil, !showsOrganizationBanner {
                 Text("Missing PRs from an organization?")
                     .font(.caption)
                     .foregroundStyle(.secondary)

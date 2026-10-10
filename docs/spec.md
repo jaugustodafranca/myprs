@@ -94,7 +94,7 @@ filters.
 | Team | Zaintech LTDA, `688YYDN5Z4`, Developer ID |
 | URL scheme | `myprs` |
 | Worker | `myprs-auth`, served at `https://myprs-auth.zaintech.com.br` |
-| OAuth scope | `repo` (needed to read private repos) |
+| OAuth scopes | `repo` (read private repos), `read:org` (list organization memberships for the access check) |
 | Update feed | `https://github.com/jaugustodafranca/myprs/releases/latest/download/appcast.xml` |
 
 The app is not sandboxed (Developer ID distribution, needed for Sparkle without
@@ -186,6 +186,25 @@ query {
 
 A snapshot cached by an older version lacks the newer fields, so it fails to
 decode: `SnapshotStore.load()` returns nil and the next refresh replaces it.
+
+### Organization access check
+
+Organizations with "OAuth App access restrictions" hide their repositories from
+the token, so their PRs silently go missing. A separate GraphQL request
+(`OrganizationAccessQuery`) lists `viewer.organizations` with
+`repositories(first: 1)`. For a restricted organization GitHub returns partial
+data plus an error with `type: "FORBIDDEN"` and a path
+`["viewer","organizations","nodes",<index>,"repositories"]`;
+`RestrictedOrganizations.from` maps those indices back to logins.
+
+- Runs after a successful PR refresh, at most every 30 minutes, or on demand
+  ("Check again"). Failures are ignored and never affect the PR list.
+- If the `X-OAuth-Scopes` response header lacks `read:org`, the check is
+  skipped and the panel asks the user to sign in again.
+- The panel shows a banner above the list: "<org> hasn't approved MyPRs" (or
+  "N organizations haven't approved MyPRs" with the names) and a "Request
+  access" button that opens the app's authorized-apps page. The menu bar icon
+  colour is unaffected.
 
 ### Branch
 
