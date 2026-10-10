@@ -21,18 +21,16 @@ struct MenuBarIcon: View {
     // MenuBarExtra ignores SwiftUI colors, so the glyph, number and dot are drawn into one image.
     // Without a dot it stays a template image and adapts to the menu bar on its own.
     private var icon: NSImage {
-        let symbol = NSImage(systemSymbolName: "arrow.triangle.pull", accessibilityDescription: "MyPRs")!
-            .withSymbolConfiguration(.init(pointSize: 14, weight: .medium))!
         let text = count > 0 ? NSAttributedString(string: " \(count)", attributes: [.font: NSFont.menuBarFont(ofSize: 0)]) : nil
         let textWidth = text?.size().width ?? 0
-        let size = NSSize(width: symbol.size.width + textWidth + (dotColor == nil ? 0 : 3), height: 18)
+        let size = NSSize(width: Self.glyphSize + textWidth + (dotColor == nil ? 0 : 3), height: 18)
         let dotColor = dotColor
 
         let image = NSImage(size: size, flipped: false) { _ in
-            let symbolOrigin = NSPoint(x: 0, y: (size.height - symbol.size.height) / 2)
-            Self.drawTemplate(symbol, at: symbolOrigin, tinted: dotColor != nil)
+            let glyphFrame = CGRect(x: 0, y: (size.height - Self.glyphSize) / 2, width: Self.glyphSize, height: Self.glyphSize)
+            Self.drawGlyph(in: glyphFrame, color: dotColor == nil ? .black : .labelColor)
             if let text {
-                let origin = NSPoint(x: symbol.size.width, y: (size.height - text.size().height) / 2)
+                let origin = NSPoint(x: Self.glyphSize, y: (size.height - text.size().height) / 2)
                 if dotColor != nil { Self.drawText(text, at: origin) } else { text.draw(at: origin) }
             }
             if let dotColor {
@@ -45,17 +43,18 @@ struct MenuBarIcon: View {
         return image
     }
 
-    private static func drawTemplate(_ symbol: NSImage, at origin: NSPoint, tinted: Bool) {
-        guard tinted else {
-            symbol.draw(at: origin, from: .zero, operation: .sourceOver, fraction: 1)
-            return
-        }
-        let tintedSymbol = symbol.copy() as! NSImage
-        tintedSymbol.lockFocus()
-        NSColor.labelColor.set()
-        NSRect(origin: .zero, size: tintedSymbol.size).fill(using: .sourceAtop)
-        tintedSymbol.unlockFocus()
-        tintedSymbol.draw(at: origin, from: .zero, operation: .sourceOver, fraction: 1)
+    private static let glyphSize: CGFloat = 16
+
+    private static func drawGlyph(in frame: CGRect, color: NSColor) {
+        guard let context = NSGraphicsContext.current?.cgContext else { return }
+        // The shape is laid out top-down, the image context is bottom-up.
+        context.saveGState()
+        context.translateBy(x: 0, y: frame.minY + frame.maxY)
+        context.scaleBy(x: 1, y: -1)
+        context.addPath(BrandGlyph().path(in: frame).cgPath)
+        context.setFillColor(color.cgColor)
+        context.fillPath()
+        context.restoreGState()
     }
 
     private static func drawText(_ text: NSAttributedString, at origin: NSPoint) {
