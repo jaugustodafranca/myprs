@@ -39,6 +39,8 @@ private struct PanelTabButton: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(badge?.accessibilityLabel ?? tab.rawValue)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .onHover { isHovering = $0 }
         .keyboardShortcut(tab.shortcut, modifiers: .command)
     }

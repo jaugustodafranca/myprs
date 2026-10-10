@@ -7,6 +7,10 @@ struct OpenCountBadge {
     let count: Int
     let tone: Tone
 
+    var accessibilityLabel: String {
+        "Open, \(count) \(count == 1 ? "pull request" : "pull requests")"
+    }
+
     init?(_ summary: PanelSummary) {
         guard summary.open > 0 else { return nil }
         count = summary.open
