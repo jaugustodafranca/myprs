@@ -11,7 +11,7 @@ struct ListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            header
+            WidgetHeaderView(summary: summary, showsInlineScoreboard: showsScoreboard && isInlineScoreboard)
             if showsScoreboard && !isInlineScoreboard {
                 ScoreboardView(summary: summary)
             }
@@ -24,22 +24,6 @@ struct ListView: View {
             Text("Updated \(snapshot.fetchedAt.formatted(date: .omitted, time: .shortened))")
                 .font(.system(size: 9))
                 .foregroundStyle(.tertiary)
-        }
-    }
-
-    private var header: some View {
-        HStack {
-            Text("MyPRs")
-                .font(.system(size: 13, weight: .semibold))
-                .widgetAccentable()
-            Spacer()
-            if showsScoreboard && isInlineScoreboard {
-                ScoreboardView(summary: summary, isInline: true)
-                Spacer()
-            }
-            Text("\(summary.open) open")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.secondary)
         }
     }
 }
