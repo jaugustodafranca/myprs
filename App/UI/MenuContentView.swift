@@ -4,6 +4,7 @@ struct MenuContentView: View {
     let monitor: PullRequestMonitor
     let updater: Updater
     @State private var showsSettings = false
+    @State private var tab = PanelTab.open
 
     var body: some View {
         Group {
@@ -19,6 +20,7 @@ struct MenuContentView: View {
     private var signedInContent: some View {
         VStack(spacing: 0) {
             PanelHeader(subtitle: subtitle, isRefreshing: monitor.isRefreshing, refresh: { Task { await monitor.refresh() } }, showsSettings: $showsSettings)
+            PanelTabPicker(selection: $tab)
             Divider()
             if showsOrganizationBanner {
                 OrganizationAccessBanner(
@@ -28,21 +30,34 @@ struct MenuContentView: View {
                 )
                 Divider()
             }
-            pullRequestList
-            if let error = monitor.lastError {
-                Text(error)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 14)
-                    .padding(.bottom, 8)
-            }
+            tabContent
             if showsSettings {
                 Divider()
                 SettingsSection(monitor: monitor, updater: updater)
             } else {
                 quitShortcut
             }
+        }
+    }
+
+    @ViewBuilder
+    private var tabContent: some View {
+        switch tab {
+        case .open: openContent
+        case .recent: RecentPullRequestList(recent: monitor.recent)
+        }
+    }
+
+    @ViewBuilder
+    private var openContent: some View {
+        pullRequestList
+        if let error = monitor.lastError {
+            Text(error)
+                .font(.caption)
+                .foregroundStyle(.red)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 14)
+                .padding(.bottom, 8)
         }
     }
 
@@ -54,6 +69,7 @@ struct MenuContentView: View {
     }
 
     private var subtitle: String {
+        guard tab == .open else { return "Closed and merged" }
         let summary = PanelSummary.text(for: monitor.pullRequests)
         guard let fetchedAt = monitor.snapshot?.fetchedAt else { return summary }
         let age = CompactFormat.age(from: fetchedAt)

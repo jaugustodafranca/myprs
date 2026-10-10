@@ -18,6 +18,8 @@ final class PullRequestMonitor {
         }
     }
 
+    let recent: RecentPullRequests
+
     var pullRequests: [PullRequest] { snapshot?.pullRequests.sortedForDisplay() ?? [] }
 
     private static let intervalKey = "refreshInterval"
@@ -33,6 +35,12 @@ final class PullRequestMonitor {
     @ObservationIgnored private var lastOrganizationCheck: Date?
 
     init() {
+        let client = self.client
+        let tokenStore = self.tokenStore
+        recent = RecentPullRequests { cursor in
+            guard let token = tokenStore.load() else { throw GitHubError.unauthorized }
+            return try await client.fetchClosedPullRequests(token: token, after: cursor)
+        }
         refreshInterval = RefreshInterval.restored(from: defaults.double(forKey: Self.intervalKey))
         snapshot = snapshotStore.load()
         isSignedIn = tokenStore.load() != nil
@@ -68,6 +76,7 @@ final class PullRequestMonitor {
         timerTask?.cancel()
         tokenStore.delete()
         snapshotStore.clear()
+        recent.clear()
         snapshot = nil
         organizationAccess = OrganizationAccess()
         lastOrganizationCheck = nil

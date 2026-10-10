@@ -13,7 +13,7 @@ struct PullRequestRow: View {
                     .fontWeight(.medium)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                branchLine
+                BranchLine(head: pullRequest.headBranch, base: pullRequest.baseBranch)
                 Text(details)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -33,20 +33,6 @@ struct PullRequestRow: View {
         .onHover { isHovering = $0 }
         .onTapGesture(perform: open)
         .contextMenu { contextMenu }
-    }
-
-    private var branchLine: some View {
-        HStack(spacing: 4) {
-            Text(pullRequest.headBranch)
-                .lineLimit(1)
-                .truncationMode(.middle)
-            Text("→")
-            Text(pullRequest.baseBranch)
-                .lineLimit(1)
-                .fixedSize()
-        }
-        .font(.caption.monospaced())
-        .foregroundStyle(.secondary)
     }
 
     private var details: String {
