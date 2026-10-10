@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct PanelHeader: View {
+    @Binding var tab: PanelTab
+    let openBadge: OpenCountBadge?
     let subtitle: String
     let isRefreshing: Bool
     let refresh: () -> Void
@@ -9,11 +11,13 @@ struct PanelHeader: View {
     var body: some View {
         HStack(alignment: .center, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Your pull requests").font(.headline)
+                PanelTabs(selection: $tab, openBadge: openBadge)
+                    .padding(.leading, -6)
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .padding(.leading, 6)
             }
             Spacer()
             GlassContainer {
