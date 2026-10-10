@@ -1,0 +1,8 @@
+name = "myprs-auth"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+
+[vars]
+GITHUB_CLIENT_ID = "REPLACE_WITH_CLIENT_ID"
+
+# Secret, set with: npx wrangler secret put GITHUB_CLIENT_SECRET
