@@ -37,16 +37,5 @@ import Testing
 }
 
 private func makeDetectorPullRequest(checks: CheckStatus = .passing, threads: Int = 0) -> PullRequest {
-    PullRequest(
-        id: "pr-1",
-        number: 1,
-        title: "Fix it",
-        url: URL(string: "https://github.com/octo/repo/pull/1")!,
-        repository: "octo/repo",
-        isDraft: false,
-        checks: checks,
-        review: .waiting,
-        unansweredThreads: threads,
-        updatedAt: Date(timeIntervalSince1970: 0)
-    )
+    makePullRequest(checks: checks, unansweredThreads: threads)
 }

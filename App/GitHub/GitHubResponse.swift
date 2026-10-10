@@ -37,9 +37,17 @@ struct GitHubResponse: Decodable {
         let url: URL
         let isDraft: Bool
         let updatedAt: Date
+        let createdAt: Date
+        let additions: Int
+        let deletions: Int
+        let changedFiles: Int
+        let headRefName: String
+        let baseRefName: String
+        let mergeable: String
         let reviewDecision: String?
         let repository: Repository
         let commits: Connection<CommitNode>
+        let latestReviews: Connection<Review>
         let reviewThreads: Connection<ReviewThread>
     }
 
@@ -60,6 +68,17 @@ struct GitHubResponse: Decodable {
     }
 
     struct StatusCheckRollup: Decodable {
+        let state: String
+        let contexts: Connection<CheckContext>
+    }
+
+    /// A `CheckRun` has `conclusion`; a `StatusContext` has `state`.
+    struct CheckContext: Decodable {
+        let conclusion: String?
+        let state: String?
+    }
+
+    struct Review: Decodable {
         let state: String
     }
 
