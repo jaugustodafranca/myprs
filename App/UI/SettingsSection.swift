@@ -21,7 +21,7 @@ struct SettingsSection: View {
                 Button("Sign out") { monitor.signOut() }
             }
         }
-        .padding(12)
+        .padding(14)
     }
 
     private func setLaunchAtLogin(_ enabled: Bool) {

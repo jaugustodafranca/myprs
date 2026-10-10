@@ -10,7 +10,7 @@ struct MyPRsApp: App {
         MenuBarExtra {
             MenuContentView(monitor: monitor, updater: updater)
         } label: {
-            MenuBarIcon(pullRequests: monitor.snapshot?.pullRequests ?? [])
+            MenuBarIcon(pullRequests: monitor.snapshot?.pullRequests ?? [], isSignedIn: monitor.isSignedIn)
         }
         .menuBarExtraStyle(.window)
     }
