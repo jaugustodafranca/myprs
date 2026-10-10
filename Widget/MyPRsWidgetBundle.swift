@@ -10,26 +10,26 @@ struct MyPRsWidgetBundle: WidgetBundle {
 
 struct MyPRsWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "MyPRsWidget", provider: PlaceholderProvider()) { _ in
-            Text("MyPRs")
+        StaticConfiguration(kind: "MyPRsWidget", provider: Provider()) { entry in
+            EntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
+        .configurationDisplayName("Open PRs")
+        .description("Your open pull requests, with CI and review status.")
         .supportedFamilies([.systemMedium, .systemLarge])
     }
 }
 
-struct PlaceholderEntry: TimelineEntry {
-    let date = Date()
+#Preview(as: .systemMedium) {
+    MyPRsWidget()
+} timeline: {
+    PullRequestEntry.sample
+    PullRequestEntry.empty
+    PullRequestEntry.signedOut
 }
 
-struct PlaceholderProvider: TimelineProvider {
-    func placeholder(in context: Context) -> PlaceholderEntry { PlaceholderEntry() }
-
-    func getSnapshot(in context: Context, completion: @escaping (PlaceholderEntry) -> Void) {
-        completion(PlaceholderEntry())
-    }
-
-    func getTimeline(in context: Context, completion: @escaping (Timeline<PlaceholderEntry>) -> Void) {
-        completion(Timeline(entries: [PlaceholderEntry()], policy: .never))
-    }
+#Preview(as: .systemLarge) {
+    MyPRsWidget()
+} timeline: {
+    PullRequestEntry.sample
 }
