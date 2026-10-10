@@ -1,6 +1,8 @@
 name = "myprs-auth"
 main = "src/index.ts"
 compatibility_date = "2025-09-01"
+workers_dev = false
+routes = [{ pattern = "myprs-auth.zaintech.com.br", custom_domain = true }]
 
 [vars]
 GITHUB_CLIENT_ID = "Ov23li7Ghr091fkSv2eG"
