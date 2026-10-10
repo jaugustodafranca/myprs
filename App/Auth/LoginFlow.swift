@@ -6,13 +6,19 @@ final class LoginFlow: NSObject, ASWebAuthenticationPresentationContextProviding
     private var session: ASWebAuthenticationSession?
 
     func signIn() async throws -> String {
-        let state = UUID().uuidString
+        let state = Self.randomState()
+        defer { session = nil }
         let callbackURL = try await authenticate(at: authorizeURL(state: state))
         return try LoginCallback.token(from: callbackURL, expectedState: state)
     }
 
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         NSApp.keyWindow ?? NSApp.windows.first ?? ASPresentationAnchor()
+    }
+
+    private static func randomState() -> String {
+        var generator = SystemRandomNumberGenerator()
+        return (0..<32).map { _ in String(format: "%02x", UInt8.random(in: .min ... .max, using: &generator)) }.joined()
     }
 
     private func authorizeURL(state: String) -> URL {
@@ -41,7 +47,9 @@ final class LoginFlow: NSObject, ASWebAuthenticationPresentationContextProviding
             session.presentationContextProvider = self
             session.prefersEphemeralWebBrowserSession = false
             self.session = session
-            session.start()
+            if !session.start() {
+                continuation.resume(throwing: LoginError.invalidCallback)
+            }
         }
     }
 }

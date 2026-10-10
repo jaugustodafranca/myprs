@@ -18,6 +18,8 @@ enum LoginCallback {
     static func token(from url: URL, expectedState: String) throws -> String {
         guard
             url.scheme == AppConfig.urlScheme,
+            url.host == "auth",
+            ["", "/"].contains(url.path),
             let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
         else {
             throw LoginError.invalidCallback

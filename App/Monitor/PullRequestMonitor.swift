@@ -35,7 +35,10 @@ final class PullRequestMonitor {
         refreshInterval = Self.intervalOptions.contains(stored) ? stored : 120
         snapshot = snapshotStore.load()
         isSignedIn = tokenStore.load() != nil
-        if isSignedIn { startTimer() }
+        if isSignedIn {
+            notifier.requestAuthorization()
+            startTimer()
+        }
     }
 
     func signIn() async {
@@ -70,6 +73,7 @@ final class PullRequestMonitor {
 
         do {
             let fresh = try await client.fetchOpenPullRequests(token: token)
+            guard isSignedIn else { return }
             let changes = ChangeDetector.changes(from: snapshot?.pullRequests ?? [], to: fresh.pullRequests)
             notifier.notify(changes)
             snapshotStore.save(fresh)
