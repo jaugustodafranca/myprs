@@ -90,4 +90,27 @@ import Testing
         await recent.loadIfNeeded()
         #expect(pages.cursors == [nil, nil])
     }
+
+    @Test func failedNextPageRetriesWithSameCursor() async {
+        let (recent, pages) = makeRecent()
+        await recent.loadIfNeeded()
+        pages.failing = true
+        await recent.loadMore()
+        #expect(recent.hasFailed)
+        #expect(recent.items.map(\.number) == [1, 2])
+
+        pages.failing = false
+        await recent.retry()
+        #expect(pages.cursors == [nil, "c1", "c1"])
+        #expect(recent.items.map(\.number) == [1, 2, 3])
+    }
+
+    @Test func concurrentLoadMoreFetchesOnce() async {
+        let (recent, pages) = makeRecent()
+        await recent.loadIfNeeded()
+        async let first: Void = recent.loadMore()
+        async let second: Void = recent.loadMore()
+        _ = await (first, second)
+        #expect(pages.cursors == [nil, "c1"])
+    }
 }

@@ -35,8 +35,8 @@ final class PullRequestMonitor {
     @ObservationIgnored private var lastOrganizationCheck: Date?
 
     init() {
-        let client = GitHubClient()
-        let tokenStore = TokenStore()
+        let client = self.client
+        let tokenStore = self.tokenStore
         recent = RecentPullRequests { cursor in
             guard let token = tokenStore.load() else { throw GitHubError.unauthorized }
             return try await client.fetchClosedPullRequests(token: token, after: cursor)
