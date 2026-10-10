@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct MyPRsApp: App {
+    @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @State private var updater = Updater()
     @State private var monitor = PullRequestMonitor()
 

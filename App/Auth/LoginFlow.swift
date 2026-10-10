@@ -1,19 +1,30 @@
 import AppKit
-import AuthenticationServices
 
 @MainActor
-final class LoginFlow: NSObject, ASWebAuthenticationPresentationContextProviding {
-    private var session: ASWebAuthenticationSession?
+final class LoginFlow {
+    static let shared = LoginFlow()
+
+    private var pending: (state: String, continuation: CheckedContinuation<URL, Error>)?
 
     func signIn() async throws -> String {
+        cancel()
         let state = Self.randomState()
-        defer { session = nil }
-        let callbackURL = try await authenticate(at: authorizeURL(state: state))
+        let callbackURL = try await withCheckedThrowingContinuation { continuation in
+            pending = (state, continuation)
+            NSWorkspace.shared.open(authorizeURL(state: state))
+        }
         return try LoginCallback.token(from: callbackURL, expectedState: state)
     }
 
-    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        NSApp.keyWindow ?? NSApp.windows.first ?? ASPresentationAnchor()
+    func handle(_ url: URL) {
+        guard let pending, url.scheme == AppConfig.urlScheme else { return }
+        self.pending = nil
+        pending.continuation.resume(returning: url)
+    }
+
+    func cancel() {
+        pending?.continuation.resume(throwing: CancellationError())
+        pending = nil
     }
 
     private static func randomState() -> String {
@@ -30,26 +41,5 @@ final class LoginFlow: NSObject, ASWebAuthenticationPresentationContextProviding
             URLQueryItem(name: "state", value: state),
         ]
         return components.url!
-    }
-
-    private func authenticate(at url: URL) async throws -> URL {
-        try await withCheckedThrowingContinuation { continuation in
-            let session = ASWebAuthenticationSession(
-                url: url,
-                callbackURLScheme: AppConfig.urlScheme
-            ) { callbackURL, error in
-                if let callbackURL {
-                    continuation.resume(returning: callbackURL)
-                } else {
-                    continuation.resume(throwing: error ?? LoginError.invalidCallback)
-                }
-            }
-            session.presentationContextProvider = self
-            session.prefersEphemeralWebBrowserSession = false
-            self.session = session
-            if !session.start() {
-                continuation.resume(throwing: LoginError.invalidCallback)
-            }
-        }
     }
 }
