@@ -3,9 +3,6 @@ import SwiftUI
 /// The MyPRs pull request mark (see assets/logo-mark.svg), without the logo's status dots.
 /// Drawn as a filled outline so it scales crisply and can be used as a view, a mask or a CGPath.
 struct BrandGlyph: Shape {
-    /// Stroke width as a fraction of the glyph size. The logo uses 46 of 480.
-    var strokeFraction: CGFloat = 46.0 / 480
-
     func path(in rect: CGRect) -> Path {
         let side = min(rect.width, rect.height)
         let unit = side / Design.size
@@ -15,12 +12,21 @@ struct BrandGlyph: Shape {
             CGPoint(x: origin.x + x * unit, y: origin.y + y * unit)
         }
 
+        func circle(centeredAt x: CGFloat, _ y: CGFloat) -> CGRect {
+            let radius = Design.nodeRadius
+            let diameter = radius * 2 * unit
+            return CGRect(origin: point(x - radius, y - radius), size: CGSize(width: diameter, height: diameter))
+        }
+
+        let lineStartY = Design.topNodeY + Design.nodeRadius + Design.gap
+        let lineEndY = Design.bottomNodeY - Design.nodeRadius - Design.gap
+
         var centerline = Path()
         // Line joining the two nodes on the left.
-        centerline.move(to: point(Design.left, Design.topNodeY + Design.nodeRadius + Design.gap))
-        centerline.addLine(to: point(Design.left, Design.bottomNodeY - Design.nodeRadius - Design.gap))
-        // Curve from the bottom right node, ending at the arrow tip.
-        centerline.move(to: point(Design.right, Design.bottomNodeY - Design.nodeRadius - Design.gap))
+        centerline.move(to: point(Design.left, lineStartY))
+        centerline.addLine(to: point(Design.left, lineEndY))
+        // From the bottom right node up, round the corner, then left towards the arrowhead.
+        centerline.move(to: point(Design.right, lineEndY))
         centerline.addLine(to: point(Design.right, Design.curveY + Design.cornerRadius))
         centerline.addQuadCurve(
             to: point(Design.right - Design.cornerRadius, Design.curveY),
@@ -32,21 +38,18 @@ struct BrandGlyph: Shape {
         centerline.addLine(to: point(Design.arrowTipX, Design.curveY))
         centerline.addLine(to: point(Design.arrowTipX + Design.arrowDepth, Design.curveY + Design.arrowDepth))
         // Nodes.
-        for (x, y) in [(Design.left, Design.topNodeY), (Design.left, Design.bottomNodeY), (Design.right, Design.bottomNodeY)] {
-            centerline.addEllipse(in: CGRect(
-                x: origin.x + (x - Design.nodeRadius) * unit,
-                y: origin.y + (y - Design.nodeRadius) * unit,
-                width: Design.nodeRadius * 2 * unit,
-                height: Design.nodeRadius * 2 * unit
-            ))
-        }
+        centerline.addEllipse(in: circle(centeredAt: Design.left, Design.topNodeY))
+        centerline.addEllipse(in: circle(centeredAt: Design.left, Design.bottomNodeY))
+        centerline.addEllipse(in: circle(centeredAt: Design.right, Design.bottomNodeY))
 
-        return centerline.strokedPath(StrokeStyle(lineWidth: side * strokeFraction, lineCap: .round, lineJoin: .round))
+        let stroke = StrokeStyle(lineWidth: Design.strokeWidth * unit, lineCap: .round, lineJoin: .round)
+        return centerline.strokedPath(stroke)
     }
 
     /// Proportions in a 480 x 480 box, taken from the logo.
     private enum Design {
         static let size: CGFloat = 480
+        static let strokeWidth: CGFloat = 46
         static let left: CGFloat = 92
         static let right: CGFloat = 388
         static let topNodeY: CGFloat = 74
