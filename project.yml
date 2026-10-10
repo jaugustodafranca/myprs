@@ -1,0 +1,79 @@
+name: MyPRs
+options:
+  bundleIdPrefix: com.zaintech
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: 688YYDN5Z4
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.6.0
+targets:
+  MyPRs:
+    type: application
+    platform: macOS
+    sources: [App, Shared]
+    dependencies:
+      - package: Sparkle
+      - target: MyPRsWidget
+    entitlements:
+      path: App/MyPRs.entitlements
+      properties:
+        com.apple.security.application-groups: [688YYDN5Z4.com.zaintech.myprs]
+    info:
+      path: App/Info.plist
+      properties:
+        LSUIElement: true
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleURLTypes:
+          - CFBundleURLName: com.zaintech.myprs
+            CFBundleURLSchemes: [myprs]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zaintech.myprs
+        ENABLE_HARDENED_RUNTIME: true
+  MyPRsWidget:
+    type: app-extension
+    platform: macOS
+    sources: [Widget, Shared]
+    entitlements:
+      path: Widget/MyPRsWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups: [688YYDN5Z4.com.zaintech.myprs]
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: MyPRs
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zaintech.myprs.widget
+        ENABLE_HARDENED_RUNTIME: true
+  MyPRsTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [Tests, Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zaintech.myprs.tests
+        GENERATE_INFOPLIST_FILE: true
+        CODE_SIGN_STYLE: Automatic
+schemes:
+  MyPRs:
+    build:
+      targets:
+        MyPRs: all
+        MyPRsWidget: all
+    test:
+      targets: [MyPRsTests]

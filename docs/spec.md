@@ -63,9 +63,9 @@ filters.
 │  PullRequestMonitor (timer)         │ myprs:// │ myprs://auth?token&state   │
 │   └ GitHubClient ──── GraphQL ──────┼──▶ api.github.com                    │
 │   └ ChangeDetector → Notifier       │         └────────────────────────────┘
-│   └ SnapshotStore.save ─┐           │
+│   └ SnapshotStore.shared.save ─┐           │
 │ MyPRsWidget.appex       │ App Group │
-│   └ SnapshotStore.load ◀┘           │
+│   └ SnapshotStore.shared.load ◀┘           │
 └─────────────────────────────────────┘
 ```
 
@@ -119,10 +119,12 @@ struct PullRequestSnapshot: Codable {
     let fetchedAt: Date
 }
 
-enum SnapshotStore {
-    static func load() -> PullRequestSnapshot?
-    static func save(_ snapshot: PullRequestSnapshot)
-    static func clear()
+struct SnapshotStore {
+    static let shared: SnapshotStore   // App Group container
+    init(directory: URL)               // tests pass a temporary directory
+    func load() -> PullRequestSnapshot?
+    func save(_ snapshot: PullRequestSnapshot)
+    func clear()
 }
 
 enum AppConfig { appGroupID, urlScheme, gitHubClientID, authCallbackURL, ... }
