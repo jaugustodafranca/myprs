@@ -24,10 +24,14 @@ targets:
       - target: MyPRsWidget
     entitlements:
       path: App/MyPRs.entitlements
+      properties:
+        com.apple.security.application-groups: [688YYDN5Z4.com.zaintech.myprs]
     info:
       path: App/Info.plist
       properties:
         LSUIElement: true
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleURLTypes:
           - CFBundleURLName: com.zaintech.myprs
             CFBundleURLSchemes: [myprs]
@@ -41,10 +45,15 @@ targets:
     sources: [Widget, Shared]
     entitlements:
       path: Widget/MyPRsWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups: [688YYDN5Z4.com.zaintech.myprs]
     info:
       path: Widget/Info.plist
       properties:
         CFBundleDisplayName: MyPRs
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
