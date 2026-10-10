@@ -1,0 +1,49 @@
+import Foundation
+import Testing
+
+@Suite struct WidgetSummaryTests {
+    @Test func compactCountShortensThousands() {
+        #expect(WidgetFormatting.compactCount(214) == "214")
+        #expect(WidgetFormatting.compactCount(999) == "999")
+        #expect(WidgetFormatting.compactCount(1000) == "1k")
+        #expect(WidgetFormatting.compactCount(1250) == "1.2k")
+        #expect(WidgetFormatting.compactCount(12_800) == "12k")
+    }
+
+    @Test func diffAndFilesText() {
+        #expect(WidgetFormatting.diffText(additions: 214, deletions: 1500) == "+214 \u{2212}1.5k")
+        #expect(WidgetFormatting.filesText(1) == "1 file")
+        #expect(WidgetFormatting.filesText(7) == "7 files")
+    }
+
+    @Test func summaryCountsWhatNeedsAttention() {
+        let failing = makePullRequest(id: "failing", checks: .failing)
+        let asked = makePullRequest(id: "asked", unansweredThreads: 2)
+        let ready = makeApprovedPullRequest(id: "ready", hasConflicts: false)
+        let conflicted = makeApprovedPullRequest(id: "conflicted", hasConflicts: true)
+
+        let summary = PullRequestSummary([ready, conflicted, asked, failing])
+
+        #expect(summary.open == 4)
+        #expect(summary.failing == 1)
+        #expect(summary.toAnswer == 1)
+        #expect(summary.ready == 1)
+        #expect(summary.needsAttention)
+        #expect(summary.mostUrgent?.id == "failing" || summary.mostUrgent?.id == "asked")
+    }
+
+    @Test func nothingNeedsAttentionWhenAllIsCalm() {
+        let summary = PullRequestSummary([makeApprovedPullRequest(id: "ready", hasConflicts: false)])
+        #expect(!summary.needsAttention)
+    }
+}
+
+private func makeApprovedPullRequest(id: String, hasConflicts: Bool) -> PullRequest {
+    PullRequest(
+        id: id, number: 1, title: "Ready", url: URL(string: "https://github.com/octo/repo/pull/1")!,
+        repository: "octo/repo", isDraft: false, checks: .passing, review: .approved, unansweredThreads: 0,
+        updatedAt: .now, createdAt: .now, additions: 1, deletions: 1, changedFiles: 1,
+        headBranch: "feature", baseBranch: "main", hasConflicts: hasConflicts,
+        checksPassed: 1, checksTotal: 1, approvals: 1
+    )
+}

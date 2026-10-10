@@ -1,57 +1,74 @@
+import AppIntents
 import SwiftUI
 
 struct PullRequestRowView: View {
     let pullRequest: PullRequest
+    let detail: RowDetail
 
     var body: some View {
         HStack(spacing: 8) {
             Link(destination: pullRequest.url) {
-                HStack(spacing: 8) {
+                HStack(alignment: .top, spacing: 8) {
                     StatusDot(pullRequest: pullRequest)
-                    VStack(alignment: .leading, spacing: 0) {
+                        .widgetAccentable()
+                        .padding(.top, 3)
+                    VStack(alignment: .leading, spacing: 1) {
                         Text(pullRequest.title)
-                            .font(.caption.weight(.semibold))
+                            .font(.system(size: 12, weight: .semibold))
                             .lineLimit(1)
-                        Text(subtitle)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
+                            .widgetAccentable()
+                        if detail.showsBranch {
+                            branchLine
+                            MetadataLine(pullRequest: pullRequest, asBadges: detail.showsBadges)
+                        } else {
+                            referenceAndMetadataLine
+                        }
                     }
-                    Spacer(minLength: 4)
-                    reviewIcon
-                    unansweredBadge
+                    Spacer(minLength: 0)
                 }
             }
-            Button(intent: CopyLinkIntent(url: pullRequest.url.absoluteString)) {
-                Image(systemName: "link")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            copyButton(systemImage: "link", intent: CopyLinkIntent(url: pullRequest.url.absoluteString))
+            if detail.showsCopyBranch {
+                copyButton(systemImage: "arrow.triangle.branch", intent: CopyBranchIntent(branch: pullRequest.headBranch))
             }
-            .buttonStyle(.plain)
         }
     }
 
-    private var subtitle: String {
-        let reference = "\(pullRequest.repository)#\(pullRequest.number)"
-        return pullRequest.isDraft ? "Draft · \(reference)" : reference
+    private var reference: String { "\(pullRequest.repository)#\(pullRequest.number)" }
+
+    private var branchLine: some View {
+        HStack(spacing: 6) {
+            Text("\(pullRequest.headBranch) \u{2192} \(pullRequest.baseBranch)")
+                .font(.system(size: 10, design: .monospaced))
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Spacer(minLength: 0)
+            Text(reference)
+                .font(.system(size: 10))
+                .lineLimit(1)
+                .layoutPriority(1)
+        }
+        .foregroundStyle(.secondary)
     }
 
-    @ViewBuilder private var reviewIcon: some View {
-        switch pullRequest.review {
-        case .approved:
-            Image(systemName: "checkmark.circle").foregroundStyle(.green).font(.caption)
-        case .changesRequested:
-            Image(systemName: "exclamationmark.bubble").foregroundStyle(.red).font(.caption)
-        case .waiting:
-            EmptyView()
+    private var referenceAndMetadataLine: some View {
+        HStack(spacing: 8) {
+            Text(reference)
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .layoutPriority(1)
+            MetadataLine(pullRequest: pullRequest, asBadges: false)
         }
     }
 
-    @ViewBuilder private var unansweredBadge: some View {
-        if pullRequest.unansweredThreads > 0 {
-            Label("\(pullRequest.unansweredThreads)", systemImage: "bubble.left")
-                .font(.caption2)
-                .foregroundStyle(.orange)
+    private func copyButton(systemImage: String, intent: some AppIntent) -> some View {
+        Button(intent: intent) {
+            Image(systemName: systemImage)
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .frame(width: 22, height: 22)
         }
+        .buttonStyle(.plain)
     }
 }

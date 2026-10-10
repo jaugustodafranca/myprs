@@ -49,7 +49,7 @@ filters.
 
 ### Widget
 
-- Medium and large sizes. Shows the same list from the shared cache.
+- Small, medium, large and extra large. Small shows counts, the others a list from the shared cache.
 - Tapping a row opens the PR. Each row has a copy-link button (App Intent).
 - Signed out / empty states with a short message.
 
