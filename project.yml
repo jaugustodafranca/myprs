@@ -63,7 +63,7 @@ targets:
   MyPRsTests:
     type: bundle.unit-test
     platform: macOS
-    sources: [Tests, Shared]
+    sources: [Tests, Shared, App/GitHub]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zaintech.myprs.tests
