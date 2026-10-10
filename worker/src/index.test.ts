@@ -49,6 +49,14 @@ describe("GET /callback", () => {
     expect(response.headers.get("Location")).toBe("myprs://auth?error=exchange_failed&state=s1");
   });
 
+  it("returns exchange_failed when GitHub sends an unexpected body", async () => {
+    mockGitHub({ error: { nested: true } });
+
+    const response = await get("/callback?code=c&state=s1");
+
+    expect(response.headers.get("Location")).toBe("myprs://auth?error=exchange_failed&state=s1");
+  });
+
   it("returns invalid_request when code is missing", async () => {
     const fetchMock = mockGitHub({});
 
@@ -80,5 +88,17 @@ describe("other paths", () => {
   it("returns 404", async () => {
     expect((await get("/")).status).toBe(404);
     expect((await get("/other")).status).toBe(404);
+  });
+
+  it("returns 404 for non-GET requests to /callback", async () => {
+    const fetchMock = mockGitHub({ access_token: "gho_abc" });
+
+    const response = await worker.fetch(
+      new Request("https://auth.example.com/callback?code=c&state=s", { method: "POST" }),
+      env,
+    );
+
+    expect(response.status).toBe(404);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

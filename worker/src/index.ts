@@ -43,9 +43,9 @@ export async function exchangeCodeForToken(code: string, env: Env): Promise<Toke
         code,
       }),
     });
-    const body = (await response.json()) as { access_token?: string; error?: string };
-    if (body.access_token) return { token: body.access_token };
-    return { error: body.error ?? "exchange_failed" };
+    const body = (await response.json()) as { access_token?: unknown; error?: unknown };
+    if (typeof body.access_token === "string" && body.access_token) return { token: body.access_token };
+    return { error: typeof body.error === "string" ? body.error : "exchange_failed" };
   } catch {
     return { error: "exchange_failed" };
   }
