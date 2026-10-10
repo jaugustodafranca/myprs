@@ -12,7 +12,7 @@ struct PullRequestRowView: View {
                         Text(pullRequest.title)
                             .font(.caption.weight(.semibold))
                             .lineLimit(1)
-                        Text("\(pullRequest.repository)#\(pullRequest.number)")
+                        Text(subtitle)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -29,6 +29,11 @@ struct PullRequestRowView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    private var subtitle: String {
+        let reference = "\(pullRequest.repository)#\(pullRequest.number)"
+        return pullRequest.isDraft ? "Draft · \(reference)" : reference
     }
 
     @ViewBuilder private var reviewIcon: some View {
