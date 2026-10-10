@@ -39,6 +39,29 @@ import Testing
     @Test func countsOnlyUnresolvedThreadsNotAnsweredByViewer() {
         #expect(pullRequests.map(\.unansweredThreads) == [0, 1, 0, 0, 1])
     }
+
+    @Test func mapsSizeBranchesAndDates() {
+        let first = pullRequests[0]
+        #expect(first.additions == 10)
+        #expect(first.deletions == 2)
+        #expect(first.changedFiles == 3)
+        #expect(first.headBranch == "feature/one")
+        #expect(first.baseBranch == "main")
+        #expect(first.createdAt == Date(timeIntervalSince1970: 1_790_668_800))
+    }
+
+    @Test func flagsOnlyConflictingPullRequests() {
+        #expect(pullRequests.map(\.hasConflicts) == [false, true, false, false, false])
+    }
+
+    @Test func countsPassedAndTotalChecksAcrossCheckRunsAndStatusContexts() {
+        #expect(pullRequests.map(\.checksPassed) == [4, 1, 0, 0, 0])
+        #expect(pullRequests.map(\.checksTotal) == [5, 3, 0, 0, 1])
+    }
+
+    @Test func countsOnlyApprovedLatestReviews() {
+        #expect(pullRequests.map(\.approvals) == [2, 0, 0, 0, 0])
+    }
 }
 
 private let fixture = #"""
@@ -50,17 +73,25 @@ private let fixture = #"""
         {
           "id": "PR_1", "number": 1, "title": "Passing and approved",
           "url": "https://github.com/acme/web/pull/1", "isDraft": false,
-          "updatedAt": "2026-09-30T08:00:00Z", "reviewDecision": "APPROVED",
+          "updatedAt": "2026-09-30T08:00:00Z", "createdAt": "2026-09-29T08:00:00Z",
+          "reviewDecision": "APPROVED",
+          "additions": 10, "deletions": 2, "changedFiles": 3,
+          "headRefName": "feature/one", "baseRefName": "main", "mergeable": "MERGEABLE",
+          "latestReviews": { "nodes": [{ "state": "APPROVED" }, { "state": "COMMENTED" }, { "state": "APPROVED" }] },
           "repository": { "nameWithOwner": "acme/web" },
-          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "SUCCESS" } } } ] },
+          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "SUCCESS", "contexts": { "nodes": [{ "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SUCCESS" }, { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "NEUTRAL" }, { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SKIPPED" }, { "__typename": "StatusContext", "state": "SUCCESS" }, { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "FAILURE" }] } } } } ] },
           "reviewThreads": { "nodes": [] }
         },
         {
           "id": "PR_2", "number": 2, "title": "Failing with reviewer thread",
           "url": "https://github.com/acme/web/pull/2", "isDraft": false,
-          "updatedAt": "2026-09-30T08:00:00Z", "reviewDecision": "CHANGES_REQUESTED",
+          "updatedAt": "2026-09-30T08:00:00Z", "createdAt": "2026-09-29T08:00:00Z",
+          "reviewDecision": "CHANGES_REQUESTED",
+          "additions": 10, "deletions": 2, "changedFiles": 3,
+          "headRefName": "feature/one", "baseRefName": "main", "mergeable": "CONFLICTING",
+          "latestReviews": { "nodes": [{ "state": "CHANGES_REQUESTED" }] },
           "repository": { "nameWithOwner": "acme/web" },
-          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "FAILURE" } } } ] },
+          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "FAILURE", "contexts": { "nodes": [{ "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SUCCESS" }, { "__typename": "StatusContext", "state": "FAILURE" }, { "__typename": "StatusContext", "state": "PENDING" }] } } } } ] },
           "reviewThreads": { "nodes": [
             { "isResolved": false, "comments": { "nodes": [ { "author": { "login": "reviewer" } } ] } },
             { "isResolved": false, "comments": { "nodes": [ { "author": { "login": "me" } } ] } },
@@ -71,15 +102,23 @@ private let fixture = #"""
         {
           "id": "PR_3", "number": 3, "title": "Draft still running",
           "url": "https://github.com/acme/api/pull/3", "isDraft": true,
-          "updatedAt": "2026-09-30T08:00:00Z", "reviewDecision": "REVIEW_REQUIRED",
+          "updatedAt": "2026-09-30T08:00:00Z", "createdAt": "2026-09-29T08:00:00Z",
+          "reviewDecision": "REVIEW_REQUIRED",
+          "additions": 10, "deletions": 2, "changedFiles": 3,
+          "headRefName": "feature/one", "baseRefName": "main", "mergeable": "UNKNOWN",
+          "latestReviews": { "nodes": [] },
           "repository": { "nameWithOwner": "acme/api" },
-          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "PENDING" } } } ] },
+          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "PENDING", "contexts": { "nodes": [] } } } } ] },
           "reviewThreads": { "nodes": [] }
         },
         {
           "id": "PR_4", "number": 4, "title": "No checks",
           "url": "https://github.com/acme/api/pull/4", "isDraft": false,
-          "updatedAt": "2026-09-30T08:00:00Z", "reviewDecision": null,
+          "updatedAt": "2026-09-30T08:00:00Z", "createdAt": "2026-09-29T08:00:00Z",
+          "reviewDecision": null,
+          "additions": 10, "deletions": 2, "changedFiles": 3,
+          "headRefName": "feature/one", "baseRefName": "main", "mergeable": "MERGEABLE",
+          "latestReviews": { "nodes": [] },
           "repository": { "nameWithOwner": "acme/api" },
           "commits": { "nodes": [ { "commit": { "statusCheckRollup": null } } ] },
           "reviewThreads": { "nodes": [] }
@@ -87,9 +126,13 @@ private let fixture = #"""
         {
           "id": "PR_5", "number": 5, "title": "Error and deleted commenter",
           "url": "https://github.com/acme/api/pull/5", "isDraft": false,
-          "updatedAt": "2026-09-30T08:00:00Z", "reviewDecision": null,
+          "updatedAt": "2026-09-30T08:00:00Z", "createdAt": "2026-09-29T08:00:00Z",
+          "reviewDecision": null,
+          "additions": 10, "deletions": 2, "changedFiles": 3,
+          "headRefName": "feature/one", "baseRefName": "main", "mergeable": "MERGEABLE",
+          "latestReviews": { "nodes": [] },
           "repository": { "nameWithOwner": "acme/api" },
-          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "ERROR" } } } ] },
+          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "ERROR", "contexts": { "nodes": [{ "__typename": "StatusContext", "state": "ERROR" }] } } } } ] },
           "reviewThreads": { "nodes": [
             { "isResolved": false, "comments": { "nodes": [ { "author": null } ] } }
           ] }

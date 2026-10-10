@@ -8,17 +8,29 @@ enum PullRequestMapper {
     }
 
     private static func pullRequest(from node: GitHubResponse.PullRequestNode, viewerLogin: String) -> PullRequest {
-        PullRequest(
+        let rollup = node.commits.nodes.last?.commit.statusCheckRollup
+        let contexts = rollup?.contexts.nodes ?? []
+        return PullRequest(
             id: node.id,
             number: node.number,
             title: node.title,
             url: node.url,
             repository: node.repository.nameWithOwner,
             isDraft: node.isDraft,
-            checks: checkStatus(from: node.commits.nodes.last?.commit.statusCheckRollup?.state),
+            checks: checkStatus(from: rollup?.state),
             review: reviewStatus(from: node.reviewDecision),
             unansweredThreads: node.reviewThreads.nodes.filter { isUnanswered($0, viewerLogin: viewerLogin) }.count,
-            updatedAt: node.updatedAt
+            updatedAt: node.updatedAt,
+            createdAt: node.createdAt,
+            additions: node.additions,
+            deletions: node.deletions,
+            changedFiles: node.changedFiles,
+            headBranch: node.headRefName,
+            baseBranch: node.baseRefName,
+            hasConflicts: node.mergeable == "CONFLICTING",
+            checksPassed: contexts.filter(isPassed).count,
+            checksTotal: contexts.count,
+            approvals: node.latestReviews.nodes.filter { $0.state == "APPROVED" }.count
         )
     }
 
@@ -29,6 +41,13 @@ enum PullRequestMapper {
         case "PENDING", "EXPECTED": .running
         default: .none
         }
+    }
+
+    private static func isPassed(_ context: GitHubResponse.CheckContext) -> Bool {
+        if let conclusion = context.conclusion {
+            return ["SUCCESS", "NEUTRAL", "SKIPPED"].contains(conclusion)
+        }
+        return context.state == "SUCCESS"
     }
 
     private static func reviewStatus(from decision: String?) -> ReviewStatus {

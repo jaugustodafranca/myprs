@@ -31,10 +31,35 @@ import Testing
         #expect(store.load() == nil)
     }
 
+    @Test func loadReturnsNilForSnapshotInOldFormat() throws {
+        let directory = try makeTemporaryDirectory()
+        try Data(oldFormatSnapshot.utf8).write(to: directory.appendingPathComponent("snapshot.json"))
+
+        #expect(SnapshotStore(directory: directory).load() == nil)
+    }
+
     private func makeStoreInTemporaryDirectory() throws -> SnapshotStore {
+        SnapshotStore(directory: try makeTemporaryDirectory())
+    }
+
+    private func makeTemporaryDirectory() throws -> URL {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        return SnapshotStore(directory: directory)
+        return directory
     }
 }
+
+private let oldFormatSnapshot = """
+{
+  "login": "octocat",
+  "fetchedAt": "2026-09-30T08:00:00Z",
+  "pullRequests": [
+    {
+      "id": "PR_1", "number": 1, "title": "Old", "url": "https://github.com/acme/web/pull/1",
+      "repository": "acme/web", "isDraft": false, "checks": "passing", "review": "waiting",
+      "unansweredThreads": 0, "updatedAt": "2026-09-30T08:00:00Z"
+    }
+  ]
+}
+"""

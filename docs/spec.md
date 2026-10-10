@@ -114,6 +114,16 @@ struct PullRequest: Codable, Hashable, Identifiable {
     let review: ReviewStatus
     let unansweredThreads: Int
     let updatedAt: Date
+    let createdAt: Date
+    let additions: Int
+    let deletions: Int
+    let changedFiles: Int
+    let headBranch: String    // headRefName
+    let baseBranch: String    // baseRefName
+    let hasConflicts: Bool    // mergeable == CONFLICTING
+    let checksPassed: Int     // CheckRun SUCCESS/NEUTRAL/SKIPPED + StatusContext SUCCESS
+    let checksTotal: Int      // all check contexts (first 100)
+    let approvals: Int        // latestReviews with state APPROVED
     var needsAttention: Bool { checks == .failing || unansweredThreads > 0 }
 }
 enum CheckStatus: String, Codable { case passing, failing, running, none }
@@ -146,9 +156,26 @@ query {
   search(query: "is:pr is:open author:@me archived:false", type: ISSUE, first: 50) {
     nodes {
       ... on PullRequest {
-        id number title url isDraft updatedAt reviewDecision
+        id number title url isDraft updatedAt createdAt reviewDecision
+        additions deletions changedFiles headRefName baseRefName mergeable
         repository { nameWithOwner }
-        commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
+        latestReviews(first: 20) { nodes { state } }
+        commits(last: 1) {
+          nodes {
+            commit {
+              statusCheckRollup {
+                state
+                contexts(first: 100) {
+                  nodes {
+                    __typename
+                    ... on CheckRun { status conclusion }
+                    ... on StatusContext { state }
+                  }
+                }
+              }
+            }
+          }
+        }
         reviewThreads(first: 100) {
           nodes { isResolved comments(last: 1) { nodes { author { login } } } }
         }
@@ -157,6 +184,14 @@ query {
   }
 }
 ```
+
+A snapshot cached by an older version lacks the newer fields, so it fails to
+decode: `SnapshotStore.load()` returns nil and the next refresh replaces it.
+
+### Branch
+
+The UI offers copying the PR's head branch name and the command
+`git checkout <headBranch>`.
 
 ### Errors
 
