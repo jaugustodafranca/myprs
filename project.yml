@@ -13,7 +13,7 @@ settings:
 packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
-    from: 2.6.0
+    exactVersion: 2.10.0
 targets:
   MyPRs:
     type: application
@@ -30,6 +30,10 @@ targets:
       path: App/Info.plist
       properties:
         LSUIElement: true
+        SUFeedURL: https://github.com/jaugustodafranca/myprs/releases/latest/download/appcast.xml
+        SUPublicEDKey: REPLACE_WITH_SPARKLE_PUBLIC_KEY
+        SUEnableAutomaticChecks: true
+        SUScheduledCheckInterval: 86400
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleURLTypes:
