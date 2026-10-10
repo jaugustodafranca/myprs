@@ -19,14 +19,39 @@ struct Badge: View {
     }
 }
 
+struct DiffBadge: View {
+    let additions: Int
+    let deletions: Int
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text("+\(CompactFormat.count(additions))").foregroundStyle(.green)
+            Text("−\(CompactFormat.count(deletions))").foregroundStyle(.red)
+        }
+        .font(.caption2.weight(.medium).monospacedDigit())
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(Color.secondary.opacity(0.14), in: Capsule())
+        .fixedSize()
+    }
+}
+
+struct FilesBadge: View {
+    let count: Int
+
+    var body: some View {
+        Badge(text: "\(count) file\(count == 1 ? "" : "s")")
+    }
+}
+
 struct PullRequestBadges: View {
     let pullRequest: PullRequest
 
     var body: some View {
         FlowLayout(spacing: 5) {
             checksBadge
-            diffBadge
-            Badge(text: "\(pullRequest.changedFiles) file\(pullRequest.changedFiles == 1 ? "" : "s")")
+            DiffBadge(additions: pullRequest.additions, deletions: pullRequest.deletions)
+            FilesBadge(count: pullRequest.changedFiles)
             if pullRequest.unansweredThreads > 0 {
                 Badge(text: "\(pullRequest.unansweredThreads) to answer", symbol: "bubble.left.fill", color: .orange)
             }
@@ -48,18 +73,6 @@ struct PullRequestBadges: View {
             case .none: EmptyView()
             }
         }
-    }
-
-    private var diffBadge: some View {
-        HStack(spacing: 4) {
-            Text("+\(CompactFormat.count(pullRequest.additions))").foregroundStyle(.green)
-            Text("−\(CompactFormat.count(pullRequest.deletions))").foregroundStyle(.red)
-        }
-        .font(.caption2.weight(.medium).monospacedDigit())
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .background(Color.secondary.opacity(0.14), in: Capsule())
-        .fixedSize()
     }
 
     @ViewBuilder
