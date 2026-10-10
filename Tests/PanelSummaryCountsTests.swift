@@ -1,28 +1,14 @@
 import Foundation
 import Testing
 
-@Suite struct WidgetSummaryTests {
-    @Test func compactCountShortensThousands() {
-        #expect(WidgetFormatting.compactCount(214) == "214")
-        #expect(WidgetFormatting.compactCount(999) == "999")
-        #expect(WidgetFormatting.compactCount(1000) == "1k")
-        #expect(WidgetFormatting.compactCount(1250) == "1.2k")
-        #expect(WidgetFormatting.compactCount(12_800) == "12k")
-    }
-
-    @Test func diffAndFilesText() {
-        #expect(WidgetFormatting.diffText(additions: 214, deletions: 1500) == "+214 \u{2212}1.5k")
-        #expect(WidgetFormatting.filesText(1) == "1 file")
-        #expect(WidgetFormatting.filesText(7) == "7 files")
-    }
-
+@Suite struct PanelSummaryCountsTests {
     @Test func summaryCountsWhatNeedsAttention() {
         let failing = makePullRequest(id: "failing", checks: .failing)
         let asked = makePullRequest(id: "asked", unansweredThreads: 2)
         let ready = makeApprovedPullRequest(id: "ready", hasConflicts: false)
         let conflicted = makeApprovedPullRequest(id: "conflicted", hasConflicts: true)
 
-        let summary = PullRequestSummary([ready, conflicted, asked, failing])
+        let summary = PanelSummary([ready, conflicted, asked, failing])
 
         #expect(summary.open == 4)
         #expect(summary.failing == 1)
@@ -33,7 +19,7 @@ import Testing
     }
 
     @Test func nothingNeedsAttentionWhenAllIsCalm() {
-        let summary = PullRequestSummary([makeApprovedPullRequest(id: "ready", hasConflicts: false)])
+        let summary = PanelSummary([makeApprovedPullRequest(id: "ready", hasConflicts: false)])
         #expect(!summary.needsAttention)
     }
 }

@@ -20,7 +20,7 @@ struct EntryView: View {
     @ViewBuilder private func content(for snapshot: PullRequestSnapshot) -> some View {
         switch family {
         case .systemSmall:
-            let summary = PullRequestSummary(snapshot.pullRequests)
+            let summary = PanelSummary(snapshot.pullRequests)
             SmallView(summary: summary)
                 .widgetURL(summary.mostUrgent?.url)
         case .systemLarge:

@@ -4,10 +4,20 @@ struct MetadataItem: Identifiable {
     enum Kind { case draft, checks, diff, files, unanswered, review, conflicts }
 
     let kind: Kind
-    let text: String
+    let content: Text
     let color: Color
 
     var id: Kind { kind }
+
+    init(kind: Kind, text: String, color: Color) {
+        self.init(kind: kind, content: Text(text), color: color)
+    }
+
+    init(kind: Kind, content: Text, color: Color) {
+        self.kind = kind
+        self.content = content
+        self.color = color
+    }
 
     static func items(for pullRequest: PullRequest) -> [MetadataItem] {
         var items: [MetadataItem] = []
@@ -18,12 +28,11 @@ struct MetadataItem: Identifiable {
             let color: Color = pullRequest.checks == .failing ? .red : (pullRequest.checks == .passing ? .green : .secondary)
             items.append(MetadataItem(kind: .checks, text: "CI \(pullRequest.checksPassed)/\(pullRequest.checksTotal)", color: color))
         }
-        items.append(MetadataItem(
-            kind: .diff,
-            text: WidgetFormatting.diffText(additions: pullRequest.additions, deletions: pullRequest.deletions),
-            color: .secondary
-        ))
-        items.append(MetadataItem(kind: .files, text: WidgetFormatting.filesText(pullRequest.changedFiles), color: .secondary))
+        let additions = Text("+\(CompactFormat.count(pullRequest.additions))").foregroundStyle(.green)
+        let deletions = Text("\u{2212}\(CompactFormat.count(pullRequest.deletions))").foregroundStyle(.red)
+        items.append(MetadataItem(kind: .diff, content: additions + Text(" ") + deletions, color: .secondary))
+        let files = pullRequest.changedFiles
+        items.append(MetadataItem(kind: .files, text: "\(files) file\(files == 1 ? "" : "s")", color: .secondary))
         if pullRequest.unansweredThreads > 0 {
             items.append(MetadataItem(kind: .unanswered, text: "\(pullRequest.unansweredThreads) to answer", color: .orange))
         }

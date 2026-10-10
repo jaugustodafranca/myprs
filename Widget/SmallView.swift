@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SmallView: View {
-    let summary: PullRequestSummary
+    let summary: PanelSummary
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {

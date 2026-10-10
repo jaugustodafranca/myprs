@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ScoreboardView: View {
-    let summary: PullRequestSummary
+    let summary: PanelSummary
     var isInline = false
 
     var body: some View {

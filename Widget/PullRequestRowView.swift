@@ -19,7 +19,11 @@ struct PullRequestRowView: View {
                             .widgetAccentable()
                         if detail.showsBranch {
                             branchLine
-                            MetadataLine(pullRequest: pullRequest, asBadges: detail.showsBadges)
+                            if detail.showsBadges {
+                                MetadataLine(pullRequest: pullRequest, asBadges: true)
+                            } else {
+                                referenceAndMetadataLine
+                            }
                         } else {
                             referenceAndMetadataLine
                         }
@@ -42,11 +46,13 @@ struct PullRequestRowView: View {
                 .font(.system(size: 10, design: .monospaced))
                 .lineLimit(1)
                 .truncationMode(.middle)
-            Spacer(minLength: 0)
-            Text(reference)
-                .font(.system(size: 10))
-                .lineLimit(1)
-                .layoutPriority(1)
+            if detail.showsBadges {
+                Spacer(minLength: 0)
+                Text(reference)
+                    .font(.system(size: 10))
+                    .lineLimit(1)
+                    .layoutPriority(1)
+            }
         }
         .foregroundStyle(.secondary)
     }

@@ -68,7 +68,7 @@ targets:
   MyPRsTests:
     type: bundle.unit-test
     platform: macOS
-    sources: [Tests, Shared, App/GitHub, App/Auth/LoginCallback.swift, App/Monitor/ChangeDetector.swift, Widget/WidgetFormatting.swift, Widget/PullRequestSummary.swift]
+    sources: [Tests, Shared, App/GitHub, App/Auth/LoginCallback.swift, App/Monitor/ChangeDetector.swift]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zaintech.myprs.tests

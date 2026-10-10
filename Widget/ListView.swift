@@ -7,7 +7,7 @@ struct ListView: View {
     let detail: RowDetail
 
     private var isInlineScoreboard: Bool { detail == .full }
-    private var summary: PullRequestSummary { PullRequestSummary(snapshot.pullRequests) }
+    private var summary: PanelSummary { PanelSummary(snapshot.pullRequests) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {

@@ -18,13 +18,13 @@ struct MetadataLine: View {
         HStack(spacing: asBadges ? 4 : 8) {
             ForEach(items) { item in
                 if asBadges {
-                    Text(item.text)
+                    item.content
                         .foregroundStyle(item.color)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
                         .background(item.color.opacity(0.15), in: Capsule())
                 } else {
-                    Text(item.text).foregroundStyle(item.color)
+                    item.content.foregroundStyle(item.color)
                 }
             }
         }
