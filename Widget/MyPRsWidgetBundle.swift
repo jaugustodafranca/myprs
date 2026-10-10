@@ -10,25 +10,39 @@ struct MyPRsWidgetBundle: WidgetBundle {
 
 struct MyPRsWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "MyPRsWidget", provider: Provider()) { entry in
+        StaticConfiguration(kind: AppConfig.widgetKind, provider: Provider()) { entry in
             EntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("Open PRs")
         .description("Your open pull requests, with CI and review status.")
-        .supportedFamilies([.systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
     }
 }
 
-#Preview(as: .systemMedium) {
+#Preview("Small", as: .systemSmall) {
     MyPRsWidget()
 } timeline: {
     PullRequestEntry.sample
+    PullRequestEntry.calm
     PullRequestEntry.empty
     PullRequestEntry.signedOut
 }
 
-#Preview(as: .systemLarge) {
+#Preview("Medium", as: .systemMedium) {
+    MyPRsWidget()
+} timeline: {
+    PullRequestEntry.sample
+    PullRequestEntry.empty
+}
+
+#Preview("Large", as: .systemLarge) {
+    MyPRsWidget()
+} timeline: {
+    PullRequestEntry.sample
+}
+
+#Preview("Extra large", as: .systemExtraLarge) {
     MyPRsWidget()
 } timeline: {
     PullRequestEntry.sample
