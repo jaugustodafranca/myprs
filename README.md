@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/media/demo.gif" alt="MyPRs demo: the menu bar panel, a CI failure notification, copying a branch and the desktop widget" width="800">
+  <img src="assets/media/demo.gif" alt="MyPRs demo: the menu bar panel, a CI failure notification, copying a branch, the Recent tab and the desktop widget" width="800">
 </p>
 
 <p align="center">
