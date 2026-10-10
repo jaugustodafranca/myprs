@@ -1,0 +1,11 @@
+# Xcode
+*.xcodeproj
+xcuserdata/
+DerivedData/
+build/
+.DS_Store
+
+# Worker
+node_modules/
+.wrangler/
+.dev.vars
