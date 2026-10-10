@@ -4,8 +4,6 @@ import WidgetKit
 @MainActor
 @Observable
 final class PullRequestMonitor {
-    static let intervalOptions: [TimeInterval] = [60, 120, 300, 600, 900]
-
     private(set) var snapshot: PullRequestSnapshot?
     private(set) var isSignedIn: Bool
     private(set) var isRefreshing = false
@@ -35,8 +33,7 @@ final class PullRequestMonitor {
     @ObservationIgnored private var lastOrganizationCheck: Date?
 
     init() {
-        let stored = defaults.double(forKey: Self.intervalKey)
-        refreshInterval = Self.intervalOptions.contains(stored) ? stored : 120
+        refreshInterval = RefreshInterval.restored(from: defaults.double(forKey: Self.intervalKey))
         snapshot = snapshotStore.load()
         isSignedIn = tokenStore.load() != nil
         if isSignedIn {
