@@ -19,32 +19,22 @@
 
 - Lists your open pull requests in the menu bar and in a desktop widget
 - Shows CI status for each PR: passing, running or failing
+- Sends a notification when CI starts failing or a PR gets new unanswered threads
 - Counts unanswered review threads so nothing waits on you unnoticed
 - Shows review status: approved, changes requested or pending
 - Opens a PR or copies its link in one click
 - Updates itself with Sparkle
-
-## Screenshots
-
-Screenshots are coming soon.
-
-<!--
-<p align="center">
-  <img src="assets/screenshots/menu-bar.png" width="420" alt="Menu bar">
-  <img src="assets/screenshots/widget.png" width="420" alt="Desktop widget">
-</p>
--->
 
 ## Install
 
 1. Download the latest `.dmg` from [GitHub Releases](https://github.com/jaugustodafranca/myprs/releases/latest).
 2. Drag MyPRs to Applications and open it.
 
-Requires macOS 14 or later. After the first install, updates arrive automatically through Sparkle.
+Requires macOS 14 or later. After the first install, updates arrive automatically through Sparkle. Maintainers: see [docs/release.md](docs/release.md) for how to cut a release.
 
 ## Sign in & privacy
 
-- Sign in with GitHub through a standard browser redirect.
+- Sign in with GitHub through a standard browser redirect. The app requests the `repo` scope so it can read private repositories.
 - Your token is stored in the macOS Keychain.
 - The app talks only to `api.github.com`.
 - A tiny Cloudflare Worker exchanges the OAuth code for a token and stores nothing.
@@ -80,8 +70,10 @@ Widget/     Widget extension
 Shared/     Types shared by app, widget and tests
 Tests/      Unit tests
 worker/     Cloudflare Worker for the OAuth code exchange
-docs/       Specification
-assets/     Logo and screenshots
+scripts/    Release helpers
+docs/       Specification and release guide
+assets/     Logo
+.github/    CI and release workflows
 ```
 
 See [docs/spec.md](docs/spec.md) for the design and [AGENTS.md](AGENTS.md) for contributor rules.
