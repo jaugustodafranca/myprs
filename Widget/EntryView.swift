@@ -8,12 +8,12 @@ struct EntryView: View {
     var body: some View {
         if let snapshot = entry.snapshot {
             if snapshot.pullRequests.isEmpty {
-                message("No open PRs 🎉")
+                emptyContent(updatedAt: snapshot.fetchedAt)
             } else {
                 content(for: snapshot)
             }
         } else {
-            message("Sign in from the MyPRs menu bar app")
+            emptyContent(updatedAt: nil)
         }
     }
 
@@ -32,11 +32,12 @@ struct EntryView: View {
         }
     }
 
-    private func message(_ text: String) -> some View {
-        Text(text)
-            .font(.callout)
-            .foregroundStyle(.secondary)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    @ViewBuilder private func emptyContent(updatedAt: Date?) -> some View {
+        switch family {
+        case .systemSmall:
+            EmptySmallView(isSignedOut: updatedAt == nil)
+        default:
+            EmptyWidgetView(family: family, updatedAt: updatedAt)
+        }
     }
 }
