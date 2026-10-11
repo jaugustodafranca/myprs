@@ -30,7 +30,7 @@ struct EmptyStateView: View {
             .foregroundStyle(tint)
             .background {
                 Circle()
-                    .fill(RadialGradient(colors: [tint.opacity(0.2), .clear], center: .center, startRadius: 0, endRadius: symbolSize * 1.1))
+                    .fill(RadialGradient(colors: [tint.opacity(0.32), .clear], center: .center, startRadius: 0, endRadius: symbolSize * 1.1))
                     .frame(width: symbolSize * 2.4, height: symbolSize * 2.4)
             }
             .widgetAccentable()
