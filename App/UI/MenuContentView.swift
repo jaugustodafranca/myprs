@@ -94,18 +94,30 @@ struct MenuContentView: View {
         }
     }
 
+    @ViewBuilder
     private var emptyState: some View {
-        VStack(spacing: 6) {
-            Text(monitor.snapshot == nil ? "Loading…" : "No open pull requests")
+        if monitor.snapshot == nil {
+            Text("Loading…")
                 .foregroundStyle(.secondary)
-            if monitor.snapshot != nil, !showsOrganizationBanner {
-                Text("Missing PRs from an organization?")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Link("Grant MyPRs access", destination: AppConfig.organizationAccessURL)
-                    .font(.caption)
+                .frame(maxWidth: .infinity, minHeight: PanelSize.emptyStateHeight)
+        } else {
+            VStack(spacing: 10) {
+                EmptyStateView.allCaughtUp(symbolSize: 36)
+                if !showsOrganizationBanner {
+                    organizationAccessHint
+                }
             }
+            .frame(maxWidth: .infinity, minHeight: PanelSize.emptyStateHeight)
+            .padding(.vertical, 8)
         }
-        .frame(maxWidth: .infinity, minHeight: PanelSize.emptyStateHeight)
+    }
+
+    private var organizationAccessHint: some View {
+        HStack(spacing: 4) {
+            Text("Missing PRs from an organization?")
+                .foregroundStyle(.secondary)
+            Link("Grant MyPRs access", destination: AppConfig.organizationAccessURL)
+        }
+        .font(.caption2)
     }
 }
