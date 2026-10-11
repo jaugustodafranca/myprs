@@ -5,6 +5,7 @@ struct MenuContentView: View {
     let updater: Updater
     @State private var showsSettings = false
     @State private var tab = PanelTab.open
+    @State private var screenHeight = NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight
 
     var body: some View {
         Group {
@@ -14,7 +15,8 @@ struct MenuContentView: View {
                 SignedOutView(monitor: monitor)
             }
         }
-        .frame(width: 400)
+        .frame(width: PanelSize.width)
+        .onAppear { screenHeight = NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight }
     }
 
     private var signedInContent: some View {
@@ -43,7 +45,7 @@ struct MenuContentView: View {
     private var tabContent: some View {
         switch tab {
         case .open: openContent
-        case .recent: RecentPullRequestList(recent: monitor.recent)
+        case .recent: RecentPullRequestList(recent: monitor.recent).frame(minHeight: listHeights.lowerBound, maxHeight: listHeights.upperBound)
         }
     }
 
@@ -58,6 +60,10 @@ struct MenuContentView: View {
                 .padding(.horizontal, 14)
                 .padding(.bottom, 8)
         }
+    }
+
+    private var listHeights: ClosedRange<CGFloat> {
+        PanelSize.listHeights(screenHeight: screenHeight, showsSettings: showsSettings)
     }
 
     private var quitShortcut: some View {
@@ -81,11 +87,14 @@ struct MenuContentView: View {
 
     @ViewBuilder
     private var pullRequestList: some View {
-        if monitor.pullRequests.isEmpty {
-            emptyState
-        } else {
-            PullRequestList(pullRequests: monitor.pullRequests)
+        Group {
+            if monitor.pullRequests.isEmpty {
+                emptyState
+            } else {
+                PullRequestList(pullRequests: monitor.pullRequests)
+            }
         }
+        .frame(minHeight: listHeights.lowerBound, maxHeight: listHeights.upperBound)
     }
 
     private var emptyState: some View {

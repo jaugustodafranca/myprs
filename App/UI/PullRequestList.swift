@@ -12,6 +12,5 @@ struct PullRequestList: View {
                 }
             }
         }
-        .frame(maxHeight: 480)
     }
 }
