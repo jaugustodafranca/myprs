@@ -5,8 +5,7 @@ struct RecentPullRequestList: View {
 
     var body: some View {
         content
-            .frame(maxHeight: 480)
-            .task { await recent.loadIfNeeded() }
+                .task { await recent.loadIfNeeded() }
     }
 
     @ViewBuilder
