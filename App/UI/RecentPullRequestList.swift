@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RecentPullRequestList: View {
     let recent: RecentPullRequests
+    let maxHeight: CGFloat
 
     var body: some View {
         content
@@ -18,7 +19,7 @@ struct RecentPullRequestList: View {
     }
 
     private var list: some View {
-        ScrollView {
+        FittingScrollView(maxHeight: maxHeight) {
             LazyVStack(spacing: 0) {
                 ForEach(recent.items) { pullRequest in
                     ClosedPullRequestRow(pullRequest: pullRequest)
@@ -49,13 +50,11 @@ struct RecentPullRequestList: View {
         } else if recent.isLoading || !recent.hasLoaded {
             ProgressView()
                 .controlSize(.small)
-                .frame(maxWidth: .infinity)
-                .padding(24)
+                .frame(maxWidth: .infinity, minHeight: PanelSize.emptyStateHeight)
         } else {
             Text("No closed pull requests")
                 .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .padding(24)
+                .frame(maxWidth: .infinity, minHeight: PanelSize.emptyStateHeight)
         }
     }
 
@@ -67,8 +66,7 @@ struct RecentPullRequestList: View {
                 .buttonStyle(.link)
         }
         .font(.callout)
-        .frame(maxWidth: .infinity)
-        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: PanelSize.emptyStateHeight)
     }
 
     private func loadMoreIfLast(_ pullRequest: ClosedPullRequest) {

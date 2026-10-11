@@ -2,9 +2,10 @@ import SwiftUI
 
 struct PullRequestList: View {
     let pullRequests: [PullRequest]
+    let maxHeight: CGFloat
 
     var body: some View {
-        ScrollView {
+        FittingScrollView(maxHeight: maxHeight) {
             LazyVStack(spacing: 0) {
                 ForEach(pullRequests) { pullRequest in
                     PullRequestRow(pullRequest: pullRequest)
