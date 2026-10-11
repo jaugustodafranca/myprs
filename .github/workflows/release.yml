@@ -91,10 +91,8 @@ jobs:
 
       - name: Create DMG
         run: |
-          mkdir dmg-root
-          cp -R build/MyPRs.app dmg-root/
-          ln -s /Applications dmg-root/Applications
-          hdiutil create -volname MyPRs -srcfolder dmg-root -ov -format UDZO "$DMG"
+          brew install create-dmg
+          scripts/make-dmg.sh build/MyPRs.app "$DMG"
           codesign --sign "Developer ID Application" --timestamp "$DMG"
 
       - name: Notarize and staple DMG
