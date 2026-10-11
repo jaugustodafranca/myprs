@@ -45,7 +45,7 @@ struct MenuContentView: View {
     private var tabContent: some View {
         switch tab {
         case .open: openContent
-        case .recent: RecentPullRequestList(recent: monitor.recent).frame(minHeight: listHeights.lowerBound, maxHeight: listHeights.upperBound)
+        case .recent: RecentPullRequestList(recent: monitor.recent, maxHeight: maxListHeight)
         }
     }
 
@@ -62,8 +62,8 @@ struct MenuContentView: View {
         }
     }
 
-    private var listHeights: ClosedRange<CGFloat> {
-        PanelSize.listHeights(screenHeight: screenHeight, showsSettings: showsSettings)
+    private var maxListHeight: CGFloat {
+        PanelSize.maxListHeight(screenHeight: screenHeight, showsSettings: showsSettings)
     }
 
     private var quitShortcut: some View {
@@ -87,14 +87,11 @@ struct MenuContentView: View {
 
     @ViewBuilder
     private var pullRequestList: some View {
-        Group {
-            if monitor.pullRequests.isEmpty {
-                emptyState
-            } else {
-                PullRequestList(pullRequests: monitor.pullRequests)
-            }
+        if monitor.pullRequests.isEmpty {
+            emptyState
+        } else {
+            PullRequestList(pullRequests: monitor.pullRequests, maxHeight: maxListHeight)
         }
-        .frame(minHeight: listHeights.lowerBound, maxHeight: listHeights.upperBound)
     }
 
     private var emptyState: some View {
@@ -109,7 +106,6 @@ struct MenuContentView: View {
                     .font(.caption)
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(24)
+        .frame(maxWidth: .infinity, minHeight: PanelSize.emptyStateHeight)
     }
 }
