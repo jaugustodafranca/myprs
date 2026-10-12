@@ -261,8 +261,9 @@ The UI offers copying the PR's head branch name and the command
 ### Token storage and URL trust
 
 - The token lives in the legacy login keychain (service `com.zaintech.myprs`,
-  account `github-token`), saved with `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`.
-  Every `SecItem*` status is checked and a failed save is shown to the user.
+  account `github-token`). `kSecAttrAccessible` is not set: it only applies to
+  the data-protection keychain. Saving updates the existing item in place, so
+  tokens saved by older versions keep loading. Every `SecItem*` status is checked and a failed save is shown to the user.
 - Limitation: the data-protection keychain (`kSecUseDataProtectionKeychain`)
   needs the `keychain-access-groups` entitlement, which is restricted. Verified
   with a Developer ID build and no provisioning profile: Xcode refuses to sign

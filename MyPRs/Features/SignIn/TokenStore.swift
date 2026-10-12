@@ -58,7 +58,6 @@ struct TokenStore {
     private func add(_ data: Data) throws {
         var item = identity
         item[kSecValueData as String] = data
-        item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         let status = SecItemAdd(item as CFDictionary, nil)
         guard status == errSecSuccess else { throw TokenStoreError(operation: "save", status: status) }
     }

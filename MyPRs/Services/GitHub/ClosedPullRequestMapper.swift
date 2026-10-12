@@ -3,7 +3,10 @@ import MyPRsKit
 enum ClosedPullRequestMapper {
     static func page(from data: ClosedPullRequestsResponse.DataPayload) -> ClosedPullRequestPage {
         ClosedPullRequestPage(
-            pullRequests: data.search.nodes.compactMap(\.pullRequest).filter { GitHubURL.isTrusted($0.url) }.compactMap(pullRequest(from:)),
+            pullRequests: data.search.nodes
+                .compactMap(\.pullRequest)
+                .filter { GitHubURL.isTrusted($0.url) }
+                .compactMap(pullRequest(from:)),
             endCursor: data.search.pageInfo.endCursor,
             hasNextPage: data.search.pageInfo.hasNextPage
         )
