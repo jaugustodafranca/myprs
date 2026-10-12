@@ -94,13 +94,15 @@ filters.
     to `myprs://auth?code=…&state=…` (or `?error=…&state=…`, passing GitHub's
     `error` such as `access_denied` through), with an "Open MyPRs" link as a
     manual fallback. The page's only script is allowed by its CSP hash; the
-    response also sets `frame-ancestors 'none'`, HSTS and `nosniff`.
+    response also sets `base-uri`, `form-action` and `frame-ancestors` to
+    `'none'`, HSTS and `nosniff`.
   - `POST /token` takes JSON `{ code, code_verifier }`, exchanges it with GitHub
     (client id, client secret, code, PKCE verifier) and answers
     `{ access_token }` or `{ error }`. JSON only, `Cache-Control: no-store`, no
-    CORS, no logging.
+    CORS, no logging. Bodies over 4 KB get 413.
   - `POST /revoke` takes JSON `{ access_token }` and calls GitHub's
     `DELETE /applications/{client_id}/token`; answers 204.
+  - A known path with the wrong method gets 405 with `Allow`; anything else 404.
 - **Login** happens in the user's default browser with PKCE (RFC 7636, S256):
   the app creates a random verifier per sign-in and opens the GitHub authorize
   URL (with `state` and `code_challenge`) with `NSWorkspace`, then waits for
@@ -108,7 +110,8 @@ filters.
   and routed to `LoginFlow`. Only a `myprs://auth` URL carrying the pending
   `state` completes the sign-in; anything else is ignored. The app then posts
   the code and verifier to the Worker's `/token` over HTTPS and stores the
-  token in the Keychain. A leaked code is useless without the verifier.
+  token in the Keychain (if the Keychain refuses it, the fresh token is revoked
+  and an error is shown). A leaked code is useless without the verifier.
   Starting a new sign-in cancels a pending one.
 - **Sign-out** asks the Worker to revoke the token (fire and forget, failures
   ignored), then deletes it locally.

@@ -67,7 +67,7 @@ describe("GET /callback", () => {
     expect(response.headers.get("content-type")).toBe("text/html; charset=utf-8");
     expect(response.headers.get("referrer-policy")).toBe("no-referrer");
     expect(response.headers.get("content-security-policy")).toBe(
-      `default-src 'none'; style-src 'unsafe-inline'; script-src '${PAGE_SCRIPT_HASH}'; frame-ancestors 'none'`,
+      `default-src 'none'; style-src 'unsafe-inline'; script-src '${PAGE_SCRIPT_HASH}'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`,
     );
   });
 
@@ -78,7 +78,7 @@ describe("GET /callback", () => {
     const expected = `sha256-${btoa(String.fromCharCode(...new Uint8Array(digest)))}`;
     expect(PAGE_SCRIPT_HASH).toBe(expected);
     expect(html).toContain(`<script>${PAGE_SCRIPT}</script>`);
-    expect(html.match(/<script>/g)).toHaveLength(1);
+    expect(html.match(/<script\b/g)).toHaveLength(1);
   });
 
   it("rejects a code that is not hex", async () => {
@@ -225,6 +225,16 @@ describe("POST /token", () => {
     expect(response.status).toBe(502);
     expect(await response.json()).toEqual({ error: "exchange_failed" });
   });
+
+  it("rejects an oversized body without calling GitHub", async () => {
+    const fetchMock = mockGitHub({ access_token: "gho_abc" });
+
+    const response = await post("/token", { code: "abc", code_verifier: VERIFIER, padding: "x".repeat(5000) });
+
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ error: "payload_too_large" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("POST /revoke", () => {
@@ -281,14 +291,19 @@ describe("other paths", () => {
     expect((await worker.fetch(new Request("https://auth.example.com/other"), env)).status).toBe(404);
   });
 
-  it("returns 404 for the wrong method", async () => {
+  it("returns 405 with Allow for the wrong method", async () => {
     const fetchMock = mockGitHub({ access_token: "gho_abc" });
 
     const postCallback = await post("/callback?code=abc&state=s", {});
     const getToken = await worker.fetch(new Request("https://auth.example.com/token"), env);
+    const getRevoke = await worker.fetch(new Request("https://auth.example.com/revoke"), env);
 
-    expect(postCallback.status).toBe(404);
-    expect(getToken.status).toBe(404);
+    expect(postCallback.status).toBe(405);
+    expect(postCallback.headers.get("allow")).toBe("GET");
+    expect(getToken.status).toBe(405);
+    expect(getToken.headers.get("allow")).toBe("POST");
+    expect(getRevoke.status).toBe(405);
+    expectSecurityHeaders(getToken);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

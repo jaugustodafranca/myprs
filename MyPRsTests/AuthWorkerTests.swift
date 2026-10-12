@@ -5,6 +5,10 @@ import Testing
 @Suite(.serialized) struct AuthWorkerTests {
     private let worker = AuthWorker(session: .authWorkerStub, baseURL: URL(string: "https://auth.test")!)
 
+    @Test func defaultWorkerUsesHTTPS() {
+        #expect(AuthWorker().baseURL.scheme == "https")
+    }
+
     @Test func exchangesCodeAndVerifierForToken() async throws {
         AuthWorkerStub.respond(status: 200, body: #"{"access_token":"gho_abc"}"#)
 

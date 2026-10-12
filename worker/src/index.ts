@@ -14,6 +14,9 @@ const CODE_VERIFIER_PATTERN = /^[A-Za-z0-9\-._~]{43,128}$/;
 const ACCESS_TOKEN_PATTERN = /^[A-Za-z0-9_]{1,255}$/;
 const ERROR_PATTERN = /^[a-z_]{1,64}$/;
 const MAX_STATE_LENGTH = 256;
+const MAX_BODY_BYTES = 4096;
+
+const ROUTE_METHODS: Record<string, string> = { "/callback": "GET", "/token": "POST", "/revoke": "POST" };
 
 const SECURITY_HEADERS = {
   "cache-control": "no-store",
@@ -27,6 +30,8 @@ export default {
     if (request.method === "GET" && url.pathname === "/callback") return handleCallback(url);
     if (request.method === "POST" && url.pathname === "/token") return handleToken(request, env);
     if (request.method === "POST" && url.pathname === "/revoke") return handleRevoke(request, env);
+    const allowed = ROUTE_METHODS[url.pathname];
+    if (allowed) return new Response("Method not allowed", { status: 405, headers: { ...SECURITY_HEADERS, allow: allowed } });
     return new Response("Not found", { status: 404, headers: SECURITY_HEADERS });
   },
 };
@@ -92,8 +97,10 @@ async function handleRevoke(request: Request, env: Env): Promise<Response> {
 async function readJSON(request: Request): Promise<Record<string, unknown> | Response> {
   const mediaType = (request.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
   if (mediaType !== "application/json") return json({ error: "unsupported_media_type" }, 415);
+  const text = await request.text();
+  if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) return json({ error: "payload_too_large" }, 413);
   try {
-    const body: unknown = await request.json();
+    const body: unknown = JSON.parse(text);
     if (typeof body === "object" && body !== null && !Array.isArray(body)) return body as Record<string, unknown>;
   } catch {
     // Reported as invalid_request below.
@@ -139,7 +146,7 @@ function redirectToApp(params: Record<string, string>): Response {
       ...SECURITY_HEADERS,
       "content-type": "text/html; charset=utf-8",
       "referrer-policy": "no-referrer",
-      "content-security-policy": `default-src 'none'; style-src 'unsafe-inline'; script-src '${PAGE_SCRIPT_HASH}'; frame-ancestors 'none'`,
+      "content-security-policy": `default-src 'none'; style-src 'unsafe-inline'; script-src '${PAGE_SCRIPT_HASH}'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`,
     },
   });
 }
