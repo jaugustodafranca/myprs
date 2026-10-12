@@ -7,7 +7,17 @@ export interface PageOptions {
 }
 
 const SOURCE_CODE_URL = "https://github.com/jaugustodafranca/myprs";
-const CLOSE_HINT_DELAY_MS = 1500;
+
+// Static so the Content-Security-Policy can allow it by hash instead of 'unsafe-inline'.
+// The app URL is read from the button, which is the only place it is rendered.
+export const PAGE_SCRIPT = `var link = document.getElementById("open-app");
+location.replace(link.href);
+if (document.body.dataset.variant === "success") {
+  setTimeout(function () { document.getElementById("message").textContent = "You can close this tab."; }, 1500);
+}`;
+
+// sha256 of PAGE_SCRIPT; a test fails if they drift apart.
+export const PAGE_SCRIPT_HASH = "sha256-XvSeg7Zko3WRO/FhfAwyBPVof9kweuhEUHe+2/WUAyw=";
 
 export function renderPage({ variant, appURL, error }: PageOptions): string {
   const href = escapeHTML(appURL);
@@ -22,17 +32,17 @@ export function renderPage({ variant, appURL, error }: PageOptions): string {
 <title>MyPRs</title>
 <style>${styles}</style>
 </head>
-<body>
+<body data-variant="${variant}">
 <main class="card">
 ${logoSVG}
 ${content.badge}
 <h1>${content.title}</h1>
 <p id="message" class="message">${content.message}</p>
-<a class="button" href="${href}">Open MyPRs</a>
+<a id="open-app" class="button" href="${href}">Open MyPRs</a>
 <p class="hint">Didn't open? Click the button above.</p>
-<p class="trust">${lockIcon}<span>Your GitHub token goes straight to the MyPRs app on your Mac. Nothing is stored on our servers. <a href="${SOURCE_CODE_URL}">Source code</a></span></p>
+<p class="trust">${lockIcon}<span>Your GitHub token is sent only to the MyPRs app on your Mac, never to this page. Nothing is stored on our servers. <a href="${SOURCE_CODE_URL}">Source code</a></span></p>
 </main>
-<script>${script(appURL, variant)}</script>
+<script>${PAGE_SCRIPT}</script>
 </body>
 </html>`;
 }
@@ -40,7 +50,7 @@ ${content.badge}
 function successContent() {
   return {
     badge: `<svg class="badge success" viewBox="0 0 52 52" aria-hidden="true"><circle class="badge-circle" cx="26" cy="26" r="24"/><path class="badge-mark" d="M15 27 l8 8 l14 -16"/></svg>`,
-    title: "You're signed in",
+    title: "Authorized on GitHub",
     message: "Returning to MyPRs…",
   };
 }
@@ -51,13 +61,6 @@ function errorContent(error: string) {
     title: "Sign-in didn't complete",
     message: `${escapeHTML(error)}. Return to MyPRs and try again.`,
   };
-}
-
-function script(appURL: string, variant: PageVariant): string {
-  const redirect = `location.replace(${JSON.stringify(appURL).replace(/</g, "\\u003c")});`;
-  if (variant === "error") return redirect;
-  return `${redirect}
-setTimeout(function () { document.getElementById("message").textContent = "You can close this tab."; }, ${CLOSE_HINT_DELAY_MS});`;
 }
 
 function escapeHTML(text: string): string {

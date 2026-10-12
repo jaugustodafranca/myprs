@@ -6,5 +6,6 @@ public enum AppConfig {
     public static let urlScheme = "myprs"
     public static let gitHubClientID = "Ov23li7Ghr091fkSv2eG"
     public static let organizationAccessURL = URL(string: "https://github.com/settings/connections/applications/\(gitHubClientID)")!
-    public static let authCallbackURL = "https://myprs-auth.zaintech.com.br/callback"
+    public static let authBaseURL = URL(string: "https://myprs-auth.zaintech.com.br")!
+    public static let authCallbackURL = authBaseURL.appending(path: "callback").absoluteString
 }

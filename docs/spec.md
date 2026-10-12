@@ -73,9 +73,12 @@ filters.
 ```
 ┌──────────────── Mac ────────────────┐         ┌──────── Cloudflare ────────┐
 │ MyPRs.app (menu bar)                │  login  │ myprs-auth Worker          │
-│  LoginFlow ── default browser ──────┼────────▶│ GET /callback              │
-│  TokenStore (Keychain)              │◀────────┼ code → token, HTML page    │
-│  PullRequestMonitor (timer)         │ myprs:// │ opens myprs://auth?token…  │
+│  LoginFlow ── default browser ──────┼────────▶│ GET /callback → page that  │
+│                                     │ myprs:// │  opens myprs://auth?code…  │
+│  AuthWorker ── HTTPS ───────────────┼────────▶│ POST /token  (code+PKCE)   │
+│                                     │         │ POST /revoke (sign-out)    │
+│  TokenStore (Keychain)              │         │                            │
+│  PullRequestMonitor (timer)         │         │                            │
 │   └ GitHubClient ──── GraphQL ──────┼──▶ api.github.com                    │
 │   └ ChangeDetector → Notifier       │         └────────────────────────────┘
 │   └ SnapshotStore.shared.save ─┐           │
@@ -84,15 +87,34 @@ filters.
 └─────────────────────────────────────┘
 ```
 
-- **Worker** holds the OAuth client secret. It only exchanges the authorization
-  code for a token and answers with a small HTML page that navigates to
-  `myprs://auth?token=…&state=…` (or `?error=…&state=…`), with an "Open MyPRs"
-  link as a manual fallback. It stores nothing.
-- **Login** happens in the user's default browser: the app opens the GitHub
-  authorize URL with `NSWorkspace`, then waits for the `myprs://auth` callback,
-  delivered to `AppDelegate.application(_:open:)` and routed to `LoginFlow`.
-  Starting a new sign-in cancels a pending one; callbacks with no pending
-  sign-in are ignored; the state must match.
+- **Worker** holds the OAuth client secret and stores nothing. It never puts
+  the token in a URL or an HTML page.
+  - `GET /callback` (GitHub's redirect) validates `code` (hex, at most 64
+    characters) and `state`, and answers with a small HTML page that navigates
+    to `myprs://auth?code=…&state=…` (or `?error=…&state=…`, passing GitHub's
+    `error` such as `access_denied` through), with an "Open MyPRs" link as a
+    manual fallback. The page's only script is allowed by its CSP hash; the
+    response also sets `base-uri`, `form-action` and `frame-ancestors` to
+    `'none'`, HSTS and `nosniff`.
+  - `POST /token` takes JSON `{ code, code_verifier }`, exchanges it with GitHub
+    (client id, client secret, code, PKCE verifier) and answers
+    `{ access_token }` or `{ error }`. JSON only, `Cache-Control: no-store`, no
+    CORS, no logging. Bodies over 4 KB get 413.
+  - `POST /revoke` takes JSON `{ access_token }` and calls GitHub's
+    `DELETE /applications/{client_id}/token`; answers 204.
+  - A known path with the wrong method gets 405 with `Allow`; anything else 404.
+- **Login** happens in the user's default browser with PKCE (RFC 7636, S256):
+  the app creates a random verifier per sign-in and opens the GitHub authorize
+  URL (with `state` and `code_challenge`) with `NSWorkspace`, then waits for
+  the `myprs://auth` callback, delivered to `AppDelegate.application(_:open:)`
+  and routed to `LoginFlow`. Only a `myprs://auth` URL carrying the pending
+  `state` completes the sign-in; anything else is ignored. The app then posts
+  the code and verifier to the Worker's `/token` over HTTPS and stores the
+  token in the Keychain (if the Keychain refuses it, the fresh token is revoked
+  and an error is shown). A leaked code is useless without the verifier.
+  Starting a new sign-in cancels a pending one.
+- **Sign-out** asks the Worker to revoke the token (fire and forget, failures
+  ignored), then deletes it locally.
 - **App** talks to GitHub directly with the token. It is the only process that
   holds the token and does network calls.
 - **Widget** never calls the network. It reads `snapshot.json` from the App
@@ -158,7 +180,7 @@ struct SnapshotStore {
     func clear()
 }
 
-enum AppConfig { appGroupID, urlScheme, gitHubClientID, authCallbackURL, ... }
+enum AppConfig { appGroupID, urlScheme, gitHubClientID, authBaseURL, authCallbackURL, ... }
 ```
 
 ### GitHub query
