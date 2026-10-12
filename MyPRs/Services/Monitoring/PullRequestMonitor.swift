@@ -31,6 +31,7 @@ final class PullRequestMonitor {
     @ObservationIgnored private let snapshotStore = SnapshotStore.shared
     @ObservationIgnored private let notifier = Notifier()
     @ObservationIgnored private let loginFlow = LoginFlow.shared
+    @ObservationIgnored private let authWorker = AuthWorker()
     @ObservationIgnored private let defaults = UserDefaults.standard
     @ObservationIgnored private var timerTask: Task<Void, Never>?
     @ObservationIgnored private var lastOrganizationCheck: Date?
@@ -78,6 +79,10 @@ final class PullRequestMonitor {
 
     func signOut() {
         timerTask?.cancel()
+        if let token = tokenStore.load() {
+            let authWorker = self.authWorker
+            Task { await authWorker.revoke(token) }
+        }
         tokenStore.delete()
         snapshotStore.clear()
         recent.clear()
