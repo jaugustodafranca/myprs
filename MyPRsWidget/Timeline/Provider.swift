@@ -21,6 +21,14 @@ struct Provider: TimelineProvider {
     }
 
     private func currentEntry() -> PullRequestEntry {
-        PullRequestEntry(date: Date(), snapshot: SnapshotStore.shared.load())
+        PullRequestEntry(date: Date(), snapshot: SnapshotStore.shared.load().map(withTrustedLinksOnly))
+    }
+
+    private func withTrustedLinksOnly(_ snapshot: PullRequestSnapshot) -> PullRequestSnapshot {
+        PullRequestSnapshot(
+            login: snapshot.login,
+            pullRequests: snapshot.pullRequests.filter { GitHubURL.isTrusted($0.url) },
+            fetchedAt: snapshot.fetchedAt
+        )
     }
 }

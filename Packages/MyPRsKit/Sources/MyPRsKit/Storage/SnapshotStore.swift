@@ -25,6 +25,7 @@ public struct SnapshotStore: Sendable {
     public func save(_ snapshot: PullRequestSnapshot) {
         guard let data = try? Self.encoder.encode(snapshot) else { return }
         try? data.write(to: fileURL, options: .atomic)
+        try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: fileURL.path)
     }
 
     public func clear() {

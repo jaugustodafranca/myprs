@@ -2,6 +2,7 @@ import AppIntents
 import AppKit
 
 struct CopyBranchIntent: AppIntent {
+    static let isDiscoverable = false
     static let title: LocalizedStringResource = "Copy PR branch"
 
     @Parameter(title: "Branch") var branch: String

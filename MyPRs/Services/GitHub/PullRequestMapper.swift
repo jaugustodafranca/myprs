@@ -5,6 +5,7 @@ enum PullRequestMapper {
     static func pullRequests(from data: GitHubResponse.DataPayload) -> [PullRequest] {
         data.search.nodes
             .compactMap(\.pullRequest)
+            .filter { GitHubURL.isTrusted($0.url) }
             .map { pullRequest(from: $0, viewerLogin: data.viewer.login) }
     }
 
