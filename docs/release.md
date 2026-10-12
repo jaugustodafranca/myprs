@@ -12,8 +12,43 @@ The `Release` workflow builds, signs, notarizes and staples the app, packages
 DMG and `appcast.xml`. Installed apps find updates through
 `releases/latest/download/appcast.xml`.
 
+Releases are cut from `main` only: the first step of the workflow fails unless
+the tagged commit is an ancestor of `origin/main`.
+
 The marketing version comes from the tag (without the `v`); the build number is
 the workflow run number.
+
+## Supply chain
+
+- Every action in `.github/workflows` is pinned to a full commit SHA with the
+  version in a trailing comment. To bump one, resolve the tag with
+  `gh api repos/<owner>/<repo>/git/ref/tags/<tag>` (dereference annotated tags via
+  `git/tags/<sha>`), then update the SHA and comment together.
+- `actions/checkout` runs with `persist-credentials: false`; the only step that
+  talks to GitHub with a token is `gh release create`, which gets `GH_TOKEN` explicitly.
+- CI has `permissions: contents: read`; the release workflow has `contents: write` only.
+- Tools are pinned too: Sparkle's tarball is checked against `SPARKLE_SHA256` in
+  `release.yml`, XcodeGen is installed by `scripts/install-xcodegen.sh` (version +
+  SHA-256), and create-dmg by `scripts/install-create-dmg.sh` (pinned commit).
+  When bumping Sparkle, update `SPARKLE_VERSION`, `SPARKLE_SHA256`
+  (`shasum -a 256` of the official `Sparkle-<version>.tar.xz`) and the SPM version in
+  `project.yml` together.
+- The release job declares `environment: release`. That environment requires
+  approval from the owner and only allows `v*` tags to deploy; a tag ruleset
+  restricts creating `v*` tags to admins. The job does not start (and no secret
+  is exposed) until the owner approves the deployment. The release secrets are
+  still repository-level secrets; only the gate lives on the environment.
+
+## Signed appcast
+
+The app sets `SURequireSignedFeed` and `SUVerifyUpdateBeforeExtraction`, so
+Sparkle only accepts a feed carrying an EdDSA signature (made with the same key
+as the DMG, verified against `SUPublicEDKey`) and verifies the archive signature
+before extracting it. `make-appcast.sh` writes the unsigned feed, then the
+workflow runs `sign_update --ed-key-file - appcast.xml`, which embeds the
+signature as a trailing `sparkle-signatures` XML comment. Any later edit of
+`appcast.xml` invalidates it, so re-run `sign_update` after changing the file.
+Versions before this change do not require a signed feed and ignore the comment.
 
 ## DMG window
 
