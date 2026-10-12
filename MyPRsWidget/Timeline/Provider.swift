@@ -1,3 +1,4 @@
+import MyPRsKit
 import WidgetKit
 
 struct PullRequestEntry: TimelineEntry {

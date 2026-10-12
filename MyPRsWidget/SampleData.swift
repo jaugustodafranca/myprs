@@ -1,4 +1,5 @@
 import Foundation
+import MyPRsKit
 
 extension PullRequestEntry {
     static let sample = entry(samplePullRequests)

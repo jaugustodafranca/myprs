@@ -1,4 +1,5 @@
 import AppIntents
+import MyPRsKit
 import SwiftUI
 
 struct PullRequestRowView: View {

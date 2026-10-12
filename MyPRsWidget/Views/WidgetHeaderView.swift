@@ -1,3 +1,4 @@
+import MyPRsKit
 import SwiftUI
 
 struct WidgetHeaderView: View {

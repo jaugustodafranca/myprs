@@ -1,3 +1,4 @@
+
 enum RowDetail {
     case compact, regular, full
 
