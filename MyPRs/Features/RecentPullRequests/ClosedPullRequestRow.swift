@@ -61,6 +61,7 @@ struct ClosedPullRequestRow: View {
     }
 
     private func open() {
+        guard GitHubURL.isTrusted(pullRequest.url) else { return }
         NSWorkspace.shared.open(pullRequest.url)
     }
 }

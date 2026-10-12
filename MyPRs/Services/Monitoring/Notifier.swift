@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import MyPRsKit
 import UserNotifications
 
 final class Notifier: NSObject, UNUserNotificationCenterDelegate {
@@ -30,7 +31,8 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     ) async {
         guard
             let string = response.notification.request.content.userInfo["url"] as? String,
-            let url = URL(string: string)
+            let url = URL(string: string),
+            GitHubURL.isTrusted(url)
         else { return }
         await MainActor.run { _ = NSWorkspace.shared.open(url) }
     }

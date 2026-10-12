@@ -2,6 +2,7 @@ import AppIntents
 import AppKit
 
 struct CopyLinkIntent: AppIntent {
+    static let isDiscoverable = false
     static let title: LocalizedStringResource = "Copy PR link"
 
     @Parameter(title: "URL") var url: String

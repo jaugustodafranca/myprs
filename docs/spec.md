@@ -258,6 +258,22 @@ The UI offers copying the PR's head branch name and the command
 - Login: state mismatch, user cancel, or `error=` in callback → stay signed out
   and show the reason.
 
+### Token storage and URL trust
+
+- The token lives in the legacy login keychain (service `com.zaintech.myprs`,
+  account `github-token`). `kSecAttrAccessible` is not set: it only applies to
+  the data-protection keychain. Saving updates the existing item in place, so
+  tokens saved by older versions keep loading. Every `SecItem*` status is checked and a failed save is shown to the user.
+- Limitation: the data-protection keychain (`kSecUseDataProtectionKeychain`)
+  needs the `keychain-access-groups` entitlement, which is restricted. Verified
+  with a Developer ID build and no provisioning profile: Xcode refuses to sign
+  it, and a manually re-signed copy is killed by AMFI ("No matching profile
+  found"). Without the entitlement SecItem returns -34018. Moving over requires
+  creating a Developer ID provisioning profile for the app.
+- Pull request URLs are opened or linked only when `GitHubURL.isTrusted`
+  (https and host `github.com`). Mappers drop other pull requests, and the
+  widget filters the snapshot again when it reads it.
+
 ## Code style
 
 See `AGENTS.md`. Readability and simplicity first.

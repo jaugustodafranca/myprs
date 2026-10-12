@@ -45,6 +45,7 @@ final class PullRequestMonitor {
         refreshInterval = RefreshInterval.restored(from: defaults.double(forKey: Self.intervalKey))
         snapshot = snapshotStore.load()
         isSignedIn = tokenStore.load() != nil
+        WidgetCenter.shared.reloadTimelines(ofKind: AppConfig.widgetKind)
         if isSignedIn {
             notifier.requestAuthorization()
             startTimer()
@@ -58,11 +59,13 @@ final class PullRequestMonitor {
         defer { isSigningIn = false }
         do {
             let token = try await loginFlow.signIn()
-            tokenStore.save(token)
+            try tokenStore.save(token)
             isSignedIn = true
             notifier.requestAuthorization()
             startTimer()
         } catch let error as LoginError {
+            lastError = error.errorDescription
+        } catch let error as TokenStoreError {
             lastError = error.errorDescription
         } catch {
             // Cancelling a sign-in is not worth an error message.
