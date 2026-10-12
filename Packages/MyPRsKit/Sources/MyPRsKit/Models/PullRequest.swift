@@ -68,11 +68,3 @@ public struct PullRequest: Codable, Hashable, Identifiable, Sendable {
         self.approvals = approvals
     }
 }
-
-public enum CheckStatus: String, Codable, Sendable {
-    case passing, failing, running, none
-}
-
-public enum ReviewStatus: String, Codable, Sendable {
-    case approved, changesRequested, waiting
-}

@@ -1,4 +1,5 @@
-@testable import MyPRsKit
+@testable import MyPRs
+import MyPRsKit
 import Testing
 import Foundation
 

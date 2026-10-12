@@ -1,7 +1,7 @@
 import Foundation
 
 public enum AppConfig {
-    public static let appGroupID = "688YYDN5Z4.com.zaintech.myprs"
+    static let appGroupID = "688YYDN5Z4.com.zaintech.myprs"
     public static let widgetKind = "MyPRsWidget"
     public static let urlScheme = "myprs"
     public static let gitHubClientID = "Ov23li7Ghr091fkSv2eG"

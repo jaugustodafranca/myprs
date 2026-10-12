@@ -10,36 +10,3 @@ extension View {
         }
     }
 }
-
-struct GlassIconButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .frame(width: 26, height: 26)
-            .glassBackground(in: Circle())
-            .opacity(configuration.isPressed ? 0.6 : 1)
-            .contentShape(Circle())
-    }
-}
-
-extension View {
-    @ViewBuilder
-    func glassButtonStyle() -> some View {
-        if #available(macOS 26, *) {
-            buttonStyle(.glass)
-        } else {
-            buttonStyle(.bordered)
-        }
-    }
-}
-
-struct GlassContainer<Content: View>: View {
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        if #available(macOS 26, *) {
-            GlassEffectContainer(spacing: 8) { content }
-        } else {
-            content
-        }
-    }
-}

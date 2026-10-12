@@ -1,17 +1,18 @@
 import Foundation
+import MyPRsKit
 
 /// The count shown next to the "Open" tab, tinted by the most urgent status.
-public struct OpenCountBadge {
-    public enum Tone { case failing, toAnswer, neutral }
+struct OpenCountBadge {
+    enum Tone { case failing, toAnswer, neutral }
 
-    public let count: Int
-    public let tone: Tone
+    let count: Int
+    let tone: Tone
 
-    public var accessibilityLabel: String {
+    var accessibilityLabel: String {
         "Open, \(count) \(count == 1 ? "pull request" : "pull requests")"
     }
 
-    public init?(_ summary: PanelSummary) {
+    init?(_ summary: PanelSummary) {
         guard summary.open > 0 else { return nil }
         count = summary.open
         tone = Self.tone(for: summary)

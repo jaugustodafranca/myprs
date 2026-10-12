@@ -9,7 +9,7 @@ public struct SnapshotStore: Sendable {
             ?? FileManager.default.temporaryDirectory
     }
 
-    public let directory: URL
+    let directory: URL
 
     public init(directory: URL) {
         self.directory = directory

@@ -37,7 +37,7 @@ MyPRsWidget/                 Widget extension target
   Intents/                   App Intents (copy link, copy branch)
 MyPRsTests/                  App tests (Swift Testing, hosted by the app)
 Packages/MyPRsKit/           Local Swift package shared by app and widget
-  Sources/MyPRsKit/          Models, Logic, Storage, DesignSystem
+  Sources/MyPRsKit/          Models, Logic, Storage, DesignSystem (only what the widget also uses)
   Tests/MyPRsKitTests/       Package tests
 worker/                      Cloudflare Worker for the OAuth code exchange
 scripts/                     Release helpers

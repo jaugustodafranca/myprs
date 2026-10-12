@@ -39,7 +39,7 @@ extension PanelSummary {
 }
 
 extension PullRequest {
-    public var isReadyToMerge: Bool {
+    var isReadyToMerge: Bool {
         review == .approved && checks == .passing && !hasConflicts
     }
 }
