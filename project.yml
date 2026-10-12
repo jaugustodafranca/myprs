@@ -11,6 +11,8 @@ settings:
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
 packages:
+  MyPRsKit:
+    path: Packages/MyPRsKit
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     exactVersion: 2.10.0
@@ -18,16 +20,17 @@ targets:
   MyPRs:
     type: application
     platform: macOS
-    sources: [App, Shared]
+    sources: [MyPRs]
     dependencies:
+      - package: MyPRsKit
       - package: Sparkle
       - target: MyPRsWidget
     entitlements:
-      path: App/MyPRs.entitlements
+      path: MyPRs/Resources/MyPRs.entitlements
       properties:
         com.apple.security.application-groups: [688YYDN5Z4.com.zaintech.myprs]
     info:
-      path: App/Info.plist
+      path: MyPRs/Resources/Info.plist
       properties:
         LSUIElement: true
         SUFeedURL: https://github.com/jaugustodafranca/myprs/releases/latest/download/appcast.xml
@@ -47,14 +50,16 @@ targets:
   MyPRsWidget:
     type: app-extension
     platform: macOS
-    sources: [Widget, Shared]
+    sources: [MyPRsWidget]
+    dependencies:
+      - package: MyPRsKit
     entitlements:
-      path: Widget/MyPRsWidget.entitlements
+      path: MyPRsWidget/MyPRsWidget.entitlements
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.application-groups: [688YYDN5Z4.com.zaintech.myprs]
     info:
-      path: Widget/Info.plist
+      path: MyPRsWidget/Info.plist
       properties:
         CFBundleDisplayName: MyPRs
         CFBundleShortVersionString: $(MARKETING_VERSION)
@@ -68,10 +73,15 @@ targets:
   MyPRsTests:
     type: bundle.unit-test
     platform: macOS
-    sources: [Tests, Shared, App/GitHub, App/Auth/LoginCallback.swift, App/Monitor/ChangeDetector.swift, App/Monitor/RecentPullRequests.swift]
+    sources: [MyPRsTests]
+    dependencies:
+      - target: MyPRs
+      - package: MyPRsKit
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zaintech.myprs.tests
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/MyPRs.app/Contents/MacOS/MyPRs
+        BUNDLE_LOADER: $(TEST_HOST)
         GENERATE_INFOPLIST_FILE: true
         CODE_SIGN_STYLE: Automatic
 schemes:
@@ -81,4 +91,6 @@ schemes:
         MyPRs: all
         MyPRsWidget: all
     test:
-      targets: [MyPRsTests]
+      targets:
+        - MyPRsTests
+        - package: MyPRsKit/MyPRsKitTests

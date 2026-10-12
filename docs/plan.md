@@ -1,3 +1,5 @@
+> This is the original v1 plan. File paths and names below are historical and no longer match the current layout (see `AGENTS.md`).
+
 # MyPRs — implementation plan
 
 Each task is one branch and one PR. Every PR: follows `AGENTS.md`, keeps CI
