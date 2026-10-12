@@ -33,9 +33,11 @@ the workflow run number.
   When bumping Sparkle, update `SPARKLE_VERSION`, `SPARKLE_SHA256`
   (`shasum -a 256` of the official `Sparkle-<version>.tar.xz`) and the SPM version in
   `project.yml` together.
-- The release job declares `environment: release`. Required reviewers / tag-branch
-  restrictions on that environment, and moving the release secrets from repository
-  secrets into it, are configured in GitHub settings (not in code).
+- The release job declares `environment: release`. That environment requires
+  approval from the owner and only allows `v*` tags to deploy; a tag ruleset
+  restricts creating `v*` tags to admins. The job does not start (and no secret
+  is exposed) until the owner approves the deployment. The release secrets are
+  still repository-level secrets; only the gate lives on the environment.
 
 ## Signed appcast
 

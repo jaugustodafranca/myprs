@@ -15,7 +15,7 @@ env:
 jobs:
   release:
     runs-on: macos-15
-    # Protection rules and release secrets live on this environment (see docs/release.md).
+    # Protected environment: owner approval required, v* tags only (see docs/release.md).
     environment: release
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
