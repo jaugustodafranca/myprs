@@ -115,7 +115,7 @@ filters.
 The app is not sandboxed (Developer ID distribution, needed for Sparkle without
 extra XPC setup). The widget extension is sandboxed, as WidgetKit requires.
 
-### Shared types (`Shared/`, compiled into app, widget and tests)
+### Shared types (`Packages/MyPRsKit`, linked by app and widget)
 
 ```swift
 struct PullRequest: Codable, Hashable, Identifiable {

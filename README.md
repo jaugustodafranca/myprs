@@ -85,15 +85,27 @@ cd worker && npm ci && npm test && npx tsc --noEmit
 ## Project layout
 
 ```
-App/        Menu bar app
-Widget/     Widget extension
-Shared/     Types shared by app, widget and tests
-Tests/      Unit tests
-worker/     Cloudflare Worker for the OAuth code exchange
-scripts/    Release helpers
-docs/       Specification and release guide
-assets/     Logo
-.github/    CI and release workflows
+project.yml                  XcodeGen definition (the .xcodeproj is generated, not committed)
+MyPRs/                       Menu bar app target
+  App/                       Entry point and app delegate
+  Features/                  One folder per screen: MenuBar, OpenPullRequests,
+                             RecentPullRequests, Settings, SignIn, Updates
+  Services/                  GitHub (client, queries, mappers), Monitoring (polling, change detection, notifications)
+  Components/                Reusable app-only views and helpers
+  Resources/                 Asset catalog; generated Info.plist and entitlements
+MyPRsWidget/                 Widget extension target
+  Timeline/                  Timeline provider, entry and widget bundle
+  Views/                     Widget views
+  Intents/                   App Intents (copy link, copy branch)
+MyPRsTests/                  App tests (Swift Testing, hosted by the app)
+Packages/MyPRsKit/           Local Swift package shared by app and widget
+  Sources/MyPRsKit/          Models, Logic, Storage, DesignSystem
+  Tests/MyPRsKitTests/       Package tests
+worker/                      Cloudflare Worker for the OAuth code exchange
+scripts/                     Release helpers
+docs/                        Specification and release guide
+assets/                      Logo and README media
+.github/workflows/           CI and release
 ```
 
 See [docs/spec.md](docs/spec.md) for the design and [AGENTS.md](AGENTS.md) for contributor rules.
