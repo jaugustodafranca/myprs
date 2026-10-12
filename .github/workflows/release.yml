@@ -9,19 +9,34 @@ permissions:
 
 env:
   SPARKLE_VERSION: "2.10.0"
+  # SHA-256 of Sparkle-2.10.0.tar.xz from the official GitHub release; bump together with SPARKLE_VERSION.
+  SPARKLE_SHA256: "c2bf58aa8387266ac179357b1415d6f2635f044da8be41042af32425dae6da0c"
 
 jobs:
   release:
     runs-on: macos-15
+    # Protection rules and release secrets live on this environment (see docs/release.md).
+    environment: release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
-      - uses: maxim-lobanov/setup-xcode@v1
+      - name: Require tagged commit to be on main
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::$GITHUB_REF_NAME ($GITHUB_SHA) is not an ancestor of origin/main; releases are cut from main only."
+            exit 1
+          fi
+
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: latest-stable
 
       - name: Install XcodeGen
-        run: brew install xcodegen
+        run: scripts/install-xcodegen.sh
 
       - name: Set version
         run: |
@@ -89,9 +104,11 @@ jobs:
           codesign --verify --deep --strict --verbose=2 build/MyPRs.app
           spctl --assess --type execute --verbose build/MyPRs.app
 
+      - name: Install create-dmg
+        run: scripts/install-create-dmg.sh
+
       - name: Create DMG
         run: |
-          brew install create-dmg
           scripts/make-dmg.sh build/MyPRs.app "$DMG"
           codesign --sign "Developer ID Application" --timestamp "$DMG"
 
@@ -112,8 +129,10 @@ jobs:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
           mkdir "$RUNNER_TEMP/sparkle"
-          curl -fsSL "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz" \
-            | tar -xJ -C "$RUNNER_TEMP/sparkle"
+          curl -fsSL -o "$RUNNER_TEMP/sparkle.tar.xz" \
+            "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
+          echo "${SPARKLE_SHA256}  $RUNNER_TEMP/sparkle.tar.xz" | shasum -a 256 -c -
+          tar -xJf "$RUNNER_TEMP/sparkle.tar.xz" -C "$RUNNER_TEMP/sparkle"
           attributes=$(printf '%s' "$SPARKLE_PRIVATE_KEY" | "$RUNNER_TEMP/sparkle/bin/sign_update" --ed-key-file - "$DMG")
           echo "attributes=$attributes" >> "$GITHUB_OUTPUT"
 
@@ -123,10 +142,17 @@ jobs:
           SIGNATURE_ATTRIBUTES: ${{ steps.sparkle.outputs.attributes }}
         run: scripts/make-appcast.sh "$GITHUB_REF_NAME" "$VERSION" "$DMG" "$SIGNATURE_ATTRIBUTES"
 
+      - name: Sign appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          printf '%s' "$SPARKLE_PRIVATE_KEY" | "$RUNNER_TEMP/sparkle/bin/sign_update" --ed-key-file - appcast.xml
+          grep -q 'sparkle-signatures:' appcast.xml
+
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" "$DMG" appcast.xml --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" "$DMG" appcast.xml --repo "$GITHUB_REPOSITORY" --generate-notes
 
       - name: Clean up
         if: always()
