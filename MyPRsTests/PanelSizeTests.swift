@@ -1,3 +1,4 @@
+@testable import MyPRs
 import Testing
 
 @Suite struct PanelSizeTests {

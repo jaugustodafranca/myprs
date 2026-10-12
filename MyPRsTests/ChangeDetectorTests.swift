@@ -1,4 +1,6 @@
 import Foundation
+import MyPRsKit
+@testable import MyPRs
 import Testing
 
 @Suite struct ChangeDetectorTests {

@@ -1,4 +1,5 @@
 import Foundation
+@testable import MyPRs
 import Testing
 
 struct LoginCallbackTests {
