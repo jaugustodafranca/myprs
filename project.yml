@@ -35,6 +35,8 @@ targets:
         LSUIElement: true
         SUFeedURL: https://github.com/jaugustodafranca/myprs/releases/latest/download/appcast.xml
         SUPublicEDKey: RKgHI37mknm9PYCdlcikcW57jfIf9xoAQtlCTXjNLvE=
+        SUVerifyUpdateBeforeExtraction: true
+        SURequireSignedFeed: true
         SUEnableAutomaticChecks: true
         SUScheduledCheckInterval: 86400
         CFBundleShortVersionString: $(MARKETING_VERSION)
