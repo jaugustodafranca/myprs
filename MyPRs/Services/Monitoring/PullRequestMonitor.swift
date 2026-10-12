@@ -60,7 +60,7 @@ final class PullRequestMonitor {
         defer { isSigningIn = false }
         do {
             let token = try await loginFlow.signIn()
-            try tokenStore.save(token)
+            try storeOrRevoke(token)
             isSignedIn = true
             notifier.requestAuthorization()
             startTimer()
@@ -73,16 +73,28 @@ final class PullRequestMonitor {
         }
     }
 
+    /// A token the Keychain refused would be an orphaned grant, so it is revoked.
+    private func storeOrRevoke(_ token: String) throws {
+        do {
+            try tokenStore.save(token)
+        } catch {
+            revokeInBackground(token)
+            throw error
+        }
+    }
+
+    private func revokeInBackground(_ token: String) {
+        let authWorker = self.authWorker
+        Task { await authWorker.revoke(token) }
+    }
+
     func cancelSignIn() {
         loginFlow.cancel()
     }
 
     func signOut() {
         timerTask?.cancel()
-        if let token = tokenStore.load() {
-            let authWorker = self.authWorker
-            Task { await authWorker.revoke(token) }
-        }
+        if let token = tokenStore.load() { revokeInBackground(token) }
         tokenStore.delete()
         snapshotStore.clear()
         recent.clear()
