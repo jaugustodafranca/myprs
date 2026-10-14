@@ -44,6 +44,7 @@
 - Shows review status: approved, changes requested or pending
 - Review tab: pull requests from your saved GitHub searches (paste any GitHub pull request list link), with optional notifications for new ones
 - Opens a PR or copies its link in one click
+- Copies a ready-to-paste AI review prompt for any PR (editable in Settings)
 - Updates itself with Sparkle
 
 ## Install

@@ -115,13 +115,13 @@ turns it into the query that is run, shown live under the field:
 ### Settings (inside the panel)
 
 Settings is a screen of the menu bar panel, not a window: the panel shows one
-`PanelRoute` at a time (`.list`, `.settings`, `.editSearch(SavedSearch?)`),
+`PanelRoute` at a time (`.list`, `.settings`, `.editSearch(SavedSearch?)`, `.editPrompt`),
 switched with a short fade. The gear or ⌘, opens Settings; "‹ Back" (or ⌘[ /
 Esc) returns. The panel keeps its screen when it closes, and the Add/Edit Search
 form keeps what was typed (held by `PanelNavigation`, outside the views) until
 Save or Back, so the user can leave to copy a GitHub link and come back. Heights
 fit the content up to the same 60%-of-screen cap as the lists. One scrolling
-form with three sections:
+form with four sections:
 
 - **General**: refresh interval, launch at login, version, check for updates,
   "Quit MyPRs".
@@ -130,8 +130,31 @@ form with three sections:
   Search), plus "Add Search". The editor is its own panel screen (Back, Save) with Name, "GitHub link or
   search" with the parsed query preview, and "Notify me about new pull
   requests".
+- **AI review prompt**: "Edit prompt…" opens the prompt editor (see below).
 - **Account**: signed-in login, organization access link, Sign Out (or Sign
   in with GitHub).
+
+### AI review prompt
+
+Every row (Open, Recent, Review) has a third icon in its fixed action column,
+below "Copy branch name" and "Copy link": SF Symbol `sparkles`, help "Copy AI
+review prompt". It copies the prompt template rendered for that pull request
+and shows a check for about 1.2 s. The row's context menu has "Copy AI Review
+Prompt" too.
+
+`ReviewPromptTemplate.render(_:values:)` replaces `{{key}}` placeholders in one
+pass; unknown placeholders stay as written. Keys: `url`, `title`, `repo`
+(owner/name), `number`, `author` (login or "unknown"), `head`, `base`,
+`additions`, `deletions`, `files`, `checks` ("passing 77/77", "failing 3/5",
+"running", "none"; "n/a" for closed pull requests, which also have no author).
+The default template lives in `Features/AIReview/DefaultReviewPrompt.swift`.
+
+The custom template is stored in the app's `UserDefaults` (key
+`reviewPromptTemplate`; absent means the default; saving blank or the default
+removes it). The editor (`.editPrompt`: Back, Save, monospaced text editor,
+clickable placeholder chips that append, "Reset to Default…" with confirmation,
+live preview with a sample pull request) keeps its draft in `PanelNavigation`
+like the search editor.
 
 ### Widget
 

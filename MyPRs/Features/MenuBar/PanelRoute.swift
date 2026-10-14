@@ -6,4 +6,5 @@ enum PanelRoute: Hashable {
     case settings
     /// `nil` adds a new search.
     case editSearch(SavedSearch?)
+    case editPrompt
 }
