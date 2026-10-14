@@ -11,10 +11,15 @@ enum AppActivation {
         }
     }
 
-    /// SwiftUI gives no handle to the MenuBarExtra panel; its window class name is the only marker.
+    /// SwiftUI gives no handle to the MenuBarExtra panel, so it is found by its private class name.
+    /// If Apple renames it nothing matches and the panel simply stays open.
     static func dismissMenuBarPanel() {
-        for window in NSApp.windows where window is NSPanel && String(describing: type(of: window)).contains("MenuBarExtra") {
+        for window in NSApp.windows where isMenuBarPanel(window) {
             window.orderOut(nil)
         }
+    }
+
+    private static func isMenuBarPanel(_ window: NSWindow) -> Bool {
+        window is NSPanel && String(describing: type(of: window)).contains("MenuBarExtra")
     }
 }
