@@ -5,11 +5,15 @@ import SwiftUI
 struct FittingScrollView<Content: View>: View {
     let maxHeight: CGFloat
     @ViewBuilder let content: Content
+    /// Keeps trailing controls out from under the vertical scroller.
+    private static var scrollerClearance: CGFloat { 6 }
     @State private var contentHeight: CGFloat?
 
     var body: some View {
         ScrollView {
-            content.onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
+            content
+                .padding(.trailing, Self.scrollerClearance)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
         }
         .frame(height: min(contentHeight ?? maxHeight, maxHeight))
         .animation(.easeOut(duration: 0.15), value: contentHeight)

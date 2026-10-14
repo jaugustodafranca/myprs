@@ -40,8 +40,6 @@ struct PullRequestRowView: View {
         }
     }
 
-    private var reference: String { "\(pullRequest.repository)#\(pullRequest.number)" }
-
     private var referenceWithAuthor: some View {
         HStack(spacing: 4) {
             if showsAuthor, let login = pullRequest.authorLogin {
@@ -50,11 +48,15 @@ struct PullRequestRowView: View {
                     .lineLimit(1)
                 Text("\u{00B7}")
             }
-            Text(reference)
+            Text(RepositoryName.short(pullRequest.repository))
                 .lineLimit(1)
+                .truncationMode(.middle)
+            Text(verbatim: "#\(pullRequest.number)")
+                .lineLimit(1)
+                .fixedSize()
+                .layoutPriority(1)
         }
         .font(.system(size: 10))
-        .layoutPriority(1)
     }
 
     private var branchLine: some View {
