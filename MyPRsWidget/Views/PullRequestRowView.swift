@@ -21,14 +21,8 @@ struct PullRequestRowView: View {
                             .widgetAccentable()
                         if detail.showsBranch {
                             branchLine
-                            if detail.showsBadges {
-                                MetadataLine(pullRequest: pullRequest, asBadges: true)
-                            } else {
-                                referenceAndMetadataLine
-                            }
-                        } else {
-                            referenceAndMetadataLine
                         }
+                        referenceAndMetadataLine
                     }
                     Spacer(minLength: 0)
                 }
@@ -60,24 +54,18 @@ struct PullRequestRowView: View {
     }
 
     private var branchLine: some View {
-        HStack(spacing: 6) {
-            Text("\(pullRequest.headBranch) \u{2192} \(pullRequest.baseBranch)")
-                .font(.system(size: 10, design: .monospaced))
-                .lineLimit(1)
-                .truncationMode(.middle)
-            if detail.showsBadges {
-                Spacer(minLength: 0)
-                referenceWithAuthor
-            }
-        }
-        .foregroundStyle(.secondary)
+        Text("\(pullRequest.headBranch) \u{2192} \(pullRequest.baseBranch)")
+            .font(.system(size: 10, design: .monospaced))
+            .lineLimit(1)
+            .truncationMode(.middle)
+            .foregroundStyle(.secondary)
     }
 
     private var referenceAndMetadataLine: some View {
         HStack(spacing: 8) {
             referenceWithAuthor
                 .foregroundStyle(.secondary)
-            MetadataLine(pullRequest: pullRequest, asBadges: false)
+            MetadataLine(pullRequest: pullRequest, asBadges: detail.showsBranch && detail.showsBadges)
         }
     }
 
