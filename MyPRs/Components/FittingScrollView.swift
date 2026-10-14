@@ -6,7 +6,7 @@ struct FittingScrollView<Content: View>: View {
     let maxHeight: CGFloat
     @ViewBuilder let content: Content
     /// Keeps trailing controls out from under the vertical scroller.
-    private static let scrollerClearance: CGFloat = 6
+    private static var scrollerClearance: CGFloat { 6 }
     @State private var contentHeight: CGFloat?
 
     var body: some View {
