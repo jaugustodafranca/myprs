@@ -30,15 +30,19 @@ struct ReviewPromptEditorScreen: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 Section {
-                    Button("Reset to Default…") { confirmsReset = true }
-                        .disabled(draft == DefaultReviewPrompt.template)
+                    InlineConfirmation(
+                        isPresented: $confirmsReset,
+                        message: "Reset the prompt to the default?",
+                        confirmTitle: "Reset",
+                        confirm: { draft = DefaultReviewPrompt.template }
+                    ) {
+                        Button("Reset to Default…") { confirmsReset = true }
+                            .disabled(draft == DefaultReviewPrompt.template)
+                    }
                 }
             }
             .formStyle(.grouped)
             .scrollDisabled(true)
-        }
-        .confirmationDialog("Reset the prompt to the default?", isPresented: $confirmsReset) {
-            Button("Reset to Default", role: .destructive) { draft = DefaultReviewPrompt.template }
         }
         .onAppear { AppActivation.bringToFront() }
     }
