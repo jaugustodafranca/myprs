@@ -44,20 +44,32 @@ enum SavedSearchLink {
     }
 
     private static func scoped(_ query: String, toRepository repository: String) -> String {
-        hasQualifier(["repo", "org", "user"], in: query) ? query : "\(query) AND repo:\(repository)"
+        hasQualifier(["repo", "org", "user"], in: query) ? query : "\(grouped(query)) AND repo:\(repository)"
     }
 
     private static func requiringPullRequests(_ query: String) -> String {
         let terms = query.lowercased().split(whereSeparator: { $0 == " " || $0 == "(" })
         let isPullRequestSearch = terms.contains("is:pr") || terms.contains("type:pr")
-        return isPullRequestSearch ? query : "is:pr AND \(query)"
+        return isPullRequestSearch ? query : "is:pr AND \(grouped(query))"
+    }
+
+    /// AND binds tighter than OR, so a query with a top-level OR is wrapped before
+    /// another term is added; otherwise the added term only constrains one side.
+    private static func grouped(_ query: String) -> String {
+        hasTopLevelOr(query) ? "(\(query))" : query
+    }
+
+    private static func hasTopLevelOr(_ query: String) -> Bool {
+        var depth = 0
+        for term in query.split(separator: " ") {
+            if depth == 0, term.uppercased() == "OR" { return true }
+            depth += term.filter { $0 == "(" }.count - term.filter { $0 == ")" }.count
+        }
+        return false
     }
 
     private static func hasQualifier(_ names: [String], in query: String) -> Bool {
         let terms = query.lowercased().split(whereSeparator: { $0 == " " || $0 == "(" })
-        return terms.contains { term in
-            let positive = term.hasPrefix("-") ? term.dropFirst() : term[...]
-            return names.contains { positive.hasPrefix("\($0):") }
-        }
+        return terms.contains { term in names.contains { term.hasPrefix("\($0):") } }
     }
 }

@@ -110,6 +110,16 @@ import Testing
         #expect(store.loadSearches().map(\.name) == ["New", "Quiet"])
     }
 
+    @Test func searchesStopAtTheLimit() {
+        let searches = SavedSearches(store: store)
+        for index in searches.searches.count..<(SavedSearches.maximumCount + 2) {
+            searches.save(SavedSearch(name: "S\(index)", query: "is:pr s\(index)"))
+        }
+        #expect(searches.searches.count == SavedSearches.maximumCount)
+        #expect(!searches.canAddSearch)
+        #expect(store.loadSearches().count == SavedSearches.maximumCount)
+    }
+
     @Test func notifyToggleIsPersisted() {
         let searches = SavedSearches(store: store)
         searches.setNotifies(true, for: quiet.id)

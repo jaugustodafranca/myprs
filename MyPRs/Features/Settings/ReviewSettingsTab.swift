@@ -36,8 +36,14 @@ struct ReviewSettingsTab: View {
                 .padding(.bottom, 4)
             } footer: {
                 HStack {
+                    if !savedSearches.canAddSearch {
+                        Text("Up to \(SavedSearches.maximumCount) searches.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     Spacer()
                     Button("Add Search…") { editing = .add }
+                        .disabled(!savedSearches.canAddSearch)
                 }
             }
         }

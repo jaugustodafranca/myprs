@@ -67,7 +67,8 @@ Out of scope for v1: GitLab, multiple accounts.
 - A **saved search** is `{ id, name, query, notifies }`: a GitHub search for
   pull requests. The first launch creates "Review requested"
   (`is:pr is:open archived:false review-requested:@me`, not notifying). It can
-  be edited or deleted like any other.
+  be edited or deleted like any other. At most 10 searches (each one is a
+  GitHub search on every refresh); "Add Search…" is disabled at the limit.
 - The Review tab lists the results of every saved search, in the user's order.
   With more than one search, results are grouped under a small header with the
   search name and count; with one search there is no header. A PR found by
@@ -89,10 +90,12 @@ turns it into the query that is run, shown live under the field:
 
 - `https://github.com/<owner>/<repo>/pulls?q=…` (or `/issues`) → the decoded
   `q` (`+` is a space) plus ` AND repo:<owner>/<repo>`, unless the query
-  already has a `repo:`, `org:` or `user:` qualifier.
+  already has a (non-negated) `repo:`, `org:` or `user:` qualifier.
 - `https://github.com/pulls?q=…` or `https://github.com/issues?q=…` → `q`.
 - Anything that is not a link → the trimmed text.
 - If the result has no `is:pr` (or `type:pr`), `is:pr AND ` is put in front.
+- Before ` AND repo:…` or `is:pr AND ` is added, a query with a top-level
+  `OR` is wrapped in parentheses, since AND binds tighter than OR.
 - A link to another host, another page, or without `q` is rejected.
 
 #### Refresh and notifications

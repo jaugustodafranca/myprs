@@ -23,6 +23,15 @@ import Testing
         #expect(SavedSearchLink.query(from: "review-requested:@me") == "is:pr AND review-requested:@me")
     }
 
+    @Test func aTopLevelOrIsGroupedBeforeAddingTerms() {
+        #expect(SavedSearchLink.query(from: "author:a OR author:b") == "is:pr AND (author:a OR author:b)")
+        #expect(SavedSearchLink.query(from: "https://github.com/acme/web/pulls?q=is%3Apr+author%3Aa+OR+author%3Ab") == "(is:pr author:a OR author:b) AND repo:acme/web")
+    }
+
+    @Test func aNegatedRepoQualifierDoesNotRemoveTheLinkScope() {
+        #expect(SavedSearchLink.query(from: "https://github.com/acme/web/pulls?q=is%3Apr+-repo%3Aacme%2Fold") == "is:pr -repo:acme/old AND repo:acme/web")
+    }
+
     @Test func plainQueryIsTrimmed() {
         #expect(SavedSearchLink.query(from: "  is:pr is:open team-review-requested:acme/web \n") == "is:pr is:open team-review-requested:acme/web")
     }

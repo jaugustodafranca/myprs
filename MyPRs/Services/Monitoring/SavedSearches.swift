@@ -7,6 +7,9 @@ import MyPRsKit
 final class SavedSearches {
     typealias Fetch = (_ query: String) async throws -> [PullRequest]
 
+    /// Every refresh runs one GitHub search per saved search, so the list is kept short.
+    static let maximumCount = 10
+
     private(set) var searches: [SavedSearch]
     private(set) var snapshots: [UUID: SavedSearchSnapshot] = [:]
     private(set) var failedSearchIDs: Set<UUID> = []
@@ -18,11 +21,13 @@ final class SavedSearches {
 
     init(store: SavedSearchStore) {
         self.store = store
-        searches = store.loadSearches()
+        searches = Array(store.loadSearches().prefix(Self.maximumCount))
         for search in searches {
             snapshots[search.id] = store.loadSnapshot(for: search.id)
         }
     }
+
+    var canAddSearch: Bool { searches.count < Self.maximumCount }
 
     func search(withID id: UUID) -> SavedSearch? {
         searches.first { $0.id == id }
@@ -81,6 +86,7 @@ final class SavedSearches {
     /// its old results are dropped and its first new result never notifies.
     func save(_ search: SavedSearch) {
         guard let index = searches.firstIndex(where: { $0.id == search.id }) else {
+            guard canAddSearch else { return }
             searches.append(search)
             persistSearches()
             return
