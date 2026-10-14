@@ -27,6 +27,7 @@ struct PullRequestRow: View {
             VStack(spacing: 2) {
                 CopyButton(symbol: "arrow.triangle.branch", help: "Copy branch name", text: pullRequest.headBranch)
                 CopyButton(symbol: "link", help: "Copy link", text: pullRequest.url.absoluteString)
+                CopyButton(symbol: "sparkles", help: "Copy AI review prompt", text: reviewPrompt)
             }
             .fixedSize()
             .layoutPriority(2)
@@ -55,7 +56,12 @@ struct PullRequestRow: View {
         Button("Open on GitHub", action: open)
         Button("Copy link") { Pasteboard.copy(pullRequest.url.absoluteString) }
         Button("Copy branch name") { Pasteboard.copy(pullRequest.headBranch) }
+        Button("Copy AI Review Prompt") { Pasteboard.copy(reviewPrompt) }
         Button("Copy git checkout command") { Pasteboard.copy("git checkout \(pullRequest.headBranch)") }
+    }
+
+    private var reviewPrompt: String {
+        ReviewPromptTemplate.render(ReviewPromptStore.standard.template, values: ReviewPromptValues.of(pullRequest))
     }
 
     private func open() {

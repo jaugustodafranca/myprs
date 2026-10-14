@@ -31,4 +31,11 @@ import Testing
         #expect(navigation.route == .editSearch(nil))
         #expect(navigation.draft.name == "Half done")
     }
+
+    @Test func editingThePromptFillsTheDraftWithTheCurrentTemplate() {
+        let navigation = PanelNavigation()
+        navigation.editPrompt()
+        #expect(navigation.route == .editPrompt)
+        #expect(navigation.promptDraft == ReviewPromptStore.standard.template)
+    }
 }
