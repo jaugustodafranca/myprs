@@ -21,14 +21,8 @@ struct PullRequestRowView: View {
                             .widgetAccentable()
                         if detail.showsBranch {
                             branchLine
-                            if detail.showsBadges {
-                                MetadataLine(pullRequest: pullRequest, asBadges: true)
-                            } else {
-                                referenceAndMetadataLine
-                            }
-                        } else {
-                            referenceAndMetadataLine
                         }
+                        referenceAndMetadataLine
                     }
                     Spacer(minLength: 0)
                 }
@@ -40,8 +34,6 @@ struct PullRequestRowView: View {
         }
     }
 
-    private var reference: String { "\(pullRequest.repository)#\(pullRequest.number)" }
-
     private var referenceWithAuthor: some View {
         HStack(spacing: 4) {
             if showsAuthor, let login = pullRequest.authorLogin {
@@ -50,32 +42,30 @@ struct PullRequestRowView: View {
                     .lineLimit(1)
                 Text("\u{00B7}")
             }
-            Text(reference)
+            Text(RepositoryName.short(pullRequest.repository))
                 .lineLimit(1)
+                .truncationMode(.middle)
+            Text(verbatim: "#\(pullRequest.number)")
+                .lineLimit(1)
+                .fixedSize()
+                .layoutPriority(1)
         }
         .font(.system(size: 10))
-        .layoutPriority(1)
     }
 
     private var branchLine: some View {
-        HStack(spacing: 6) {
-            Text("\(pullRequest.headBranch) \u{2192} \(pullRequest.baseBranch)")
-                .font(.system(size: 10, design: .monospaced))
-                .lineLimit(1)
-                .truncationMode(.middle)
-            if detail.showsBadges {
-                Spacer(minLength: 0)
-                referenceWithAuthor
-            }
-        }
-        .foregroundStyle(.secondary)
+        Text("\(pullRequest.headBranch) \u{2192} \(pullRequest.baseBranch)")
+            .font(.system(size: 10, design: .monospaced))
+            .lineLimit(1)
+            .truncationMode(.middle)
+            .foregroundStyle(.secondary)
     }
 
     private var referenceAndMetadataLine: some View {
         HStack(spacing: 8) {
             referenceWithAuthor
                 .foregroundStyle(.secondary)
-            MetadataLine(pullRequest: pullRequest, asBadges: false)
+            MetadataLine(pullRequest: pullRequest, asBadges: detail.showsBranch && detail.showsBadges)
         }
     }
 

@@ -13,17 +13,16 @@ struct ClosedPullRequestRow: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                 BranchLine(head: pullRequest.headBranch, base: pullRequest.baseBranch)
-                Text(details)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                PullRequestMetaLine(repository: pullRequest.repository, number: pullRequest.number, trailing: endedText)
                 badges
             }
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
             VStack(spacing: 2) {
                 CopyButton(symbol: "arrow.triangle.branch", help: "Copy branch name", text: pullRequest.headBranch)
                 CopyButton(symbol: "link", help: "Copy link", text: pullRequest.url.absoluteString)
             }
+            .fixedSize()
+            .layoutPriority(2)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
@@ -45,11 +44,11 @@ struct ClosedPullRequestRow: View {
         }
     }
 
-    private var details: String {
+    private var endedText: String {
         let verb = pullRequest.state == .merged ? "merged" : "closed"
         let age = CompactFormat.age(from: pullRequest.endedAt)
         let when = age == "now" ? "just now" : "\(age) ago"
-        return "\(pullRequest.repository)#\(pullRequest.number) · \(verb) \(when)"
+        return "\(verb) \(when)"
     }
 
     @ViewBuilder

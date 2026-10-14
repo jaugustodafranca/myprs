@@ -10,23 +10,24 @@ struct PullRequestRow: View {
         HStack(alignment: .top, spacing: 10) {
             StatusDot(pullRequest: pullRequest)
                 .padding(.top, 5)
+                .fixedSize()
+                .layoutPriority(2)
             VStack(alignment: .leading, spacing: 4) {
                 Text(pullRequest.title)
                     .fontWeight(.medium)
                     .lineLimit(1)
                     .truncationMode(.tail)
                 BranchLine(head: pullRequest.headBranch, base: pullRequest.baseBranch)
-                detailsLine
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                metaLine
                 PullRequestBadges(pullRequest: pullRequest)
             }
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
             VStack(spacing: 2) {
                 CopyButton(symbol: "arrow.triangle.branch", help: "Copy branch name", text: pullRequest.headBranch)
                 CopyButton(symbol: "link", help: "Copy link", text: pullRequest.url.absoluteString)
             }
+            .fixedSize()
+            .layoutPriority(2)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
@@ -37,23 +38,14 @@ struct PullRequestRow: View {
         .contextMenu { contextMenu }
     }
 
-    @ViewBuilder
-    private var detailsLine: some View {
-        if showsAuthor, let login = pullRequest.authorLogin {
-            HStack(spacing: 4) {
-                AuthorLabel(login: login, avatarURL: pullRequest.authorAvatarURL)
-                    .fixedSize()
-                Text("· \(details)")
-            }
-        } else {
-            Text(details)
-        }
-    }
-
-    private var details: String {
-        let age = CompactFormat.age(from: pullRequest.createdAt)
-        let text = "\(pullRequest.repository)#\(pullRequest.number) · \(age)"
-        return pullRequest.isDraft ? "Draft · \(text)" : text
+    private var metaLine: some View {
+        PullRequestMetaLine(
+            repository: pullRequest.repository,
+            number: pullRequest.number,
+            trailing: CompactFormat.age(from: pullRequest.createdAt),
+            isDraft: pullRequest.isDraft,
+            author: showsAuthor ? pullRequest.authorLogin.map { ($0, pullRequest.authorAvatarURL) } : nil
+        )
     }
 
     @ViewBuilder
