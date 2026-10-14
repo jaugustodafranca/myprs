@@ -79,6 +79,17 @@ extension EmptyStateView {
         )
     }
 
+    public static func nothingToReview(axis: Axis = .vertical, symbolSize: CGFloat = 44) -> EmptyStateView {
+        EmptyStateView(
+            symbol: "eyes",
+            tint: .blue,
+            title: "Nothing to review",
+            subtitle: "Pull requests from your saved searches will show up here.",
+            axis: axis,
+            symbolSize: symbolSize
+        )
+    }
+
     public static func signedOut(axis: Axis = .vertical, symbolSize: CGFloat = 44) -> EmptyStateView {
         EmptyStateView(
             symbol: "person.crop.circle.badge.questionmark",
