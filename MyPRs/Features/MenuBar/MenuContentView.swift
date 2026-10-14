@@ -6,6 +6,8 @@ struct MenuContentView: View {
     let updater: Updater
     @State private var showsSettings = false
     @State private var tab = PanelTab.open
+    @State private var headerHeight: CGFloat = 0
+    @State private var settingsHeight: CGFloat = 0
     @State private var screenHeight = NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight
 
     var body: some View {
@@ -22,6 +24,24 @@ struct MenuContentView: View {
 
     private var signedInContent: some View {
         VStack(spacing: 0) {
+            header
+                .fixedSize(horizontal: false, vertical: true)
+                .layoutPriority(1)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
+            tabContent
+            if showsSettings {
+                settings
+                    .fixedSize(horizontal: false, vertical: true)
+                    .layoutPriority(1)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { settingsHeight = $0 }
+            } else {
+                quitShortcut
+            }
+        }
+    }
+
+    private var header: some View {
+        VStack(spacing: 0) {
             PanelHeader(tab: $tab, openBadge: OpenCountBadge(PanelSummary(monitor.pullRequests)), subtitle: subtitle, isRefreshing: monitor.isRefreshing, refresh: { Task { await monitor.refresh() } }, showsSettings: $showsSettings)
             Divider()
             if showsOrganizationBanner {
@@ -32,13 +52,13 @@ struct MenuContentView: View {
                 )
                 Divider()
             }
-            tabContent
-            if showsSettings {
-                Divider()
-                SettingsSection(monitor: monitor, updater: updater)
-            } else {
-                quitShortcut
-            }
+        }
+    }
+
+    private var settings: some View {
+        VStack(spacing: 0) {
+            Divider()
+            SettingsSection(monitor: monitor, updater: updater)
         }
     }
 
@@ -64,7 +84,7 @@ struct MenuContentView: View {
     }
 
     private var maxListHeight: CGFloat {
-        PanelSize.maxListHeight(screenHeight: screenHeight, showsSettings: showsSettings)
+        PanelSize.maxListHeight(screenHeight: screenHeight, chromeHeight: headerHeight + (showsSettings ? settingsHeight : 0))
     }
 
     private var quitShortcut: some View {
