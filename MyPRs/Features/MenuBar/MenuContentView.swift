@@ -4,7 +4,7 @@ import SwiftUI
 struct MenuContentView: View {
     let monitor: PullRequestMonitor
     let updater: Updater
-    @State private var route = PanelRoute.list
+    let navigation: PanelNavigation
     @State private var tab = PanelTab.open
     @State private var headerHeight: CGFloat = 0
     @State private var screenHeight = NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight
@@ -19,40 +19,31 @@ struct MenuContentView: View {
         }
         .frame(width: PanelSize.width)
         .background { hiddenShortcuts }
-        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { notification in
-            if let window = notification.object as? NSWindow, AppActivation.isMenuBarPanel(window) {
-                route = .list
-            }
-        }
         .onAppear { screenHeight = NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight }
     }
 
     @ViewBuilder
     private var routedContent: some View {
-        switch route {
+        switch navigation.route {
         case .list:
             listContent.transition(.opacity)
         case .settings:
             SettingsScreen(
                 monitor: monitor,
                 updater: updater,
-                back: { navigate(to: .list) },
-                editSearch: { navigate(to: .editSearch($0)) }
+                back: navigation.showList,
+                editSearch: navigation.editSearch
             )
             .transition(.opacity)
         case .editSearch(let search):
             SearchEditorScreen(
                 search: search,
+                draft: Bindable(navigation).draft,
                 save: { saved in Task { await monitor.saveSearch(saved) } },
-                back: { navigate(to: .settings) }
+                back: navigation.showSettings
             )
-            .id(search?.id)
             .transition(.opacity)
         }
-    }
-
-    private func navigate(to destination: PanelRoute) {
-        withAnimation(.easeInOut(duration: 0.15)) { route = destination }
     }
 
     private var listContent: some View {
@@ -73,7 +64,7 @@ struct MenuContentView: View {
                 subtitle: subtitle,
                 isRefreshing: monitor.isRefreshing,
                 refresh: { Task { await monitor.refresh() } },
-                openSettings: showSettings
+                openSettings: navigation.showSettings
             )
             Divider()
             if showsOrganizationBanner {
@@ -116,7 +107,7 @@ struct MenuContentView: View {
             showsHeaders: monitor.savedSearches.searches.count > 1,
             maxHeight: maxListHeight,
             retry: { id in Task { await monitor.refreshSearch(id) } },
-            openSettings: showSettings
+            openSettings: navigation.showSettings
         )
     }
 
@@ -145,16 +136,12 @@ struct MenuContentView: View {
         ZStack {
             Button("Quit") { NSApplication.shared.terminate(nil) }
                 .keyboardShortcut("q")
-            Button("Settings", action: showSettings)
+            Button("Settings", action: navigation.showSettings)
                 .keyboardShortcut(",")
         }
         .frame(width: 0, height: 0)
         .opacity(0)
         .accessibilityHidden(true)
-    }
-
-    private func showSettings() {
-        navigate(to: .settings)
     }
 
     private var subtitle: String {

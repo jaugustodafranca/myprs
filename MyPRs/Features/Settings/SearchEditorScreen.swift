@@ -2,19 +2,13 @@ import MyPRsKit
 import SwiftUI
 
 /// Adds or edits a search from a GitHub link or a search query, inside the panel.
+/// The draft belongs to `PanelNavigation`, so it survives the panel closing.
 struct SearchEditorScreen: View {
     let search: SavedSearch?
+    @Binding var draft: SavedSearchDraft
     let save: (SavedSearch) -> Void
     let back: () -> Void
-    @State private var draft: SavedSearchDraft
     @FocusState private var nameIsFocused: Bool
-
-    init(search: SavedSearch?, save: @escaping (SavedSearch) -> Void, back: @escaping () -> Void) {
-        self.search = search
-        self.save = save
-        self.back = back
-        _draft = State(initialValue: search.map(SavedSearchDraft.init) ?? SavedSearchDraft())
-    }
 
     var body: some View {
         PanelScreen(title: search == nil ? "Add Search" : "Edit Search", back: back) {
@@ -45,7 +39,7 @@ struct SearchEditorScreen: View {
         }
         .onAppear {
             AppActivation.bringToFront()
-            nameIsFocused = true
+            nameIsFocused = draft.name.isEmpty
         }
     }
 

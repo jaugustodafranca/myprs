@@ -117,7 +117,9 @@ turns it into the query that is run, shown live under the field:
 Settings is a screen of the menu bar panel, not a window: the panel shows one
 `PanelRoute` at a time (`.list`, `.settings`, `.editSearch(SavedSearch?)`),
 switched with a short fade. The gear or ⌘, opens Settings; "‹ Back" (or ⌘[ /
-Esc) returns. Every time the panel loses focus it goes back to the list. Heights
+Esc) returns. The panel keeps its screen when it closes, and the Add/Edit Search
+form keeps what was typed (held by `PanelNavigation`, outside the views) until
+Save or Back, so the user can leave to copy a GitHub link and come back. Heights
 fit the content up to the same 60%-of-screen cap as the lists. One scrolling
 form with three sections:
 

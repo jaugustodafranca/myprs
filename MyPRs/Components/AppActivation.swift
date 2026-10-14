@@ -19,7 +19,7 @@ enum AppActivation {
         }
     }
 
-    static func isMenuBarPanel(_ window: NSWindow) -> Bool {
+    private static func isMenuBarPanel(_ window: NSWindow) -> Bool {
         window is NSPanel && String(describing: type(of: window)).contains("MenuBarExtra")
     }
 }

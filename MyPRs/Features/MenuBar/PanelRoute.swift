@@ -1,6 +1,6 @@
 import MyPRsKit
 
-/// Which screen the panel shows. Every open of the panel starts at `.list`.
+/// Which screen the panel shows. The panel keeps its route when it closes.
 enum PanelRoute: Hashable {
     case list
     case settings

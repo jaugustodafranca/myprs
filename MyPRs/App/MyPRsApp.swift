@@ -22,10 +22,11 @@ struct MyPRsApp: App {
     @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @State private var updater = Updater()
     @State private var monitor = PullRequestMonitor()
+    @State private var navigation = PanelNavigation()
 
     var body: some Scene {
         MenuBarExtra {
-            MenuContentView(monitor: monitor, updater: updater)
+            MenuContentView(monitor: monitor, updater: updater, navigation: navigation)
         } label: {
             MenuBarIcon(pullRequests: monitor.snapshot?.pullRequests ?? [], isSignedIn: monitor.isSignedIn)
         }
