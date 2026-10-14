@@ -42,7 +42,7 @@ struct ReviewSettingsTab: View {
             }
         }
         .formStyle(.grouped)
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(height: 420)
         .sheet(item: $editing) { target in
             SavedSearchEditor(title: target.title, save: { save($0, for: target) }, draft: target.draft)
         }

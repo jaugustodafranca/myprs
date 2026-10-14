@@ -10,13 +10,19 @@ struct SavedSearchEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            Text(title)
+                .font(.headline)
+                .padding([.horizontal, .top], 20)
             Form {
                 Section {
                     TextField("Name", text: $draft.name, prompt: Text("Team reviews"))
+                }
+                Section {
                     TextField("GitHub link or search", text: $draft.linkOrQuery, prompt: Text("https://github.com/owner/repo/pulls?q=…"), axis: .vertical)
+                        .labelsHidden()
                         .lineLimit(3...6)
                 } header: {
-                    Text(title).font(.headline)
+                    Text("GitHub link or search")
                 } footer: {
                     SavedSearchQueryPreview(input: draft.linkOrQuery, query: draft.query)
                 }

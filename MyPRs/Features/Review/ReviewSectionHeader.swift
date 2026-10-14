@@ -10,13 +10,7 @@ struct ReviewSectionHeader: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-            Text("\(count)")
-                .font(.caption2.weight(.semibold))
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 5)
-                .padding(.vertical, 1)
-                .background(.quaternary, in: Capsule())
+            if count > 0 { countBadge }
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 14)
@@ -24,5 +18,15 @@ struct ReviewSectionHeader: View {
         .padding(.bottom, 4)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
+    }
+
+    private var countBadge: some View {
+        Text("\(count)")
+            .font(.caption2.weight(.semibold))
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1)
+            .background(.quaternary, in: Capsule())
     }
 }

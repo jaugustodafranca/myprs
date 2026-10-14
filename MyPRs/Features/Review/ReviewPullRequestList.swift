@@ -61,7 +61,7 @@ struct ReviewPullRequestList: View {
                 subtitle: "Add a GitHub search to list pull requests to review.",
                 symbolSize: 36
             )
-            Button("Add search…", action: openSettings)
+            Button("Add Search…", action: openSettings)
                 .controlSize(.small)
         }
         .frame(maxWidth: .infinity, minHeight: PanelSize.emptyStateHeight)

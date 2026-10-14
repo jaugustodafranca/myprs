@@ -30,7 +30,7 @@ struct GeneralSettingsTab: View {
             }
         }
         .formStyle(.grouped)
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(height: 300)
     }
 
     private var versionText: String {

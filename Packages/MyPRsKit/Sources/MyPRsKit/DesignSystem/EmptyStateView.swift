@@ -84,7 +84,7 @@ extension EmptyStateView {
             symbol: "eyes",
             tint: .blue,
             title: "Nothing to review",
-            subtitle: "Pull requests from your saved searches will show up here.",
+            subtitle: "Pull requests from your searches will show up here.",
             axis: axis,
             symbolSize: symbolSize
         )
