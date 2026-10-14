@@ -3,7 +3,8 @@ import SwiftUI
 
 struct MenuContentView: View {
     let monitor: PullRequestMonitor
-    @Environment(\.openSettings) private var openSettings
+    let updater: Updater
+    @State private var route = PanelRoute.list
     @State private var tab = PanelTab.open
     @State private var headerHeight: CGFloat = 0
     @State private var screenHeight = NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight
@@ -11,17 +12,50 @@ struct MenuContentView: View {
     var body: some View {
         Group {
             if monitor.isSignedIn {
-                signedInContent
+                routedContent
             } else {
                 SignedOutView(monitor: monitor)
             }
         }
         .frame(width: PanelSize.width)
         .background { hiddenShortcuts }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { notification in
+            if let window = notification.object as? NSWindow, AppActivation.isMenuBarPanel(window) {
+                route = .list
+            }
+        }
         .onAppear { screenHeight = NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight }
     }
 
-    private var signedInContent: some View {
+    @ViewBuilder
+    private var routedContent: some View {
+        switch route {
+        case .list:
+            listContent.transition(.opacity)
+        case .settings:
+            SettingsScreen(
+                monitor: monitor,
+                updater: updater,
+                back: { navigate(to: .list) },
+                editSearch: { navigate(to: .editSearch($0)) }
+            )
+            .transition(.opacity)
+        case .editSearch(let search):
+            SearchEditorScreen(
+                search: search,
+                save: { saved in Task { await monitor.saveSearch(saved) } },
+                back: { navigate(to: .settings) }
+            )
+            .id(search?.id)
+            .transition(.opacity)
+        }
+    }
+
+    private func navigate(to destination: PanelRoute) {
+        withAnimation(.easeInOut(duration: 0.15)) { route = destination }
+    }
+
+    private var listContent: some View {
         VStack(spacing: 0) {
             header
                 .fixedSize(horizontal: false, vertical: true)
@@ -120,8 +154,7 @@ struct MenuContentView: View {
     }
 
     private func showSettings() {
-        AppActivation.bringToFront()
-        openSettings()
+        navigate(to: .settings)
     }
 
     private var subtitle: String {

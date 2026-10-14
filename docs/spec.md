@@ -44,7 +44,7 @@ Out of scope for v1: GitLab, multiple accounts.
   when any PR has unanswered threads, default otherwise.
 - Click opens a window-style panel: a header with the Open · Recent · Review
   tabs (⌘1 / ⌘2 / ⌘3 while the panel is open), the last update time, "Refresh
-  now" and a gear that opens the Settings window, then the list. Open lists the
+  now" and a gear that opens Settings inside the panel, then the list. Open lists the
   PRs (attention first, then most recently updated), each row with "Open" and
   "Copy link". ⌘Q quits and ⌘, opens Settings while the panel is open.
 - Signed out: a single "Sign in with GitHub" button.
@@ -68,7 +68,7 @@ Out of scope for v1: GitLab, multiple accounts.
   pull requests. The first launch creates "Review requested"
   (`is:pr is:open archived:false review-requested:@me`, not notifying). It can
   be edited or deleted like any other. At most 10 searches (each one is a
-  GitHub search on every refresh); "Add Search…" is disabled at the limit.
+  GitHub search on every refresh); "Add Search" is disabled at the limit.
 - The Review tab lists the results of every saved search, in the user's order.
   With more than one search, results are grouped under a small header with the
   search name and count; with one search there is no header. A PR found by
@@ -77,7 +77,7 @@ Out of scope for v1: GitLab, multiple accounts.
   and login). The tab badge is the number of unique PRs, in a neutral colour.
   The order within a search is GitHub's, so a `sort:` qualifier is respected.
 - States: "Nothing to review" when every search is empty; "No searches" with an
-  "Add Search…" button (opens Settings) when there are none; a spinner for a
+  "Add Search" button (opens Settings) when there are none; a spinner for a
   search not fetched yet; a "Couldn't load "name". Retry" row for a search
   whose last fetch failed (its last result stays listed).
 - Avatars load only from `https://avatars.githubusercontent.com`
@@ -112,16 +112,20 @@ turns it into the query that is run, shown live under the field:
   `GitHubURL.isTrusted`.
 - Signing out clears the results but keeps the saved searches.
 
-### Settings window
+### Settings (inside the panel)
 
-A standard Settings window (SwiftUI `Settings` scene) opened by the panel's
-gear or ⌘,. The app activates itself first, since a menu bar app is not active.
+Settings is a screen of the menu bar panel, not a window: the panel shows one
+`PanelRoute` at a time (`.list`, `.settings`, `.editSearch(SavedSearch?)`),
+switched with a short fade. The gear or ⌘, opens Settings; "‹ Back" (or ⌘[ /
+Esc) returns. Every time the panel loses focus it goes back to the list. Heights
+fit the content up to the same 60%-of-screen cap as the lists. One scrolling
+form with three sections:
 
 - **General**: refresh interval, launch at login, version, check for updates,
   "Quit MyPRs".
 - **Review**: "Searches shown in the Review tab": each search with its name,
   query, a notify toggle and a menu (Edit Search…, Move Up, Move Down, Delete
-  Search), plus "Add Search…". The editor sheet has Name, "GitHub link or
+  Search), plus "Add Search". The editor is its own panel screen (Back, Save) with Name, "GitHub link or
   search" with the parsed query preview, and "Notify me about new pull
   requests".
 - **Account**: signed-in login, organization access link, Sign Out (or Sign
