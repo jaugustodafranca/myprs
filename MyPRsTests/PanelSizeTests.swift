@@ -2,15 +2,15 @@
 import Testing
 
 @Suite struct PanelSizeTests {
-    @Test func listMayUseSixtyPercentOfTheScreenMinusTheHeader() {
-        #expect(PanelSize.maxListHeight(screenHeight: 1000, showsSettings: false) == 531)
+    @Test func listMayUseSixtyPercentOfTheScreenMinusTheMeasuredChrome() {
+        #expect(PanelSize.maxListHeight(screenHeight: 1000, chromeHeight: 80) == 520)
     }
 
-    @Test func openSettingsTakeSpaceFromTheList() {
-        #expect(PanelSize.maxListHeight(screenHeight: 1000, showsSettings: true) == 320)
+    @Test func tallerChromeTakesSpaceFromTheList() {
+        #expect(PanelSize.maxListHeight(screenHeight: 1000, chromeHeight: 300) == 300)
     }
 
     @Test func listKeepsAUsableHeightOnSmallScreens() {
-        #expect(PanelSize.maxListHeight(screenHeight: 400, showsSettings: true) == 150)
+        #expect(PanelSize.maxListHeight(screenHeight: 400, chromeHeight: 300) == 150)
     }
 }
