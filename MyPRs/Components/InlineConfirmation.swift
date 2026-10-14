@@ -34,10 +34,13 @@ struct InlineConfirmation<Content: View>: View {
                 confirm()
             }
             .tint(.red)
+            .accessibilityHint(message)
             Button("Cancel") { isPresented = false }
                 .keyboardShortcut(.cancelAction)
         }
         .controlSize(.small)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(message)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .background(.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
