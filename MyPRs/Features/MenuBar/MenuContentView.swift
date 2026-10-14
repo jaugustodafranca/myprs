@@ -32,7 +32,8 @@ struct MenuContentView: View {
                 monitor: monitor,
                 updater: updater,
                 back: navigation.showList,
-                editSearch: navigation.editSearch
+                editSearch: navigation.editSearch,
+                editPrompt: navigation.editPrompt
             )
             .transition(.opacity)
         case .editSearch(let search):
@@ -40,6 +41,13 @@ struct MenuContentView: View {
                 search: search,
                 draft: Bindable(navigation).draft,
                 save: { saved in Task { await monitor.saveSearch(saved) } },
+                back: navigation.showSettings
+            )
+            .transition(.opacity)
+        case .editPrompt:
+            ReviewPromptEditorScreen(
+                draft: Bindable(navigation).promptDraft,
+                save: ReviewPromptStore.standard.save,
                 back: navigation.showSettings
             )
             .transition(.opacity)

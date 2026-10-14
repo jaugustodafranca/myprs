@@ -7,6 +7,9 @@ func makePullRequest(
     unansweredThreads: Int = 0,
     updatedAt: Date = Date(timeIntervalSince1970: 1_700_000_000),
     number: Int = 42,
+    repository: String = "octo/repo",
+    checksPassed: Int = 2,
+    checksTotal: Int = 2,
     authorLogin: String? = nil
 ) -> PullRequest {
     PullRequest(
@@ -14,7 +17,7 @@ func makePullRequest(
         number: number,
         title: "Add widget",
         url: URL(string: "https://github.com/octo/repo/pull/42")!,
-        repository: "octo/repo",
+        repository: repository,
         isDraft: false,
         checks: checks,
         review: .waiting,
@@ -27,8 +30,8 @@ func makePullRequest(
         headBranch: "feature/widget",
         baseBranch: "main",
         hasConflicts: false,
-        checksPassed: 2,
-        checksTotal: 2,
+        checksPassed: checksPassed,
+        checksTotal: checksTotal,
         approvals: 0,
         authorLogin: authorLogin
     )
