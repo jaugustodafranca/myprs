@@ -45,10 +45,16 @@ struct GitHubResponse: Decodable {
         let baseRefName: String
         let mergeable: String
         let reviewDecision: String?
+        let author: PullRequestAuthor?
         let repository: Repository
         let commits: Connection<CommitNode>
         let latestReviews: Connection<Review>
         let reviewThreads: Connection<ReviewThread>
+    }
+
+    struct PullRequestAuthor: Decodable {
+        let login: String
+        let avatarUrl: URL?
     }
 
     struct Repository: Decodable {

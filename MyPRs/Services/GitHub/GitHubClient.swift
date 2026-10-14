@@ -12,7 +12,21 @@ struct GitHubClient {
     var session: URLSession = .shared
 
     func fetchOpenPullRequests(token: String) async throws -> PullRequestSnapshot {
-        let (data, response) = try await session.data(for: request(token: token))
+        let payload = try await fetchPullRequestPayload(token: token, query: OpenPullRequestsQuery.text)
+        return PullRequestSnapshot(
+            login: payload.viewer.login,
+            pullRequests: PullRequestMapper.pullRequests(from: payload),
+            fetchedAt: Date()
+        )
+    }
+
+    func fetchPullRequests(matching searchQuery: String, token: String) async throws -> [PullRequest] {
+        let payload = try await fetchPullRequestPayload(token: token, query: SavedSearchQuery.text, variables: ["q": searchQuery])
+        return PullRequestMapper.pullRequests(from: payload)
+    }
+
+    private func fetchPullRequestPayload(token: String, query: String, variables: [String: String?] = [:]) async throws -> GitHubResponse.DataPayload {
+        let (data, response) = try await session.data(for: request(token: token, query: query, variables: variables))
         try validate(response)
 
         let decoder = JSONDecoder()
@@ -24,12 +38,7 @@ struct GitHubClient {
         else {
             throw GitHubError.badResponse
         }
-
-        return PullRequestSnapshot(
-            login: payload.viewer.login,
-            pullRequests: PullRequestMapper.pullRequests(from: payload),
-            fetchedAt: Date()
-        )
+        return payload
     }
 
     func fetchClosedPullRequests(token: String, after cursor: String?) async throws -> ClosedPullRequestPage {
@@ -66,7 +75,7 @@ struct GitHubClient {
         return !Set(granted).isDisjoint(with: ["read:org", "write:org", "admin:org"])
     }
 
-    private func request(token: String, query: String = OpenPullRequestsQuery.text, variables: [String: String?] = [:]) throws -> URLRequest {
+    private func request(token: String, query: String, variables: [String: String?] = [:]) throws -> URLRequest {
         var request = URLRequest(url: Self.endpoint)
         request.httpMethod = "POST"
         request.setValue("bearer \(token)", forHTTPHeaderField: "Authorization")
