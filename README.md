@@ -42,6 +42,7 @@
 - Sends a notification when CI starts failing or a PR gets new unanswered threads
 - Counts unanswered review threads so nothing waits on you unnoticed
 - Shows review status: approved, changes requested or pending
+- Review tab: pull requests from your saved GitHub searches (paste any GitHub pull request list link), with optional notifications for new ones
 - Opens a PR or copies its link in one click
 - Updates itself with Sparkle
 

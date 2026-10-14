@@ -9,7 +9,7 @@ enum PanelSize {
     private static let shortestMaxList: CGFloat = 150
 
     /// The tallest the list may grow before it scrolls, given the measured height
-    /// of everything around it (header, banner, settings).
+    /// of everything around it (header, banner).
     static func maxListHeight(screenHeight: CGFloat, chromeHeight: CGFloat) -> CGFloat {
         max(shortestMaxList, screenHeight * screenShare - chromeHeight)
     }

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PullRequestRow: View {
     let pullRequest: PullRequest
+    var showsAuthor = false
     @State private var isHovering = false
 
     var body: some View {
@@ -15,7 +16,7 @@ struct PullRequestRow: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                 BranchLine(head: pullRequest.headBranch, base: pullRequest.baseBranch)
-                Text(details)
+                detailsLine
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -34,6 +35,19 @@ struct PullRequestRow: View {
         .onHover { isHovering = $0 }
         .onTapGesture(perform: open)
         .contextMenu { contextMenu }
+    }
+
+    @ViewBuilder
+    private var detailsLine: some View {
+        if showsAuthor, let login = pullRequest.authorLogin {
+            HStack(spacing: 4) {
+                AuthorLabel(login: login, avatarURL: pullRequest.authorAvatarURL)
+                    .fixedSize()
+                Text("· \(details)")
+            }
+        } else {
+            Text(details)
+        }
     }
 
     private var details: String {

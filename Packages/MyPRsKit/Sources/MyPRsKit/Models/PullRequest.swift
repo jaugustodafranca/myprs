@@ -21,6 +21,9 @@ public struct PullRequest: Codable, Hashable, Identifiable, Sendable {
     public let checksPassed: Int
     public let checksTotal: Int
     public let approvals: Int
+    /// Nil in snapshots saved before authors were fetched.
+    public let authorLogin: String?
+    public let authorAvatarURL: URL?
 
     public var needsAttention: Bool { checks == .failing || unansweredThreads > 0 }
 
@@ -44,7 +47,9 @@ public struct PullRequest: Codable, Hashable, Identifiable, Sendable {
         hasConflicts: Bool,
         checksPassed: Int,
         checksTotal: Int,
-        approvals: Int
+        approvals: Int,
+        authorLogin: String? = nil,
+        authorAvatarURL: URL? = nil
     ) {
         self.id = id
         self.number = number
@@ -66,5 +71,7 @@ public struct PullRequest: Codable, Hashable, Identifiable, Sendable {
         self.checksPassed = checksPassed
         self.checksTotal = checksTotal
         self.approvals = approvals
+        self.authorLogin = authorLogin
+        self.authorAvatarURL = authorAvatarURL
     }
 }

@@ -27,4 +27,18 @@ struct GitHubURLTests {
     func rejectsOtherURLs(_ string: String) {
         #expect(!GitHubURL.isTrusted(URL(string: string)!))
     }
+
+    @Test func trustsGitHubAvatars() {
+        #expect(GitHubURL.isTrustedAvatar(URL(string: "https://avatars.githubusercontent.com/u/1?v=4")!))
+    }
+
+    @Test(arguments: [
+        "http://avatars.githubusercontent.com/u/1",
+        "https://evil.com/u/1",
+        "https://avatars.githubusercontent.com.evil.com/u/1",
+        "https://github.com/octocat.png",
+    ])
+    func rejectsOtherAvatarURLs(_ string: String) {
+        #expect(!GitHubURL.isTrustedAvatar(URL(string: string)!))
+    }
 }

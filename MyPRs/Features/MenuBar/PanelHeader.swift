@@ -3,16 +3,16 @@ import SwiftUI
 
 struct PanelHeader: View {
     @Binding var tab: PanelTab
-    let openBadge: OpenCountBadge?
+    let badges: [PanelTab: TabCountBadge]
     let subtitle: String
     let isRefreshing: Bool
     let refresh: () -> Void
-    @Binding var showsSettings: Bool
+    let openSettings: () -> Void
 
     var body: some View {
         HStack(alignment: .center, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
-                PanelTabs(selection: $tab, openBadge: openBadge)
+                PanelTabs(selection: $tab, badges: badges)
                     .padding(.leading, -6)
                 Text(subtitle)
                     .font(.caption)
@@ -25,10 +25,8 @@ struct PanelHeader: View {
                 HStack(spacing: 6) {
                     Button(action: refresh) { refreshLabel }
                     .help("Refresh now")
-                    Button { showsSettings.toggle() } label: {
-                        Image(systemName: "gearshape").foregroundStyle(showsSettings ? Color.accentColor : .primary)
-                    }
-                    .help("Settings")
+                    Button(action: openSettings) { Image(systemName: "gearshape") }
+                    .help("Settings (⌘,)")
                 }
                 .buttonStyle(GlassIconButtonStyle())
             }

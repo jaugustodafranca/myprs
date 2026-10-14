@@ -1,16 +1,16 @@
 import MyPRsKit
 import SwiftUI
 
-/// The panel title: two tabs that slide a highlight between them.
+/// The panel title: tabs that slide a highlight between them.
 struct PanelTabs: View {
     @Binding var selection: PanelTab
-    let openBadge: OpenCountBadge?
+    let badges: [PanelTab: TabCountBadge]
     @Namespace private var highlight
 
     var body: some View {
         HStack(spacing: 2) {
             ForEach(PanelTab.allCases) { tab in
-                PanelTabButton(tab: tab, isSelected: selection == tab, badge: tab == .open ? openBadge : nil, highlight: highlight) {
+                PanelTabButton(tab: tab, isSelected: selection == tab, badge: badges[tab], highlight: highlight) {
                     withAnimation(.spring(duration: 0.3, bounce: 0.2)) { selection = tab }
                 }
             }
@@ -21,7 +21,7 @@ struct PanelTabs: View {
 private struct PanelTabButton: View {
     let tab: PanelTab
     let isSelected: Bool
-    let badge: OpenCountBadge?
+    let badge: TabCountBadge?
     let highlight: Namespace.ID
     let select: () -> Void
     @State private var isHovering = false
@@ -55,7 +55,7 @@ private struct PanelTabButton: View {
 }
 
 private struct CountBadge: View {
-    let badge: OpenCountBadge
+    let badge: TabCountBadge
 
     var body: some View {
         Text("\(badge.count)")
@@ -81,6 +81,7 @@ private extension PanelTab {
         switch self {
         case .open: "1"
         case .recent: "2"
+        case .review: "3"
         }
     }
 }

@@ -25,6 +25,22 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
+    func notifyNewToReview(_ pullRequests: [PullRequest]) {
+        for pullRequest in pullRequests {
+            let content = UNMutableNotificationContent()
+            content.title = "New PR to review"
+            content.body = Self.reviewBody(for: pullRequest)
+            content.userInfo = ["url": pullRequest.url.absoluteString]
+            center.add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
+        }
+    }
+
+    static func reviewBody(for pullRequest: PullRequest) -> String {
+        let body = "\(pullRequest.repository)#\(pullRequest.number) · \(pullRequest.title)"
+        guard let author = pullRequest.authorLogin else { return body }
+        return "\(body) · by \(author)"
+    }
+
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
