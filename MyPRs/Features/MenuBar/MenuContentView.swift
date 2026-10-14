@@ -119,9 +119,8 @@ struct MenuContentView: View {
         .accessibilityHidden(true)
     }
 
-    /// A menu bar app is not active by default, so the Settings window would open behind other apps.
     private func showSettings() {
-        NSApp.activate(ignoringOtherApps: true)
+        AppActivation.bringToFront()
         openSettings()
     }
 
