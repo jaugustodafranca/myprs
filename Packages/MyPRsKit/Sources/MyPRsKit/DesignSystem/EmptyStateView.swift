@@ -10,7 +10,7 @@ public struct EmptyStateView: View {
     var axis: Axis = .vertical
     var symbolSize: CGFloat = 44
 
-    init(
+    public init(
         symbol: String,
         tint: Color,
         title: String,

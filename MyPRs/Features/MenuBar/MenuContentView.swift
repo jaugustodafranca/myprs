@@ -3,11 +3,9 @@ import SwiftUI
 
 struct MenuContentView: View {
     let monitor: PullRequestMonitor
-    let updater: Updater
-    @State private var showsSettings = false
+    @Environment(\.openSettings) private var openSettings
     @State private var tab = PanelTab.open
     @State private var headerHeight: CGFloat = 0
-    @State private var settingsHeight: CGFloat = 0
     @State private var screenHeight = NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight
 
     var body: some View {
@@ -19,6 +17,7 @@ struct MenuContentView: View {
             }
         }
         .frame(width: PanelSize.width)
+        .background { hiddenShortcuts }
         .onAppear { screenHeight = NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight }
     }
 
@@ -29,20 +28,19 @@ struct MenuContentView: View {
                 .layoutPriority(1)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
             tabContent
-            if showsSettings {
-                settings
-                    .fixedSize(horizontal: false, vertical: true)
-                    .layoutPriority(1)
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { settingsHeight = $0 }
-            } else {
-                quitShortcut
-            }
         }
     }
 
     private var header: some View {
         VStack(spacing: 0) {
-            PanelHeader(tab: $tab, openBadge: OpenCountBadge(PanelSummary(monitor.pullRequests)), subtitle: subtitle, isRefreshing: monitor.isRefreshing, refresh: { Task { await monitor.refresh() } }, showsSettings: $showsSettings)
+            PanelHeader(
+                tab: $tab,
+                badges: badges,
+                subtitle: subtitle,
+                isRefreshing: monitor.isRefreshing,
+                refresh: { Task { await monitor.refresh() } },
+                openSettings: showSettings
+            )
             Divider()
             if showsOrganizationBanner {
                 OrganizationAccessBanner(
@@ -55,18 +53,12 @@ struct MenuContentView: View {
         }
     }
 
-    private var settings: some View {
-        VStack(spacing: 0) {
-            Divider()
-            SettingsSection(monitor: monitor, updater: updater)
-        }
-    }
-
     @ViewBuilder
     private var tabContent: some View {
         switch tab {
         case .open: openContent
         case .recent: RecentPullRequestList(recent: monitor.recent, maxHeight: maxListHeight)
+        case .review: reviewContent
         }
     }
 
@@ -83,23 +75,81 @@ struct MenuContentView: View {
         }
     }
 
-    private var maxListHeight: CGFloat {
-        PanelSize.maxListHeight(screenHeight: screenHeight, chromeHeight: headerHeight + (showsSettings ? settingsHeight : 0))
+    private var reviewContent: some View {
+        ReviewPullRequestList(
+            sections: reviewSections,
+            hasSearches: !monitor.savedSearches.searches.isEmpty,
+            showsHeaders: monitor.savedSearches.searches.count > 1,
+            maxHeight: maxListHeight,
+            retry: { id in Task { await monitor.refreshSearch(id) } },
+            openSettings: showSettings
+        )
     }
 
-    private var quitShortcut: some View {
-        Button("Quit") { NSApplication.shared.terminate(nil) }
-            .keyboardShortcut("q")
-            .frame(width: 0, height: 0)
-            .opacity(0)
+    private var reviewSections: [ReviewSection] {
+        let savedSearches = monitor.savedSearches
+        return ReviewSections.make(
+            searches: savedSearches.searches,
+            snapshots: savedSearches.snapshots,
+            failedSearchIDs: savedSearches.failedSearchIDs
+        )
+    }
+
+    private var badges: [PanelTab: TabCountBadge] {
+        var badges: [PanelTab: TabCountBadge] = [:]
+        badges[.open] = TabCountBadge(PanelSummary(monitor.pullRequests))
+        badges[.review] = TabCountBadge(reviewCount: ReviewSections.pullRequestCount(in: reviewSections))
+        return badges
+    }
+
+    private var maxListHeight: CGFloat {
+        PanelSize.maxListHeight(screenHeight: screenHeight, chromeHeight: headerHeight)
+    }
+
+    /// ⌘Q and ⌘, while the panel is open; the panel has no menu to carry them.
+    private var hiddenShortcuts: some View {
+        ZStack {
+            Button("Quit") { NSApplication.shared.terminate(nil) }
+                .keyboardShortcut("q")
+            Button("Settings", action: showSettings)
+                .keyboardShortcut(",")
+        }
+        .frame(width: 0, height: 0)
+        .opacity(0)
+        .accessibilityHidden(true)
+    }
+
+    /// A menu bar app is not active by default, so the Settings window would open behind other apps.
+    private func showSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+        openSettings()
     }
 
     private var subtitle: String {
-        guard tab == .open else { return "Closed and merged" }
+        switch tab {
+        case .open: openSubtitle
+        case .recent: "Closed and merged"
+        case .review: reviewSubtitle
+        }
+    }
+
+    private var openSubtitle: String {
         let summary = PanelSummary.text(for: monitor.pullRequests)
         guard let fetchedAt = monitor.snapshot?.fetchedAt else { return summary }
-        let age = CompactFormat.age(from: fetchedAt)
-        return age == "now" ? "\(summary) · just updated" : "\(summary) · \(age) ago"
+        return "\(summary) · \(Self.ageText(since: fetchedAt))"
+    }
+
+    private var reviewSubtitle: String {
+        let count = ReviewSections.pullRequestCount(in: reviewSections)
+        let summary = count == 0 ? "Nothing to review" : "\(count) to review"
+        let fetchedAt = monitor.savedSearches.snapshots.values.map(\.fetchedAt).max()
+        guard let fetchedAt else { return summary }
+        return "\(summary) · \(Self.ageText(since: fetchedAt))"
+    }
+
+    private static func ageText(since date: Date) -> String {
+        let age = CompactFormat.age(from: date)
+        return age == "now" ? "just updated" : "\(age) ago"
     }
 
     private var showsOrganizationBanner: Bool {
