@@ -24,7 +24,7 @@ struct PullRequestRowView: View {
                         }
                         referenceAndMetadataLine
                     }
-                    Spacer(minLength: 0)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             copyButton(systemImage: "link", intent: CopyLinkIntent(url: pullRequest.url.absoluteString))
@@ -54,11 +54,8 @@ struct PullRequestRowView: View {
     }
 
     private var branchLine: some View {
-        Text("\(pullRequest.headBranch) \u{2192} \(pullRequest.baseBranch)")
+        BranchLine(head: pullRequest.headBranch, base: pullRequest.baseBranch)
             .font(.system(size: 10, design: .monospaced))
-            .lineLimit(1)
-            .truncationMode(.middle)
-            .foregroundStyle(.secondary)
     }
 
     private var referenceAndMetadataLine: some View {

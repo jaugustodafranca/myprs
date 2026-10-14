@@ -18,10 +18,12 @@ struct PullRequestRow: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                 BranchLine(head: pullRequest.headBranch, base: pullRequest.baseBranch)
+                    .font(.caption.monospaced())
                 metaLine
                 PullRequestBadges(pullRequest: pullRequest)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .clipped()
             VStack(spacing: 2) {
                 CopyButton(symbol: "arrow.triangle.branch", help: "Copy branch name", text: pullRequest.headBranch)
                 CopyButton(symbol: "link", help: "Copy link", text: pullRequest.url.absoluteString)
