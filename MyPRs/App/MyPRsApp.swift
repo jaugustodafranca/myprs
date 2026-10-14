@@ -25,10 +25,14 @@ struct MyPRsApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            MenuContentView(monitor: monitor, updater: updater)
+            MenuContentView(monitor: monitor)
         } label: {
             MenuBarIcon(pullRequests: monitor.snapshot?.pullRequests ?? [], isSignedIn: monitor.isSignedIn)
         }
         .menuBarExtraStyle(.window)
+
+        Settings {
+            SettingsView(monitor: monitor, updater: updater)
+        }
     }
 }

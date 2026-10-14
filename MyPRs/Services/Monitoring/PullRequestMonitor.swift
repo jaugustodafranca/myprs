@@ -20,6 +20,7 @@ final class PullRequestMonitor {
     }
 
     let recent: RecentPullRequests
+    let savedSearches = SavedSearches(store: .shared)
 
     var pullRequests: [PullRequest] { snapshot?.pullRequests.sortedForDisplay() ?? [] }
 
@@ -98,6 +99,7 @@ final class PullRequestMonitor {
         tokenStore.delete()
         snapshotStore.clear()
         recent.clear()
+        savedSearches.clearResults()
         snapshot = nil
         organizationAccess = OrganizationAccess()
         lastOrganizationCheck = nil
@@ -112,23 +114,59 @@ final class PullRequestMonitor {
         defer { isRefreshing = false }
 
         do {
-            let fresh = try await client.fetchOpenPullRequests(token: token)
-            guard isSignedIn else { return }
-            let changes = ChangeDetector.changes(from: snapshot?.pullRequests ?? [], to: fresh.pullRequests)
-            notifier.notify(changes)
-            let pullRequestsChanged = snapshot?.pullRequests != fresh.pullRequests
-            snapshotStore.save(fresh)
-            snapshot = fresh
-            lastError = nil
-            if pullRequestsChanged {
-                WidgetCenter.shared.reloadTimelines(ofKind: AppConfig.widgetKind)
-            }
-            await checkOrganizationAccess(token: token)
+            try await refreshOpenPullRequests(token: token)
         } catch GitHubError.unauthorized {
             signOut()
             lastError = "Your GitHub session expired. Sign in again."
+            return
         } catch {
             lastError = "Could not refresh. Will retry."
+        }
+        guard isSignedIn else { return }
+        apply(await savedSearches.refreshAll(using: searchFetcher(token: token)))
+        if lastError == nil { await checkOrganizationAccess(token: token) }
+    }
+
+    private func refreshOpenPullRequests(token: String) async throws {
+        let fresh = try await client.fetchOpenPullRequests(token: token)
+        guard isSignedIn else { return }
+        let changes = ChangeDetector.changes(from: snapshot?.pullRequests ?? [], to: fresh.pullRequests)
+        notifier.notify(changes)
+        let pullRequestsChanged = snapshot?.pullRequests != fresh.pullRequests
+        snapshotStore.save(fresh)
+        snapshot = fresh
+        lastError = nil
+        if pullRequestsChanged {
+            WidgetCenter.shared.reloadTimelines(ofKind: AppConfig.widgetKind)
+        }
+    }
+
+    /// Saves an added or edited search and fetches it right away.
+    func saveSearch(_ search: SavedSearch) async {
+        savedSearches.save(search)
+        await refreshSearch(search.id)
+    }
+
+    func refreshSearch(_ id: UUID) async {
+        guard let token = tokenStore.load() else { return }
+        apply(await savedSearches.refresh(id, using: searchFetcher(token: token)))
+    }
+
+    func deleteSearch(_ id: UUID) {
+        savedSearches.delete(id)
+        WidgetCenter.shared.reloadTimelines(ofKind: AppConfig.widgetKind)
+    }
+
+    private func searchFetcher(token: String) -> SavedSearches.Fetch {
+        let client = self.client
+        return { query in try await client.fetchPullRequests(matching: query, token: token) }
+    }
+
+    private func apply(_ refresh: SavedSearchRefresh) {
+        guard isSignedIn else { return }
+        notifier.notifyNewToReview(refresh.newPullRequests)
+        if refresh.didChange {
+            WidgetCenter.shared.reloadTimelines(ofKind: AppConfig.widgetKind)
         }
     }
 

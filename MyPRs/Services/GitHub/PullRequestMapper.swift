@@ -32,7 +32,9 @@ enum PullRequestMapper {
             hasConflicts: node.mergeable == "CONFLICTING",
             checksPassed: contexts.filter(isPassed).count,
             checksTotal: contexts.count,
-            approvals: node.latestReviews.nodes.filter { $0.state == "APPROVED" }.count
+            approvals: node.latestReviews.nodes.filter { $0.state == "APPROVED" }.count,
+            authorLogin: node.author?.login,
+            authorAvatarURL: node.author?.avatarUrl.flatMap { GitHubURL.isTrustedAvatar($0) ? $0 : nil }
         )
     }
 

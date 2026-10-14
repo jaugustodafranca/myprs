@@ -27,7 +27,7 @@ project.yml                  XcodeGen definition (the .xcodeproj is generated, n
 MyPRs/                       Menu bar app target
   App/                       Entry point and app delegate
   Features/                  One folder per screen: MenuBar, OpenPullRequests,
-                             RecentPullRequests, Settings, SignIn, Updates
+                             RecentPullRequests, Review, Settings, SignIn, Updates
   Services/                  GitHub (client, queries, mappers), Monitoring (polling, change detection, notifications)
   Components/                Reusable app-only views and helpers
   Resources/                 Asset catalog; generated Info.plist and entitlements
