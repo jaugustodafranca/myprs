@@ -9,8 +9,20 @@ struct SavedSearchSettingsRow: View {
     let edit: () -> Void
     let move: (Int) -> Void
     let delete: () -> Void
+    @State private var confirmsDelete = false
 
     var body: some View {
+        InlineConfirmation(
+            isPresented: $confirmsDelete,
+            message: "Delete \(search.name)?",
+            confirmTitle: "Delete",
+            confirm: delete
+        ) {
+            row
+        }
+    }
+
+    private var row: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(search.name)
@@ -35,7 +47,7 @@ struct SavedSearchSettingsRow: View {
                 Button("Move Up") { move(-1) }.disabled(!canMoveUp)
                 Button("Move Down") { move(1) }.disabled(!canMoveDown)
                 Divider()
-                Button("Delete Search", role: .destructive, action: delete)
+                Button("Delete Search…", role: .destructive) { confirmsDelete = true }
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
