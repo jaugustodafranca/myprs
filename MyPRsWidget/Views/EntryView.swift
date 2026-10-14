@@ -43,9 +43,9 @@ struct EntryView: View {
     @ViewBuilder private func emptyContent(updatedAt: Date?) -> some View {
         switch family {
         case .systemSmall:
-            EmptySmallView(source: entry.source, isSignedOut: !isSearch && updatedAt == nil)
+            EmptySmallView(source: entry.source, isSignedOut: entry.isSignedOut)
         default:
-            EmptyWidgetView(source: entry.source, family: family, updatedAt: updatedAt)
+            EmptyWidgetView(source: entry.source, family: family, updatedAt: updatedAt, isSignedOut: entry.isSignedOut)
         }
     }
 }

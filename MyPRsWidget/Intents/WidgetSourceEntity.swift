@@ -21,6 +21,10 @@ struct WidgetSourceQuery: EntityQuery {
         WidgetSource.choices(in: SavedSearchStore.shared.loadSearches()).map(WidgetSourceEntity.init)
     }
 
+    func defaultResult() async -> WidgetSourceEntity? {
+        WidgetSourceEntity(.mine)
+    }
+
     func entities(for identifiers: [String]) async throws -> [WidgetSourceEntity] {
         let searches = SavedSearchStore.shared.loadSearches()
         return identifiers.map { WidgetSourceEntity(WidgetSource.resolve(id: $0, in: searches)) }

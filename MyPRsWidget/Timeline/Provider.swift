@@ -5,6 +5,7 @@ struct PullRequestEntry: TimelineEntry {
     let date: Date
     let source: WidgetSource
     let snapshot: PullRequestSnapshot?
+    var isSignedOut = false
 }
 
 struct Provider: AppIntentTimelineProvider {
@@ -22,7 +23,12 @@ struct Provider: AppIntentTimelineProvider {
 
     private func entry(for configuration: SelectSourceIntent) -> PullRequestEntry {
         let source = WidgetSource.resolve(id: configuration.source?.id, in: SavedSearchStore.shared.loadSearches())
-        return PullRequestEntry(date: Date(), source: source, snapshot: loadSnapshot(for: source).map(withTrustedLinksOnly))
+        return PullRequestEntry(
+            date: Date(),
+            source: source,
+            snapshot: loadSnapshot(for: source).map(withTrustedLinksOnly),
+            isSignedOut: SnapshotStore.shared.load() == nil
+        )
     }
 
     private func loadSnapshot(for source: WidgetSource) -> PullRequestSnapshot? {

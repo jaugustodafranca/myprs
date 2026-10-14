@@ -8,18 +8,19 @@ struct EmptyWidgetView: View {
     let source: WidgetSource
     let family: WidgetFamily
     let updatedAt: Date?
+    let isSignedOut: Bool
 
     private var isMedium: Bool { family == .systemMedium }
 
     private var message: EmptyStateView {
         let axis: Axis = isMedium ? .horizontal : .vertical
         let symbolSize: CGFloat = isMedium ? 32 : 44
-        if source != .mine {
-            return .nothingToReview(axis: axis, symbolSize: symbolSize)
+        if isSignedOut {
+            return .signedOut(axis: axis, symbolSize: symbolSize)
         }
-        return updatedAt == nil
-            ? .signedOut(axis: axis, symbolSize: symbolSize)
-            : .allCaughtUp(axis: axis, symbolSize: symbolSize)
+        return source == .mine
+            ? .allCaughtUp(axis: axis, symbolSize: symbolSize)
+            : .nothingToReview(axis: axis, symbolSize: symbolSize)
     }
 
     var body: some View {
