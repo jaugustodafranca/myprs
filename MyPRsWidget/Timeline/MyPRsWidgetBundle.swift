@@ -11,12 +11,12 @@ struct MyPRsWidgetBundle: WidgetBundle {
 
 struct MyPRsWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: AppConfig.widgetKind, provider: Provider()) { entry in
+        AppIntentConfiguration(kind: AppConfig.widgetKind, intent: SelectSourceIntent.self, provider: Provider()) { entry in
             EntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("Open PRs")
-        .description("Your open pull requests, with CI and review status.")
+        .configurationDisplayName("Pull requests")
+        .description("Your open pull requests, or the results of a saved search.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
     }
 }
@@ -28,6 +28,13 @@ struct MyPRsWidget: Widget {
     PullRequestEntry.calm
     PullRequestEntry.empty
     PullRequestEntry.signedOut
+}
+
+#Preview("Review", as: .systemMedium) {
+    MyPRsWidget()
+} timeline: {
+    PullRequestEntry.reviewSample
+    PullRequestEntry.reviewEmpty
 }
 
 #Preview("Medium", as: .systemMedium) {

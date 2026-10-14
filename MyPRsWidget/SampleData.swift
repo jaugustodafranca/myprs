@@ -5,14 +5,42 @@ extension PullRequestEntry {
     static let sample = entry(samplePullRequests)
     static let calm = entry(samplePullRequests.filter { !$0.needsAttention })
     static let empty = entry([])
-    static let signedOut = PullRequestEntry(date: .now, snapshot: nil)
+    static let signedOut = PullRequestEntry(date: .now, source: .mine, snapshot: nil)
+    static let reviewSample = entry(reviewPullRequests, source: reviewSearch)
+    static let reviewEmpty = entry([], source: reviewSearch)
 
-    private static func entry(_ pullRequests: [PullRequest]) -> PullRequestEntry {
+    private static let reviewSearch = WidgetSource.search(.reviewRequested)
+
+    private static func entry(_ pullRequests: [PullRequest], source: WidgetSource = .mine) -> PullRequestEntry {
         PullRequestEntry(
             date: .now,
+            source: source,
             snapshot: PullRequestSnapshot(login: "octo", pullRequests: pullRequests, fetchedAt: .now)
         )
     }
+
+    static let reviewPullRequests = [
+        PullRequest.sample(
+            11, "Handle partial refunds in the ledger export", repository: "acme/billing-api",
+            checks: .passing, passed: 5, total: 5, additions: 320, deletions: 41, files: 9,
+            head: "feature/partial-refunds", author: "maria-lopes"
+        ),
+        PullRequest.sample(
+            12, "Bump Postgres driver to 4.2", repository: "acme/storefront-web",
+            checks: .failing, passed: 2, total: 4, additions: 8, deletions: 8, files: 2,
+            head: "chore/pg-driver", author: "tchen"
+        ),
+        PullRequest.sample(
+            13, "Add retry with backoff to webhook sender", repository: "acme/notifications",
+            checks: .running, passed: 1, total: 3, additions: 144, deletions: 20, files: 5,
+            head: "feature/webhook-retry", author: "dev-anand"
+        ),
+        PullRequest.sample(
+            14, "Fix typo in onboarding copy", repository: "acme/storefront-web",
+            checks: .passing, passed: 3, total: 3, additions: 1, deletions: 1, files: 1,
+            head: "docs/onboarding-typo", author: "sam-k"
+        ),
+    ]
 
     static let samplePullRequests = [
         PullRequest.sample(
@@ -56,7 +84,8 @@ extension PullRequest {
         deletions: Int,
         files: Int,
         conflicts: Bool = false,
-        head: String
+        head: String,
+        author: String? = nil
     ) -> PullRequest {
         PullRequest(
             id: "PR_\(number)",
@@ -78,7 +107,8 @@ extension PullRequest {
             hasConflicts: conflicts,
             checksPassed: passed,
             checksTotal: total,
-            approvals: review == .approved ? 1 : 0
+            approvals: review == .approved ? 1 : 0,
+            authorLogin: author
         )
     }
 }

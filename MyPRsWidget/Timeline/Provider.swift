@@ -3,25 +3,36 @@ import WidgetKit
 
 struct PullRequestEntry: TimelineEntry {
     let date: Date
+    let source: WidgetSource
     let snapshot: PullRequestSnapshot?
 }
 
-struct Provider: TimelineProvider {
+struct Provider: AppIntentTimelineProvider {
     private let refreshInterval: TimeInterval = 15 * 60
 
     func placeholder(in context: Context) -> PullRequestEntry { .sample }
 
-    func getSnapshot(in context: Context, completion: @escaping (PullRequestEntry) -> Void) {
-        completion(context.isPreview ? .sample : currentEntry())
+    func snapshot(for configuration: SelectSourceIntent, in context: Context) async -> PullRequestEntry {
+        context.isPreview ? .sample : entry(for: configuration)
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<PullRequestEntry>) -> Void) {
-        let nextRefresh = Date().addingTimeInterval(refreshInterval)
-        completion(Timeline(entries: [currentEntry()], policy: .after(nextRefresh)))
+    func timeline(for configuration: SelectSourceIntent, in context: Context) async -> Timeline<PullRequestEntry> {
+        Timeline(entries: [entry(for: configuration)], policy: .after(Date().addingTimeInterval(refreshInterval)))
     }
 
-    private func currentEntry() -> PullRequestEntry {
-        PullRequestEntry(date: Date(), snapshot: SnapshotStore.shared.load().map(withTrustedLinksOnly))
+    private func entry(for configuration: SelectSourceIntent) -> PullRequestEntry {
+        let source = WidgetSource.resolve(id: configuration.source?.id, in: SavedSearchStore.shared.loadSearches())
+        return PullRequestEntry(date: Date(), source: source, snapshot: loadSnapshot(for: source).map(withTrustedLinksOnly))
+    }
+
+    private func loadSnapshot(for source: WidgetSource) -> PullRequestSnapshot? {
+        switch source {
+        case .mine:
+            return SnapshotStore.shared.load()
+        case .search(let search):
+            guard let saved = SavedSearchStore.shared.loadSnapshot(for: search.id) else { return nil }
+            return PullRequestSnapshot(login: "", pullRequests: saved.pullRequests, fetchedAt: saved.fetchedAt)
+        }
     }
 
     private func withTrustedLinksOnly(_ snapshot: PullRequestSnapshot) -> PullRequestSnapshot {
