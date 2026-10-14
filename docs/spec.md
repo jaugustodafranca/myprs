@@ -132,6 +132,17 @@ gear or ⌘,. The app activates itself first, since a menu bar app is not active
 - Small, medium, large and extra large. Small shows counts, the others a list from the shared cache.
 - Tapping a row opens the PR. Each row has a copy-link button (App Intent).
 - Signed out / empty states with a short message.
+- Configurable: right-click → Edit "Pull requests" → "Show" picks **My pull
+  requests** (default, also for widgets installed before this option) or one of
+  the saved searches by name. Each widget instance has its own source
+  (`AppIntentConfiguration`, same kind `MyPRsWidget`; the intent is not
+  discoverable in Shortcuts). A deleted search falls back to My pull requests,
+  a renamed one shows its new name (`WidgetSource.resolve`).
+- A search widget reads `snapshots/<search id>.json`, keeps GitHub's order, and
+  titles itself with the search name. The header pill is a neutral "N to
+  review", there is no CI scoreboard, and rows show the author (initials circle
+  and login, since widgets cannot reliably load remote avatars). Small shows
+  the count and "to review". Empty: "Nothing to review".
 
 ## Architecture
 
@@ -184,7 +195,7 @@ gear or ⌘,. The app activates itself first, since a menu bar app is not active
   holds the token and does network calls.
 - **Widget** never calls the network. It reads `snapshot.json` from the App
   Group container. The app reloads the widget timelines when the snapshot or
-  a saved search's results change.
+  a saved search's results change; it also reloads them when the saved searches are added, edited, renamed, reordered or deleted, so the picker and content refresh.
 
 ### Storage (App Group container)
 
@@ -192,7 +203,7 @@ gear or ⌘,. The app activates itself first, since a menu bar app is not active
 |---|---|
 | `snapshot.json` | `PullRequestSnapshot`, my open PRs |
 | `saved-searches.json` | `[SavedSearch]` in display order (missing → the built-in "Review requested") |
-| `snapshots/<search id>.json` | `SavedSearchSnapshot`, the last result of one saved search, for a future widget |
+| `snapshots/<search id>.json` | `SavedSearchSnapshot`, the last result of one saved search, read by the Review tab and by widgets showing that search |
 
 Files are written atomically with permissions `0600`.
 

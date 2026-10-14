@@ -1,5 +1,6 @@
 import Foundation
 import MyPRsKit
+import WidgetKit
 
 /// The saved searches and their latest results, persisted per search for the widget.
 @MainActor
@@ -134,5 +135,6 @@ final class SavedSearches {
 
     private func persistSearches() {
         store.saveSearches(searches)
+        WidgetCenter.shared.reloadTimelines(ofKind: AppConfig.widgetKind)
     }
 }

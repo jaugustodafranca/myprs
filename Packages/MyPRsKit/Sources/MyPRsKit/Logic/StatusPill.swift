@@ -20,6 +20,12 @@ public struct StatusPill {
         }
     }
 
+    /// The pill of a saved-search widget: how many pull requests wait for review.
+    public init?(toReview count: Int) {
+        guard count > 0 else { return nil }
+        self.init(text: "\(count) to review", tone: .neutral)
+    }
+
     private init(text: String, tone: Tone) {
         self.text = text
         self.tone = tone

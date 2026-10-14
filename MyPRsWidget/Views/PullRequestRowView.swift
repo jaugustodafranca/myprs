@@ -5,6 +5,7 @@ import SwiftUI
 struct PullRequestRowView: View {
     let pullRequest: PullRequest
     let detail: RowDetail
+    var showsAuthor = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -41,6 +42,21 @@ struct PullRequestRowView: View {
 
     private var reference: String { "\(pullRequest.repository)#\(pullRequest.number)" }
 
+    private var referenceWithAuthor: some View {
+        HStack(spacing: 4) {
+            if showsAuthor, let login = pullRequest.authorLogin {
+                AuthorInitialsView(login: login)
+                Text(login)
+                    .lineLimit(1)
+                Text("\u{00B7}")
+            }
+            Text(reference)
+                .lineLimit(1)
+        }
+        .font(.system(size: 10))
+        .layoutPriority(1)
+    }
+
     private var branchLine: some View {
         HStack(spacing: 6) {
             Text("\(pullRequest.headBranch) \u{2192} \(pullRequest.baseBranch)")
@@ -49,10 +65,7 @@ struct PullRequestRowView: View {
                 .truncationMode(.middle)
             if detail.showsBadges {
                 Spacer(minLength: 0)
-                Text(reference)
-                    .font(.system(size: 10))
-                    .lineLimit(1)
-                    .layoutPriority(1)
+                referenceWithAuthor
             }
         }
         .foregroundStyle(.secondary)
@@ -60,11 +73,8 @@ struct PullRequestRowView: View {
 
     private var referenceAndMetadataLine: some View {
         HStack(spacing: 8) {
-            Text(reference)
-                .font(.system(size: 10))
+            referenceWithAuthor
                 .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .layoutPriority(1)
             MetadataLine(pullRequest: pullRequest, asBadges: false)
         }
     }
