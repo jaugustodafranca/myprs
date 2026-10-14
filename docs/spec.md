@@ -1,6 +1,6 @@
 # MyPRs — design spec
 
-Date: 2026-10-10
+Date: 2026-10-10 (Review tab: 2026-10-14)
 
 ## Goal
 
@@ -21,10 +21,11 @@ approved. Open or copy a PR link in one click.
   demand.
 - Native notification when a PR's CI goes from not failing to failing, and when
   its unanswered thread count goes up.
+- A Review tab listing other people's PRs found by the user's saved GitHub
+  searches, with optional notifications for new ones.
 - Notifies the user when a new version is available and installs it (Sparkle).
 
-Out of scope for v1: PRs awaiting my review, GitLab, multiple accounts, repo
-filters.
+Out of scope for v1: GitLab, multiple accounts.
 
 ### Definitions
 
@@ -41,16 +42,15 @@ filters.
 
 - Icon: `arrow.triangle.pull`. Tinted red when any PR has failing CI, orange
   when any PR has unanswered threads, default otherwise.
-- Click opens a window-style panel with the PR list (attention first, then most
-  recently updated), each row with "Open" and "Copy link", plus "Refresh now",
-  last update time, and a settings section: refresh interval, launch at login,
-  check for updates, sign out.
+- Click opens a window-style panel: a header with the Open · Recent · Review
+  tabs (⌘1 / ⌘2 / ⌘3 while the panel is open), the last update time, "Refresh
+  now" and a gear that opens the Settings window, then the list. Open lists the
+  PRs (attention first, then most recently updated), each row with "Open" and
+  "Copy link". ⌘Q quits and ⌘, opens Settings while the panel is open.
 - Signed out: a single "Sign in with GitHub" button.
 
 ### Recent tab
 
-- The panel has an "Open | Recent" segmented control under the title. Open is
-  the list above.
 - Recent lists the user's closed and merged PRs (newest activity first) so an
   old PR's link or branch is one click away. Rows show a "Merged" or "Closed"
   badge, `head → base`, `repo#number · merged 3d ago`, diff size and file
@@ -61,6 +61,68 @@ filters.
 - A failed page shows "Couldn't load. Retry" inline.
 - Kept in memory only: never written to the snapshot or shown in the widget.
   Signing out clears it.
+
+### Review tab and saved searches
+
+- A **saved search** is `{ id, name, query, notifies }`: a GitHub search for
+  pull requests. The first launch creates "Review requested"
+  (`is:pr is:open archived:false review-requested:@me`, not notifying). It can
+  be edited or deleted like any other.
+- The Review tab lists the results of every saved search, in the user's order.
+  With more than one search, results are grouped under a small header with the
+  search name and count; with one search there is no header. A PR found by
+  several searches is listed under the first one only, and searches with
+  nothing to show are left out. Rows are the Open rows plus the author (avatar
+  and login). The tab badge is the number of unique PRs, in a neutral colour.
+  The order within a search is GitHub's, so a `sort:` qualifier is respected.
+- States: "Nothing to review" when every search is empty; "No searches" with an
+  "Add Search…" button (opens Settings) when there are none; a spinner for a
+  search not fetched yet; a "Couldn't load "name". Retry" row for a search
+  whose last fetch failed (its last result stays listed).
+- Avatars load only from `https://avatars.githubusercontent.com`
+  (`GitHubURL.isTrustedAvatar`); otherwise a grey circle is shown.
+
+#### Adding a search
+
+The user pastes either a link or a search; `SavedSearchLink.query(from:)`
+turns it into the query that is run, shown live under the field:
+
+- `https://github.com/<owner>/<repo>/pulls?q=…` (or `/issues`) → the decoded
+  `q` (`+` is a space) plus ` AND repo:<owner>/<repo>`, unless the query
+  already has a `repo:`, `org:` or `user:` qualifier.
+- `https://github.com/pulls?q=…` or `https://github.com/issues?q=…` → `q`.
+- Anything that is not a link → the trimmed text.
+- If the result has no `is:pr` (or `type:pr`), `is:pr AND ` is put in front.
+- A link to another host, another page, or without `q` is rejected.
+
+#### Refresh and notifications
+
+- Every refresh fetches my PRs, then each saved search one after another. A
+  failing search only marks that search as failed. Saving an added or edited
+  search fetches it right away.
+- For a search with `notifies`, a PR whose id was not in that search's
+  previous result sends "New PR to review" with
+  `<repo>#<n> · <title> · by <author>`. The baseline is only results fetched
+  during this run of the app, so the first fetch of a search (also after
+  launch, or after its query changed) never notifies. A PR found by several
+  notifying searches notifies once. Clicking opens the PR if
+  `GitHubURL.isTrusted`.
+- Signing out clears the results but keeps the saved searches.
+
+### Settings window
+
+A standard Settings window (SwiftUI `Settings` scene) opened by the panel's
+gear or ⌘,. The app activates itself first, since a menu bar app is not active.
+
+- **General**: refresh interval, launch at login, version, check for updates,
+  "Quit MyPRs".
+- **Review**: "Searches shown in the Review tab": each search with its name,
+  query, a notify toggle and a menu (Edit Search…, Move Up, Move Down, Delete
+  Search), plus "Add Search…". The editor sheet has Name, "GitHub link or
+  search" with the parsed query preview, and "Notify me about new pull
+  requests".
+- **Account**: signed-in login, organization access link, Sign Out (or Sign
+  in with GitHub).
 
 ### Widget
 
@@ -118,8 +180,18 @@ filters.
 - **App** talks to GitHub directly with the token. It is the only process that
   holds the token and does network calls.
 - **Widget** never calls the network. It reads `snapshot.json` from the App
-  Group container. The app calls `WidgetCenter.shared.reloadAllTimelines()`
-  after each save.
+  Group container. The app reloads the widget timelines when the snapshot or
+  a saved search's results change.
+
+### Storage (App Group container)
+
+| File | Content |
+|---|---|
+| `snapshot.json` | `PullRequestSnapshot`, my open PRs |
+| `saved-searches.json` | `[SavedSearch]` in display order (missing → the built-in "Review requested") |
+| `snapshots/<search id>.json` | `SavedSearchSnapshot`, the last result of one saved search, for a future widget |
+
+Files are written atomically with permissions `0600`.
 
 ### Identifiers
 
@@ -161,6 +233,8 @@ struct PullRequest: Codable, Hashable, Identifiable {
     let checksPassed: Int     // CheckRun SUCCESS/NEUTRAL/SKIPPED + StatusContext SUCCESS
     let checksTotal: Int      // all check contexts (first 100)
     let approvals: Int        // latestReviews with state APPROVED
+    let authorLogin: String?  // nil in snapshots saved before authors were fetched
+    let authorAvatarURL: URL? // only https://avatars.githubusercontent.com
     var needsAttention: Bool { checks == .failing || unansweredThreads > 0 }
 }
 enum CheckStatus: String, Codable { case passing, failing, running, none }
@@ -170,6 +244,31 @@ struct PullRequestSnapshot: Codable {
     let login: String
     let pullRequests: [PullRequest]
     let fetchedAt: Date
+}
+
+struct SavedSearch: Codable, Hashable, Identifiable {
+    let id: UUID
+    var name: String
+    var query: String
+    var notifies: Bool
+    static let reviewRequested: SavedSearch
+}
+
+struct SavedSearchSnapshot: Codable {
+    let searchID: UUID
+    let pullRequests: [PullRequest]
+    let fetchedAt: Date
+}
+
+struct SavedSearchStore {
+    static let shared: SavedSearchStore
+    init(directory: URL)
+    func loadSearches() -> [SavedSearch]
+    func saveSearches(_ searches: [SavedSearch])
+    func loadSnapshot(for searchID: UUID) -> SavedSearchSnapshot?
+    func saveSnapshot(_ snapshot: SavedSearchSnapshot)
+    func removeSnapshot(for searchID: UUID)
+    func clearSnapshots()
 }
 
 struct SnapshotStore {
@@ -185,43 +284,55 @@ enum AppConfig { appGroupID, urlScheme, gitHubClientID, authBaseURL, authCallbac
 
 ### GitHub query
 
-One GraphQL request per refresh:
+One GraphQL request per refresh for my PRs, then one per saved search. Both
+select the same fields through a fragment (`PullRequestFields`):
 
 ```graphql
 query {
   viewer { login }
   search(query: "is:pr is:open author:@me archived:false", type: ISSUE, first: 50) {
+    nodes { ...PullRequestFields }
+  }
+}
+
+query($q: String!) {
+  viewer { login }
+  search(query: $q, type: ISSUE_ADVANCED, first: 50) {
+    nodes { ...PullRequestFields }
+  }
+}
+
+fragment PullRequestFields on PullRequest {
+  id number title url isDraft updatedAt createdAt reviewDecision
+  additions deletions changedFiles headRefName baseRefName mergeable
+  author { login avatarUrl }
+  repository { nameWithOwner }
+  latestReviews(first: 20) { nodes { state } }
+  commits(last: 1) {
     nodes {
-      ... on PullRequest {
-        id number title url isDraft updatedAt createdAt reviewDecision
-        additions deletions changedFiles headRefName baseRefName mergeable
-        repository { nameWithOwner }
-        latestReviews(first: 20) { nodes { state } }
-        commits(last: 1) {
-          nodes {
-            commit {
-              statusCheckRollup {
-                state
-                contexts(first: 100) {
-                  nodes {
-                    ... on CheckRun { conclusion }
-                    ... on StatusContext { state }
-                  }
-                }
-              }
+      commit {
+        statusCheckRollup {
+          state
+          contexts(first: 100) {
+            nodes {
+              ... on CheckRun { conclusion }
+              ... on StatusContext { state }
             }
           }
-        }
-        reviewThreads(first: 100) {
-          nodes { isResolved comments(last: 1) { nodes { author { login } } } }
         }
       }
     }
   }
+  reviewThreads(first: 100) {
+    nodes { isResolved comments(last: 1) { nodes { author { login } } } }
+  }
 }
 ```
 
-A snapshot cached by an older version lacks the newer fields, so it fails to
+`ISSUE_ADVANCED` accepts `AND`, `OR` and parentheses, as GitHub's web search
+does, so a copied link works as is.
+
+A snapshot cached by an older version lacks the newer required fields, so it fails to
 decode: `SnapshotStore.load()` returns nil and the next refresh replaces it.
 
 ### Recent query
@@ -309,4 +420,5 @@ See `AGENTS.md`. Readability and simplicity first.
   Developer ID, notarize, staple, package a DMG, sign it for Sparkle, publish a
   GitHub Release with the DMG and `appcast.xml`.
 - Unit tests cover pure logic: GraphQL response mapping, change detection,
-  login callback parsing, worker handler.
+  login callback parsing, saved search links, Review sections, new-PR
+  detection, storage, worker handler.
