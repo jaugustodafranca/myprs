@@ -15,11 +15,23 @@ struct GeneralSection: View {
             }
             Toggle("Launch at login", isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, enabled in setLaunchAtLogin(enabled) }
+            LabeledContent("Notifications") { notificationControls }
             LabeledContent("Updates") { CheckForUpdatesButton(updater: updater) }
             LabeledContent("Version", value: versionText)
             HStack {
                 Spacer()
                 Button("Quit MyPRs") { NSApplication.shared.terminate(nil) }
+            }
+        }
+    }
+
+    private var notificationControls: some View {
+        HStack(spacing: 8) {
+            Text(monitor.notificationPermission.settingsLabel)
+                .foregroundStyle(.secondary)
+            if let action = monitor.notificationPermission.settingsAction {
+                Button(action) { Task { await monitor.allowNotifications() } }
+                    .controlSize(.small)
             }
         }
     }

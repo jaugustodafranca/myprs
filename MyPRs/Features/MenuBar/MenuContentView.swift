@@ -20,6 +20,11 @@ struct MenuContentView: View {
         .frame(width: PanelSize.width)
         .background { hiddenShortcuts }
         .onAppear { screenHeight = NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight }
+        // The panel window becomes key each time it opens; the content view may stay mounted in between.
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
+            Task { await monitor.checkNotificationPermission() }
+        }
+        .task { await monitor.checkNotificationPermission() }
     }
 
     @ViewBuilder
@@ -81,6 +86,12 @@ struct MenuContentView: View {
                     checkAgain: { Task { await monitor.checkOrganizationAccess(force: true) } },
                     signInAgain: { Task { await monitor.signInAgain() } }
                 )
+                Divider()
+            }
+            if monitor.notificationPermission.needsAttention {
+                NotificationsOffBanner(permission: monitor.notificationPermission) {
+                    Task { await monitor.allowNotifications() }
+                }
                 Divider()
             }
         }

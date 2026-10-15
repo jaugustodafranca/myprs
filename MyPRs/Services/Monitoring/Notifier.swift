@@ -3,6 +3,7 @@ import Foundation
 import MyPRsKit
 import UserNotifications
 
+@MainActor
 final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     private let center = UNUserNotificationCenter.current()
 
@@ -11,8 +12,13 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         center.delegate = self
     }
 
-    func requestAuthorization() {
-        center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    func authorizationStatus() async -> UNAuthorizationStatus {
+        await center.notificationSettings().authorizationStatus
+    }
+
+    /// Shows the system prompt the first time; afterwards macOS answers from its settings.
+    func requestAuthorization() async {
+        _ = try? await center.requestAuthorization(options: [.alert, .sound])
     }
 
     func notify(_ changes: [PullRequestChange]) {
@@ -35,13 +41,13 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    static func reviewBody(for pullRequest: PullRequest) -> String {
+    nonisolated static func reviewBody(for pullRequest: PullRequest) -> String {
         let body = "\(pullRequest.repository)#\(pullRequest.number) · \(pullRequest.title)"
         guard let author = pullRequest.authorLogin else { return body }
         return "\(body) · by \(author)"
     }
 
-    func userNotificationCenter(
+    nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
@@ -53,7 +59,7 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         await MainActor.run { _ = NSWorkspace.shared.open(url) }
     }
 
-    func userNotificationCenter(
+    nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
