@@ -11,6 +11,7 @@ final class PullRequestMonitor {
     var isSigningIn = false
     var lastError: String?
     var organizationAccess = OrganizationAccess()
+    var notificationPermission = NotificationPermission.allowed
     var refreshInterval = RefreshInterval.standard
 
     let recent: RecentPullRequests
@@ -33,6 +34,8 @@ final class PullRequestMonitor {
     func saveSearch(_ search: SavedSearch) async {}
     func deleteSearch(_ id: UUID) {}
     func checkOrganizationAccess(force: Bool = false) async {}
+    func checkNotificationPermission() async {}
+    func allowNotifications() async {}
 }
 
 /// Stands in for the Sparkle-backed updater.

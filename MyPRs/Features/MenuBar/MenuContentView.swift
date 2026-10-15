@@ -19,7 +19,10 @@ struct MenuContentView: View {
         }
         .frame(width: PanelSize.width)
         .background { hiddenShortcuts }
-        .onAppear { screenHeight = NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight }
+        .onAppear {
+            screenHeight = NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight
+            Task { await monitor.checkNotificationPermission() }
+        }
     }
 
     @ViewBuilder
@@ -81,6 +84,10 @@ struct MenuContentView: View {
                     checkAgain: { Task { await monitor.checkOrganizationAccess(force: true) } },
                     signInAgain: { Task { await monitor.signInAgain() } }
                 )
+                Divider()
+            }
+            if monitor.notificationPermission.needsAttention {
+                NotificationsOffBanner { Task { await monitor.allowNotifications() } }
                 Divider()
             }
         }

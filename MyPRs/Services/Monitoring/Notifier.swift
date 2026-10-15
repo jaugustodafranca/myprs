@@ -3,7 +3,8 @@ import Foundation
 import MyPRsKit
 import UserNotifications
 
-final class Notifier: NSObject, UNUserNotificationCenterDelegate {
+// Awaited from the main actor; its only state is the shared notification center, which is thread-safe.
+final class Notifier: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     private let center = UNUserNotificationCenter.current()
 
     override init() {
@@ -11,8 +12,13 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         center.delegate = self
     }
 
-    func requestAuthorization() {
-        center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    func authorizationStatus() async -> UNAuthorizationStatus {
+        await center.notificationSettings().authorizationStatus
+    }
+
+    /// Shows the system prompt the first time; afterwards macOS answers from its settings.
+    func requestAuthorization() async -> Bool {
+        (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
     }
 
     func notify(_ changes: [PullRequestChange]) {

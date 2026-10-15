@@ -112,6 +112,19 @@ turns it into the query that is run, shown live under the field:
   `GitHubURL.isTrusted`.
 - Signing out clears the results but keeps the saved searches.
 
+#### Notification permission
+
+- After sign-in (and at launch when already signed in) the app asks macOS for
+  notification permission if it was never answered. The answer is read back
+  into `PullRequestMonitor.notificationPermission` (`NotificationPermission`:
+  unknown, notDetermined, allowed, denied), refreshed at every refresh and
+  whenever the panel opens, since the user can change it in System Settings.
+- While denied, the panel shows a banner under the header, "Notifications are
+  off", with "Open System Settings", which opens the app's own entry in the
+  Notifications pane (`x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=<bundle id>`).
+- Settings > General has a "Notifications" row: "On"; "Not allowed yet" with
+  "Allow…" (shows the system prompt); "Off" with "Open System Settings…".
+
 ### Settings (inside the panel)
 
 Settings is a screen of the menu bar panel, not a window: the panel shows one
@@ -123,8 +136,8 @@ Save or Back, so the user can leave to copy a GitHub link and come back. Heights
 fit the content up to the same 60%-of-screen cap as the lists. One scrolling
 form with four sections:
 
-- **General**: refresh interval, launch at login, version, check for updates,
-  "Quit MyPRs".
+- **General**: refresh interval, launch at login, notifications (see above),
+  version, check for updates, "Quit MyPRs".
 - **Review**: "Searches shown in the Review tab": each search with its name,
   query, a notify toggle and a menu (Edit Search…, Move Up, Move Down, Delete
   Search), plus "Add Search". The editor is its own panel screen (Back, Save) with Name, "GitHub link or
@@ -464,4 +477,4 @@ See `AGENTS.md`. Readability and simplicity first.
   GitHub Release with the DMG and `appcast.xml`.
 - Unit tests cover pure logic: GraphQL response mapping, change detection,
   login callback parsing, saved search links, Review sections, new-PR
-  detection, storage, worker handler.
+  detection, notification permission states, storage, worker handler.

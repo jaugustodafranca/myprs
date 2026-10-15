@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import MyPRsKit
 import WidgetKit
@@ -11,6 +12,7 @@ final class PullRequestMonitor {
     private(set) var isSigningIn = false
     private(set) var lastError: String?
     private(set) var organizationAccess = OrganizationAccess()
+    private(set) var notificationPermission = NotificationPermission.unknown
 
     var refreshInterval: TimeInterval {
         didSet {
@@ -49,8 +51,8 @@ final class PullRequestMonitor {
         isSignedIn = tokenStore.load() != nil
         WidgetCenter.shared.reloadTimelines(ofKind: AppConfig.widgetKind)
         if isSignedIn {
-            notifier.requestAuthorization()
             startTimer()
+            Task { await requestNotificationsIfNeeded() }
         }
     }
 
@@ -63,8 +65,8 @@ final class PullRequestMonitor {
             let token = try await loginFlow.signIn()
             try storeOrRevoke(token)
             isSignedIn = true
-            notifier.requestAuthorization()
             startTimer()
+            await requestNotificationsIfNeeded()
         } catch let error as LoginError {
             lastError = error.errorDescription
         } catch let error as TokenStoreError {
@@ -125,6 +127,31 @@ final class PullRequestMonitor {
         guard isSignedIn else { return }
         apply(await savedSearches.refreshAll(using: searchFetcher(token: token)))
         if lastError == nil { await checkOrganizationAccess(token: token) }
+        await checkNotificationPermission()
+    }
+
+    // MARK: Notifications
+
+    /// Reads what macOS currently allows; the user may have changed it in System Settings.
+    func checkNotificationPermission() async {
+        notificationPermission = NotificationPermission(await notifier.authorizationStatus())
+    }
+
+    /// Shows the system prompt if it was never answered, else opens the app's entry in System Settings.
+    func allowNotifications() async {
+        await checkNotificationPermission()
+        if notificationPermission.canAsk {
+            await requestNotificationsIfNeeded()
+        } else {
+            NSWorkspace.shared.open(NotificationPermission.systemSettingsURL(bundleID: Bundle.main.bundleIdentifier ?? ""))
+        }
+    }
+
+    private func requestNotificationsIfNeeded() async {
+        await checkNotificationPermission()
+        guard notificationPermission.canAsk else { return }
+        _ = await notifier.requestAuthorization()
+        await checkNotificationPermission()
     }
 
     private func refreshOpenPullRequests(token: String) async throws {
