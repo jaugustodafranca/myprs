@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/media/demo.gif" alt="MyPRs demo: the menu bar panel, a CI failure notification, copying a branch, the Recent tab and the desktop widget" width="800">
+  <img src="assets/media/demo.gif" alt="MyPRs demo: the menu bar panel, a CI failure notification, copying a branch, the Recent tab, the Review tab, copying an AI review prompt and the desktop widget" width="800">
 </p>
 
 <p align="center">
@@ -25,7 +25,15 @@
   <img src="assets/screenshots/hero.png" alt="MyPRs menu bar panel and widget" width="800">
 </p>
 
-<p align="center"><em>The menu bar panel next to the desktop widget.</em></p>
+<p align="center"><em>Your open pull requests in the menu bar panel, next to the desktop widget.</em></p>
+
+### Review tab
+
+<p align="center">
+  <img src="assets/screenshots/review.png" alt="MyPRs Review tab listing pull requests from two saved GitHub searches, next to a widget showing one of the searches" width="800">
+</p>
+
+<p align="center"><em>Pull requests from your saved GitHub searches, in the panel and in a widget. The sparkle button copies an AI review prompt for that PR.</em></p>
 
 ### Desktop widget
 
@@ -42,9 +50,11 @@
 - Sends a notification when CI starts failing or a PR gets new unanswered threads
 - Counts unanswered review threads so nothing waits on you unnoticed
 - Shows review status: approved, changes requested or pending
-- Review tab: pull requests from your saved GitHub searches (paste any GitHub pull request list link), with optional notifications for new ones
-- Opens a PR or copies its link in one click
-- Copies a ready-to-paste AI review prompt for any PR (editable in Settings)
+- Recent tab: your recently merged and closed pull requests
+- Review tab: pull requests waiting on you, from any GitHub search you save (paste a GitHub pull request list link), with an optional notification for new ones
+- Widgets can show your open pull requests or one of your saved searches
+- Copies a ready-to-paste AI review prompt for any PR with one click; the prompt is editable in Settings
+- Opens a PR or copies its link or branch name in one click
 - Updates itself with Sparkle
 
 ## Install
