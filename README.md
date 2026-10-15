@@ -90,8 +90,8 @@ cd worker && npm ci && npm test && npx tsc --noEmit
 project.yml                  XcodeGen definition (the .xcodeproj is generated, not committed)
 MyPRs/                       Menu bar app target
   App/                       Entry point and app delegate
-  Features/                  One folder per screen: MenuBar, OpenPullRequests,
-                             RecentPullRequests, Settings, SignIn, Updates
+  Features/                  One folder per screen: AIReview, MenuBar, OpenPullRequests,
+                             RecentPullRequests, Review, Settings, SignIn, Updates
   Services/                  GitHub (client, queries, mappers), Monitoring (polling, change detection, notifications)
   Components/                Reusable app-only views and helpers
   Resources/                 Asset catalog; generated Info.plist and entitlements
@@ -104,13 +104,15 @@ Packages/MyPRsKit/           Local Swift package shared by app and widget
   Sources/MyPRsKit/          Models, Logic, Storage, DesignSystem
   Tests/MyPRsKitTests/       Package tests
 worker/                      Cloudflare Worker for the OAuth code exchange
-scripts/                     Release helpers
-docs/                        Specification and release guide
+scripts/                     Release helpers; preview/ renders screens to PNG for prototypes
+docs/                        Specification, release guide, infrastructure, decision log
 assets/                      Logo and README media
 .github/workflows/           CI and release
 ```
 
-See [docs/spec.md](docs/spec.md) for the design and [AGENTS.md](AGENTS.md) for contributor rules.
+See [docs/spec.md](docs/spec.md) for the design, [docs/decisions.md](docs/decisions.md)
+for why it is built this way, [docs/infrastructure.md](docs/infrastructure.md) for what
+lives outside the repository and [AGENTS.md](AGENTS.md) for contributor rules.
 
 ## License
 

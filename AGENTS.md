@@ -1,7 +1,9 @@
 # MyPRs — rules for contributors and agents
 
 Read `docs/spec.md` before changing anything. It is the source of truth for
-behaviour, identifiers and shared types.
+behaviour, identifiers and shared types. `docs/decisions.md` says why things
+are the way they are; `docs/infrastructure.md` covers what lives outside the
+repository.
 
 ## Code style
 
@@ -23,10 +25,11 @@ The code must be easy for a human to read. Prefer simple over clever.
 ## Layout
 
 ```
+CLAUDE.md                    Points Claude Code at this file
 project.yml                  XcodeGen definition (the .xcodeproj is generated, not committed)
 MyPRs/                       Menu bar app target
   App/                       Entry point and app delegate
-  Features/                  One folder per screen: MenuBar, OpenPullRequests,
+  Features/                  One folder per screen: AIReview, MenuBar, OpenPullRequests,
                              RecentPullRequests, Review, Settings, SignIn, Updates
   Services/                  GitHub (client, queries, mappers), Monitoring (polling, change detection, notifications)
   Components/                Reusable app-only views and helpers
@@ -40,8 +43,8 @@ Packages/MyPRsKit/           Local Swift package shared by app and widget
   Sources/MyPRsKit/          Models, Logic, Storage, DesignSystem (only what the widget also uses)
   Tests/MyPRsKitTests/       Package tests
 worker/                      Cloudflare Worker for the OAuth code exchange
-scripts/                     Release helpers
-docs/                        Specification and release guide
+scripts/                     Release helpers; preview/ renders screens to PNG for prototypes
+docs/                        Specification, release guide, infrastructure, decision log
 assets/                      Logo and README media
 .github/workflows/           CI and release
 ```
@@ -67,8 +70,52 @@ swift test --package-path Packages/MyPRsKit   # package tests only, no Xcode pro
 cd worker && npm ci && npm test && npx tsc --noEmit
 ```
 
+## Local development
+
+Tests need no signing. Running the app itself, with the widget and the
+`myprs://` login callback, needs a signed build installed in `/Applications`:
+WidgetKit only discovers widgets of apps installed there, and a build left in
+DerivedData registers a second handler for the URL scheme. The maintainer's
+flow, which needs the Developer ID certificate in the login keychain:
+
+```bash
+xcodegen generate
+xcodebuild -project MyPRs.xcodeproj -scheme MyPRs -configuration Release -destination 'platform=macOS' -derivedDataPath build \
+  CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Developer ID Application" DEVELOPMENT_TEAM=688YYDN5Z4 \
+  PROVISIONING_PROFILE_SPECIFIER="" OTHER_CODE_SIGN_FLAGS="--timestamp" build
+pkill -x MyPRs; rm -rf /Applications/MyPRs.app && cp -R build/Build/Products/Release/MyPRs.app /Applications/
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f /Applications/MyPRs.app
+killall chronod   # drops WidgetKit's cached gallery so the new widget shows up
+open /Applications/MyPRs.app
+```
+
+Rules for agents:
+
+- Do not launch the app, open Xcode, or run anything that puts a macOS prompt
+  (keychain, notifications, Sparkle) on the user's screen. Ask the user to test
+  a build and say what to look at.
+- `xcodebuild test` starts the app as the test host. When
+  `AppEnvironment.isRunningTests` is true the launcher runs a bare
+  `TestHostApp` instead of `MyPRsApp`, so nothing touches the Keychain, App
+  Group, notifications, Sparkle or widgets; keep it that way.
+- To show how a screen looks, render it with `scripts/preview` (see its README)
+  and send the PNG instead of building and launching the app.
+
+## Data that never enters the repository
+
+- No real company data: no real organization or repository names other than
+  this one, no colleagues' logins, no internal ticket keys, no company-specific
+  prompts. This covers tests, sample data, docs, screenshots, commit messages
+  and PR descriptions. Use fictional names such as `acme/storefront` and
+  `jdoe`. The maintainer's own login and this repository are fine.
+- No secrets, and no identifiers that unlock anything: tokens, keys,
+  certificate material, Cloudflare or App Store Connect ids. Refer to them by
+  name (`docs/infrastructure.md`).
+- When delegating to a subagent, put both rules in its brief.
+
 ## Workflow
 
-- One branch and one PR per task. Branch name `feat/<short-name>`.
+- One branch and one PR per task. Branch name `<type>/<short-name>` with the
+  commit type (`feat`, `fix`, `chore`, `docs`).
 - Conventional commit messages (`feat:`, `fix:`, `chore:`, `ci:`, `docs:`).
 - CI must be green before merging. Squash merge.
