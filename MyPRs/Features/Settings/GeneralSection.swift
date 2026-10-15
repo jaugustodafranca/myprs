@@ -34,7 +34,6 @@ struct GeneralSection: View {
                     .controlSize(.small)
             }
         }
-        .task { await monitor.checkNotificationPermission() }
     }
 
     private var versionText: String {

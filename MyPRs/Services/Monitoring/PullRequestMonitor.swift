@@ -66,7 +66,7 @@ final class PullRequestMonitor {
             try storeOrRevoke(token)
             isSignedIn = true
             startTimer()
-            await requestNotificationsIfNeeded()
+            Task { await requestNotificationsIfNeeded() }
         } catch let error as LoginError {
             lastError = error.errorDescription
         } catch let error as TokenStoreError {
@@ -141,7 +141,7 @@ final class PullRequestMonitor {
     func allowNotifications() async {
         await checkNotificationPermission()
         if notificationPermission.canAsk {
-            await requestNotificationsIfNeeded()
+            await requestNotifications()
         } else {
             NSWorkspace.shared.open(NotificationPermission.systemSettingsURL(bundleID: Bundle.main.bundleIdentifier ?? ""))
         }
@@ -149,8 +149,11 @@ final class PullRequestMonitor {
 
     private func requestNotificationsIfNeeded() async {
         await checkNotificationPermission()
-        guard notificationPermission.canAsk else { return }
-        _ = await notifier.requestAuthorization()
+        if notificationPermission.canAsk { await requestNotifications() }
+    }
+
+    private func requestNotifications() async {
+        await notifier.requestAuthorization()
         await checkNotificationPermission()
     }
 

@@ -3,6 +3,7 @@ import UserNotifications
 
 /// Whether macOS lets MyPRs show notifications. Once denied, only System Settings can turn them back on.
 enum NotificationPermission: Equatable {
+    /// Not read yet.
     case unknown
     case notDetermined
     case allowed
@@ -11,7 +12,7 @@ enum NotificationPermission: Equatable {
     init(_ status: UNAuthorizationStatus) {
         switch status {
         case .notDetermined: self = .notDetermined
-        case .authorized, .provisional, .ephemeral: self = .allowed
+        case .authorized, .provisional: self = .allowed
         case .denied: self = .denied
         @unknown default: self = .unknown
         }
@@ -20,24 +21,32 @@ enum NotificationPermission: Equatable {
     /// The system prompt can still be shown.
     var canAsk: Bool { self == .notDetermined }
 
-    /// Notifications are off: the panel tells the user and points to System Settings.
-    var needsAttention: Bool { self == .denied }
+    /// Notifications are not arriving: the panel says so and offers the way to turn them on.
+    var needsAttention: Bool { self == .denied || self == .notDetermined }
+
+    var bannerTitle: String {
+        canAsk ? "Notifications aren't allowed yet" : "Notifications are off"
+    }
+
+    var bannerAction: String {
+        canAsk ? "Allow Notifications" : "Open System Settings"
+    }
 
     var settingsLabel: String {
         switch self {
-        case .unknown: "Unknown"
+        case .unknown: "Checking…"
         case .notDetermined: "Not allowed yet"
         case .allowed: "On"
         case .denied: "Off"
         }
     }
 
-    /// The button next to the label in Settings; nil when notifications are on.
+    /// The button next to the label in Settings; nil when notifications are on or the state is not known yet.
     var settingsAction: String? {
         switch self {
-        case .allowed: nil
+        case .allowed, .unknown: nil
         case .notDetermined: "Allow…"
-        case .denied, .unknown: "Open System Settings…"
+        case .denied: "Open System Settings…"
         }
     }
 

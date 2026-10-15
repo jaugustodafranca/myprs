@@ -3,8 +3,8 @@ import Foundation
 import MyPRsKit
 import UserNotifications
 
-// Awaited from the main actor; its only state is the shared notification center, which is thread-safe.
-final class Notifier: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
+@MainActor
+final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     private let center = UNUserNotificationCenter.current()
 
     override init() {
@@ -17,8 +17,8 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate, @unchecked Sen
     }
 
     /// Shows the system prompt the first time; afterwards macOS answers from its settings.
-    func requestAuthorization() async -> Bool {
-        (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
+    func requestAuthorization() async {
+        _ = try? await center.requestAuthorization(options: [.alert, .sound])
     }
 
     func notify(_ changes: [PullRequestChange]) {
@@ -41,13 +41,13 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate, @unchecked Sen
         }
     }
 
-    static func reviewBody(for pullRequest: PullRequest) -> String {
+    nonisolated static func reviewBody(for pullRequest: PullRequest) -> String {
         let body = "\(pullRequest.repository)#\(pullRequest.number) · \(pullRequest.title)"
         guard let author = pullRequest.authorLogin else { return body }
         return "\(body) · by \(author)"
     }
 
-    func userNotificationCenter(
+    nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
@@ -59,7 +59,7 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate, @unchecked Sen
         await MainActor.run { _ = NSWorkspace.shared.open(url) }
     }
 
-    func userNotificationCenter(
+    nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {

@@ -118,12 +118,17 @@ turns it into the query that is run, shown live under the field:
   notification permission if it was never answered. The answer is read back
   into `PullRequestMonitor.notificationPermission` (`NotificationPermission`:
   unknown, notDetermined, allowed, denied), refreshed at every refresh and
-  whenever the panel opens, since the user can change it in System Settings.
-- While denied, the panel shows a banner under the header, "Notifications are
-  off", with "Open System Settings", which opens the app's own entry in the
-  Notifications pane (`x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=<bundle id>`).
-- Settings > General has a "Notifications" row: "On"; "Not allowed yet" with
-  "Allow…" (shows the system prompt); "Off" with "Open System Settings…".
+  each time the panel window becomes key, since the user can change it in
+  System Settings. The prompt never blocks sign-in.
+- While not allowed, the panel shows a banner under the header. Denied:
+  "Notifications are off" with "Open System Settings", which opens the app's
+  own entry in the Notifications pane
+  (`x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=<bundle id>`).
+  Never answered: "Notifications aren't allowed yet" with "Allow
+  Notifications", which shows the system prompt.
+- Settings > General has a "Notifications" row: "Checking…" until read; "On";
+  "Not allowed yet" with "Allow…" (shows the system prompt); "Off" with
+  "Open System Settings…".
 
 ### Settings (inside the panel)
 
