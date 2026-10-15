@@ -42,7 +42,8 @@ patch_staged "$staged" MenuContentView.swift "s/$screen_height/PanelPreviewState
 patch_staged "$staged" PanelScreen.swift "s/$screen_height/PanelPreviewState.screenHeight/g"
 
 compile_preview "$work_dir/panel-preview" "$staged" \
-  "$preview_dir/Snapshot.swift" \
+  "$preview_dir/SnapshotWriter.swift" \
+  "$preview_dir/RunOffscreen.swift" \
   "$preview_dir/SampleData.swift" \
   "$preview_dir/PanelSampleData.swift" \
   "$preview_dir/PanelStubs.swift" \

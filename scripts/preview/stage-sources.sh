@@ -11,6 +11,7 @@ stage_sources() {
   mkdir -p "$destination"
   local path file
   for path in "$@"; do
+    [ -e "$path" ] || { echo "error: $path is missing; update scripts/preview" >&2; exit 1; }
     while IFS= read -r -d '' file; do
       stage_file "$file" "$destination"
     done < <(find "$path" -name '*.swift' -print0)

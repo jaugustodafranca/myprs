@@ -20,7 +20,7 @@ extension SampleData {
         ),
         closedPullRequest(
             457, "Bump the image resizer to the latest minor release",
-            repository: "acme/storefront", head: "chore/image-resizer-bump", base: "release/2026.03-stabilization",
+            repository: "acme/storefront", head: "chore/image-resizer-bump", base: "release/2.0-stabilization",
             state: .merged, endedAt: ago(days: 6), additions: 3, deletions: 3, files: 1
         ),
     ]

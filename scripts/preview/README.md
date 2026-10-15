@@ -32,7 +32,8 @@ together with the files in this folder. The repository sources are never edited.
 | File | Job |
 | --- | --- |
 | `stage-sources.sh` | Shared by both scripts: copies sources, applies a patch, runs `swiftc` |
-| `Snapshot.swift` | Draws a SwiftUI view in an invisible window and writes the PNG |
+| `SnapshotWriter.swift` | Draws a SwiftUI view in an invisible window and writes the PNG |
+| `RunOffscreen.swift` | Runs the preview as a faceless app and exits when it is done |
 | `SampleData.swift` | The pull requests, saved searches and snapshots both previews show |
 | `PanelSampleData.swift` | Closed pull requests for the Recent tab, a type only the app has |
 | `PanelStubs.swift` | Stand-ins for `PullRequestMonitor` and the Sparkle `Updater` |
@@ -40,7 +41,8 @@ together with the files in this folder. The repository sources are never edited.
 | `WidgetStubs.swift` | `PullRequestEntry.sample`, which `Provider.swift` refers to |
 | `WidgetPreview.swift` | Builds the widget scenarios |
 
-The files in this folder do not import `MyPRsKit`: everything is one module.
+The files in this folder do not import `MyPRsKit`: everything is one module. `SampleData.swift` here is
+not the widget's `MyPRsWidget/SampleData.swift`; the widget script leaves that one out on purpose.
 
 ## Source patches
 

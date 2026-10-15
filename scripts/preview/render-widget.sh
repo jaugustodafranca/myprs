@@ -27,7 +27,8 @@ patch_staged "$staged" EntryView.swift 's/@Environment(\\.widgetFamily) private 
 patch_staged "$staged" PullRequestRowView.swift 's/Link(destination: pullRequest.url)/Group/'
 
 compile_preview "$work_dir/widget-preview" "$staged" \
-  "$preview_dir/Snapshot.swift" \
+  "$preview_dir/SnapshotWriter.swift" \
+  "$preview_dir/RunOffscreen.swift" \
   "$preview_dir/SampleData.swift" \
   "$preview_dir/WidgetStubs.swift" \
   "$preview_dir/WidgetPreview.swift"

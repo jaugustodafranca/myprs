@@ -4,6 +4,7 @@ import SwiftUI
 enum SnapshotError: Error {
     case missingOutputDirectory
     case pngEncodingFailed(String)
+    case heightDidNotSettle
 }
 
 /// Draws SwiftUI views in an invisible window and saves them as PNG files.
@@ -51,15 +52,16 @@ struct SnapshotWriter {
     private func settledHeight(of host: NSView, in window: NSWindow) async throws -> CGFloat {
         var height = host.fittingSize.height
         var unchangedReads = 0
-        while unchangedReads < 3 {
+        for _ in 0..<50 {
             try await Task.sleep(for: .milliseconds(100))
             window.layoutIfNeeded()
             let latest = host.fittingSize.height
             unchangedReads = latest == height ? unchangedReads + 1 : 0
             height = latest
             window.setContentSize(NSSize(width: host.frame.width, height: height))
+            if unchangedReads == 3 { return height }
         }
-        return height
+        throw SnapshotError.heightDidNotSettle
     }
 
     /// Images have twice as many pixels as points, whatever display runs the preview.
@@ -87,20 +89,4 @@ struct SnapshotWriter {
         }
         return png
     }
-}
-
-/// Runs `work` in an app without a Dock icon, menu bar or focus, then exits with 0, or 1 if `work` threw.
-@MainActor
-func runOffscreen(_ work: @escaping @MainActor () async throws -> Void) {
-    Task { @MainActor in
-        do {
-            try await work()
-            exit(0)
-        } catch {
-            FileHandle.standardError.write(Data("Preview failed: \(error)\n".utf8))
-            exit(1)
-        }
-    }
-    NSApplication.shared.setActivationPolicy(.prohibited)
-    NSApplication.shared.run()
 }

@@ -34,14 +34,15 @@ during sign-in. The Worker is reachable only at `myprs-auth.zaintech.com.br`.
 The data-protection keychain needs a provisioning profile carrying the keychain
 access group; a Developer ID app without one is killed at launch. Release
 builds use no profile, so the token is stored in the legacy login keychain,
-restricted to the app's own item, with every `OSStatus` checked.
+restricted to the app's own item. A token the keychain refuses to store is
+revoked and the error shown, rather than left as an orphaned grant.
 
-## One GraphQL `search` shape for everything
+## GraphQL `search` for every list
 
-Open PRs, recent PRs and saved searches all use the same search query with
-`ISSUE_ADVANCED`, the query text passed as the `$q` variable and never
-interpolated into the document. Saved-search links pasted from GitHub are
-parsed into that query text.
+Open and recent PRs use fixed `search` queries (`type: ISSUE`, `author:@me`).
+Saved searches use the same field with `ISSUE_ADVANCED` and the user's query
+text passed as the `$q` variable, never interpolated into the document.
+Saved-search links pasted from GitHub are parsed into that query text.
 
 ## "Unanswered" means not resolved and last comment not by the user
 
@@ -92,9 +93,9 @@ brand mark is a custom `BrandGlyph` shape.
 ## Refresh every 30 minutes by default
 
 Two minutes was too aggressive for GitHub's rate limit and for notification
-noise. The default is 30 with 5 to 60 selectable and a manual refresh. The
-widget is reloaded only when the snapshot changed, because WidgetKit throttles
-reloads.
+noise. The default is 30 with 5 to 60 selectable and a manual refresh. After a
+refresh the widget is reloaded only when the data changed, because WidgetKit
+throttles reloads; launch, sign-out and deleting a search reload it too.
 
 ## Generic AI review prompt in the app
 

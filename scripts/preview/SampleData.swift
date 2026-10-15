@@ -63,7 +63,7 @@ enum SampleData {
         ),
         pullRequest(
             455, "Upgrade the Postgres driver to the 4.x series",
-            repository: "octo/api", head: "chore/postgres-driver-4", base: "release/2026.03-stabilization",
+            repository: "octo/api", head: "chore/postgres-driver-4", base: "release/2.0-stabilization",
             checks: .passing, passed: 6, total: 6, conflicts: true, additions: 18_400, deletions: 9_200, files: 142, createdAt: ago(days: 8)
         ),
         pullRequest(

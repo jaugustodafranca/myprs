@@ -36,7 +36,7 @@ three routes on `https://myprs-auth.zaintech.com.br`:
 
 | Route | Role |
 |---|---|
-| `GET /callback` | GitHub redirects here; a small page forwards only `code` and `state` to `myprs://auth` |
+| `GET /callback` | GitHub redirects here; a small page forwards `code` and `state` (or `error` and `state`) to `myprs://auth`, so no token passes through a URL |
 | `POST /token` | Exchanges `code` plus the PKCE `code_verifier` for a token, adding the client secret |
 | `POST /revoke` | Revokes a token on sign-out |
 
@@ -90,7 +90,8 @@ allowed by hash; a test fails if the script and `PAGE_SCRIPT_HASH` drift apart.
 - Feed: `https://github.com/jaugustodafranca/myprs/releases/latest/download/appcast.xml`,
   published by the release workflow and signed with EdDSA.
 - Public key: `SUPublicEDKey` in `project.yml`. Private key: the
-  `SPARKLE_PRIVATE_KEY` secret only.
+  `SPARKLE_PRIVATE_KEY` secret and the maintainer's login keychain, where
+  `generate_keys` stored it.
 - Installed apps only accept updates signed with the key in their own
   `Info.plist`, so the pair is not rotated casually. If it must be, ship one
   release signed with the old key that carries the new public key, then sign

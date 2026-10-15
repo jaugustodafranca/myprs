@@ -29,7 +29,7 @@ CLAUDE.md                    Points Claude Code at this file
 project.yml                  XcodeGen definition (the .xcodeproj is generated, not committed)
 MyPRs/                       Menu bar app target
   App/                       Entry point and app delegate
-  Features/                  One folder per screen: MenuBar, OpenPullRequests,
+  Features/                  One folder per screen: AIReview, MenuBar, OpenPullRequests,
                              RecentPullRequests, Review, Settings, SignIn, Updates
   Services/                  GitHub (client, queries, mappers), Monitoring (polling, change detection, notifications)
   Components/                Reusable app-only views and helpers
