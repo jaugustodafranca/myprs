@@ -39,6 +39,10 @@ patch_staged "$staged" MenuContentView.swift 's/@State private var tab = PanelTa
 patch_staged "$staged" GroupedPullRequestList.swift 's/@State private var collapsedGroupIDs: Set<String> = \[\]/@State private var collapsedGroupIDs: Set<String>/'
 patch_staged "$staged" GroupedPullRequestList.swift 's/self.groups = groups/self.groups = groups; self._collapsedGroupIDs = State(initialValue: PanelPreviewState.collapseGroups ? Set(groups.filter { $0.isRelated }.map { $0.id }) : [])/'
 
+# Make row hover styling visible in the constrained-height scenarios.
+patch_staged "$staged" PullRequestRow.swift 's/isHovering ?/(isHovering || PanelPreviewState.hoveredNumber == pullRequest.number) ?/'
+patch_staged "$staged" ClosedPullRequestRow.swift 's/isHovering ?/(isHovering || PanelPreviewState.hoveredNumber == pullRequest.number) ?/'
+
 # The panel is capped at 60% of the screen height; use a fixed height so renders match across machines.
 screen_height='NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight'
 patch_staged "$staged" MenuContentView.swift "s/$screen_height/PanelPreviewState.screenHeight/g"

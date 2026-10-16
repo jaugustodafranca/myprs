@@ -17,6 +17,7 @@ struct PullRequestList: View {
             ) { pullRequest, parentNumber in
                 PullRequestRow(pullRequest: pullRequest, parentNumber: parentNumber)
             }
+            .padding(.vertical, 12)
         }
     }
 }

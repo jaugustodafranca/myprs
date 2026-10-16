@@ -41,6 +41,7 @@ struct ReviewPullRequestList: View {
                     if section.id != sections.last?.id { Divider() }
                 }
             }
+            .padding(.vertical, 12)
         }
     }
 

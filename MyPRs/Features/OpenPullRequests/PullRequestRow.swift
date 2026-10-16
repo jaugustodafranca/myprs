@@ -40,7 +40,12 @@ struct PullRequestRow: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
-        .background(isHovering ? Color.primary.opacity(0.07) : .clear)
+        .background {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(isHovering ? Color.primary.opacity(0.035) : .clear)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+        }
         .contentShape(Rectangle())
         .onHover { isHovering = $0 }
         .onTapGesture(perform: open)

@@ -32,6 +32,7 @@ struct RecentPullRequestList: View {
                 footer
                 paginationSentinel
             }
+            .padding(.vertical, 12)
         }
     }
 

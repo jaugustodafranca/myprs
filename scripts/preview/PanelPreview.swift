@@ -4,8 +4,9 @@ import SwiftUI
 enum PanelPreviewState {
     static var tab = PanelTab.open
     static var collapseGroups = false
+    static var hoveredNumber: Int? = nil
     /// The panel grows to 60% of the screen height, then scrolls. A fixed, tall screen shows the sample lists in full on every machine.
-    static let screenHeight: CGFloat = 1600
+    static var screenHeight: CGFloat = 1600
 }
 
 @main
@@ -34,6 +35,14 @@ enum PanelPreview {
         try await writer.write(panel(of: open, tab: .recent), named: "panel-recent-collapsed", width: width)
         PanelPreviewState.collapseGroups = false
 
+        PanelPreviewState.screenHeight = 900
+        PanelPreviewState.hoveredNumber = 441
+        try await writer.write(panel(of: open, tab: .open), named: "panel-open-scroll-hover", width: width)
+        PanelPreviewState.hoveredNumber = 481
+        try await writer.write(panel(of: open, tab: .recent), named: "panel-recent-scroll-hover", width: width)
+        PanelPreviewState.hoveredNumber = nil
+        PanelPreviewState.screenHeight = 1600
+
         let empty = await makeMonitor(openPullRequests: [], searchStore: store)
         try await writer.write(panel(of: empty), named: "panel-open-empty", width: width)
 
@@ -43,11 +52,22 @@ enum PanelPreview {
     }
 
     @MainActor
-    private static func panel(of monitor: PullRequestMonitor, tab: PanelTab = .open, showingSettings: Bool = false) -> MenuContentView {
+    private static func panel(of monitor: PullRequestMonitor, tab: PanelTab = .open, showingSettings: Bool = false) -> some View {
         PanelPreviewState.tab = tab
         let navigation = PanelNavigation()
         if showingSettings { navigation.showSettings() }
         return MenuContentView(monitor: monitor, updater: Updater(), navigation: navigation)
+            .overlay(alignment: .topTrailing) {
+                // Offscreen snapshots omit the system scroller; this represents its visible footprint.
+                if PanelPreviewState.hoveredNumber != nil {
+                    Capsule()
+                        .fill(Color.secondary.opacity(0.6))
+                        .frame(width: 10, height: 180)
+                        .padding(.trailing, 3)
+                        .padding(.top, 94)
+                        .allowsHitTesting(false)
+                }
+            }
     }
 
     @MainActor
