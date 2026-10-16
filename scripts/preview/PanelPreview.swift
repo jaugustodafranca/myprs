@@ -3,6 +3,7 @@ import SwiftUI
 /// Read by the initial values that `render-panel.sh` patches into `MenuContentView` and `PanelScreen`.
 enum PanelPreviewState {
     static var tab = PanelTab.open
+    static var collapseGroups = false
     /// The panel grows to 60% of the screen height, then scrolls. A fixed, tall screen shows the sample lists in full on every machine.
     static let screenHeight: CGFloat = 1600
 }
@@ -27,6 +28,11 @@ enum PanelPreview {
         try await writer.write(panel(of: open, tab: .recent), named: "panel-recent", width: width)
         try await writer.write(panel(of: open, tab: .review), named: "panel-review", width: width)
         try await writer.write(panel(of: open, showingSettings: true), named: "panel-settings", width: width)
+
+        PanelPreviewState.collapseGroups = true
+        try await writer.write(panel(of: open, tab: .open), named: "panel-open-collapsed", width: width)
+        try await writer.write(panel(of: open, tab: .recent), named: "panel-recent-collapsed", width: width)
+        PanelPreviewState.collapseGroups = false
 
         let empty = await makeMonitor(openPullRequests: [], searchStore: store)
         try await writer.write(panel(of: empty), named: "panel-open-empty", width: width)

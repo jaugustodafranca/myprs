@@ -30,7 +30,7 @@ struct GroupedPullRequestList<Item: GroupablePullRequest, Row: View>: View {
                     row(item, nil)
                 }
 
-                if index != groups.count - 1 {
+                if index != groups.count - 1 && !group.isRelated && !groups[index + 1].isRelated {
                     Divider().padding(.leading, 32)
                 }
             }
@@ -47,27 +47,27 @@ struct GroupedPullRequestList<Item: GroupablePullRequest, Row: View>: View {
     private func relatedGroup(_ group: PullRequestGroup<Item>) -> some View {
         VStack(spacing: 0) {
             Button { toggle(group.id) } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "arrow.triangle.branch")
-                        .font(.caption)
-                    Text("\(group.repository) · \(group.baseBranch)")
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .layoutPriority(1)
-                    Spacer(minLength: 4)
-                    if let summaryText = summary?(group.items) {
-                        Text(summaryText)
-                            .lineLimit(1)
-                            .fixedSize()
-                            .foregroundStyle(.secondary)
-                    }
-                    Text("\(group.items.count) related PRs")
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .fixedSize()
-                    Image(systemName: collapsedGroupIDs.contains(group.id) ? "chevron.right" : "chevron.down")
+                HStack(spacing: 8) {
+                    Image(systemName: "chevron.right")
                         .font(.caption2.weight(.semibold))
+                        .rotationEffect(.degrees(collapsedGroupIDs.contains(group.id) ? 0 : 90))
                         .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("\(group.repository) · \(group.baseBranch)")
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        HStack(spacing: 6) {
+                            Text("\(group.items.count) related PRs")
+                            if let summaryText = summary?(group.items) {
+                                Text("·")
+                                Text(summaryText)
+                            }
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
                 }
                 .font(.caption.weight(.medium))
                 .foregroundStyle(.primary)
@@ -77,9 +77,8 @@ struct GroupedPullRequestList<Item: GroupablePullRequest, Row: View>: View {
             }
             .buttonStyle(.plain)
 
-            Divider().padding(.leading, 10)
-
             if !collapsedGroupIDs.contains(group.id) {
+                Divider().padding(.horizontal, 10)
                 VStack(spacing: 0) {
                     ForEach(Array(group.items.enumerated()), id: \.element.id) { index, item in
                         row(item, group.parentNumbers[item.id])
@@ -100,7 +99,7 @@ struct GroupedPullRequestList<Item: GroupablePullRequest, Row: View>: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 9))
         .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 
     private func toggle(_ id: String) {
