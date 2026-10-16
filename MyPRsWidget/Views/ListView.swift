@@ -16,12 +16,32 @@ struct ListView: View {
         isSearch ? StatusPill(toReview: snapshot.pullRequests.count) : StatusPill(summary)
     }
 
-    /// A search keeps GitHub's order, which may come from a `sort:` qualifier.
-    private var rows: [PullRequest] {
-        isSearch ? snapshot.pullRequests : snapshot.pullRequests.sortedForDisplay()
+    private var groups: [PullRequestGroup<PullRequest>] {
+        PullRequestGrouping.groups(isSearch ? snapshot.pullRequests : snapshot.pullRequests.sortedForDisplay())
+    }
+
+    private var totalRows: Int { groups.reduce(0) { $0 + $1.items.count } }
+
+    private func visibleGroups(_ rowCount: Int) -> [(group: PullRequestGroup<PullRequest>, visible: [PullRequest], omitted: Int)] {
+        var remaining = rowCount
+        return groups.compactMap { group in
+            let visibleCount = min(remaining, group.items.count)
+            guard visibleCount > 0 else { return nil }
+            remaining -= visibleCount
+            return (group, Array(group.items.prefix(visibleCount)), group.items.count - visibleCount)
+        }
     }
 
     var body: some View {
+        ViewThatFits(in: .vertical) {
+            ForEach(Array((0...min(rowLimit, totalRows)).reversed()), id: \.self) { rowCount in
+                content(rowCount: rowCount)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func content(rowCount: Int) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             WidgetHeaderView(
                 title: source.title,
@@ -31,15 +51,17 @@ struct ListView: View {
             if showsScoreboard && !isInlineScoreboard {
                 ScoreboardView(summary: summary)
             }
-            VStack(alignment: .leading, spacing: 7) {
-                ForEach(rows.prefix(rowLimit)) { pullRequest in
-                    PullRequestRowView(pullRequest: pullRequest, detail: detail, showsAuthor: isSearch)
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(visibleGroups(rowCount), id: \.group.id) { visibleGroup in
+                    WidgetPullRequestGroup(group: visibleGroup.group, visibleItems: visibleGroup.visible, omittedCount: visibleGroup.omitted) { pullRequest, parentNumber in
+                        PullRequestRowView(
+                            pullRequest: pullRequest, detail: detail, showsAuthor: isSearch, parentNumber: parentNumber
+                        )
+                    }
                 }
             }
-            Spacer(minLength: 0)
-            Text("Updated \(snapshot.fetchedAt.formatted(date: .omitted, time: .shortened))")
-                .font(.system(size: 9))
-                .foregroundStyle(.tertiary)
+            WidgetListFooter(omittedCount: totalRows - rowCount, updatedAt: snapshot.fetchedAt)
         }
     }
+
 }

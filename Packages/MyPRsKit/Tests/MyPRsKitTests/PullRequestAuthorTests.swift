@@ -26,5 +26,15 @@ import Testing
         let decoded = try JSONDecoder().decode(PullRequest.self, from: Data(json.utf8))
         #expect(decoded.authorLogin == nil)
         #expect(decoded.authorAvatarURL == nil)
+        #expect(decoded.headRepository == nil)
+
+        let child = PullRequest(
+            id: "PR_2", number: 2, title: "Child", url: URL(string: "https://github.com/o/r/pull/2")!, repository: "o/r",
+            headRepository: "o/r", isDraft: false, checks: .none, review: .waiting, unansweredThreads: 0,
+            updatedAt: Date(timeIntervalSince1970: 1), createdAt: Date(timeIntervalSince1970: 1), additions: 0,
+            deletions: 0, changedFiles: 0, headBranch: "child", baseBranch: "h", hasConflicts: false,
+            checksPassed: 0, checksTotal: 0, approvals: 0
+        )
+        #expect(PullRequestGrouping.groups([decoded, child]).map(\.id).sorted() == ["PR_1", "PR_2"])
     }
 }

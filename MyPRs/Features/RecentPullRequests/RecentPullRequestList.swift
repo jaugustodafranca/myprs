@@ -4,6 +4,7 @@ import SwiftUI
 struct RecentPullRequestList: View {
     let recent: RecentPullRequests
     let maxHeight: CGFloat
+    @State private var hasCollapsedGroups = false
 
     var body: some View {
         content
@@ -22,12 +23,14 @@ struct RecentPullRequestList: View {
     private var list: some View {
         FittingScrollView(maxHeight: maxHeight) {
             LazyVStack(spacing: 0) {
-                ForEach(recent.items) { pullRequest in
-                    ClosedPullRequestRow(pullRequest: pullRequest)
-                        .onAppear { loadMoreIfLast(pullRequest) }
-                    Divider()
+                GroupedPullRequestList(
+                    groups: PullRequestGrouping.groups(recent.items),
+                    onCollapseChanged: { hasCollapsedGroups = $0 }
+                ) { pullRequest, parentNumber in
+                    ClosedPullRequestRow(pullRequest: pullRequest, parentNumber: parentNumber)
                 }
                 footer
+                paginationSentinel
             }
         }
     }
@@ -70,8 +73,23 @@ struct RecentPullRequestList: View {
         .frame(maxWidth: .infinity, minHeight: PanelSize.emptyStateHeight)
     }
 
-    private func loadMoreIfLast(_ pullRequest: ClosedPullRequest) {
-        guard pullRequest.id == recent.items.last?.id else { return }
+    @ViewBuilder
+    private var paginationSentinel: some View {
+        if recent.hasNextPage && !recent.isLoading && !recent.hasFailed {
+            Button("Load more") { loadMore() }
+                .buttonStyle(.link)
+                .font(.callout)
+                .frame(maxWidth: .infinity)
+                .padding(8)
+                .id(recent.items.count)
+                .onAppear {
+                    if !hasCollapsedGroups { loadMore() }
+                }
+        }
+    }
+
+    private func loadMore() {
+        guard recent.hasNextPage, !recent.isLoading, !recent.hasFailed else { return }
         Task { await recent.loadMore() }
     }
 }

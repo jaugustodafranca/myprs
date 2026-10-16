@@ -23,6 +23,8 @@ import Testing
         #expect(merged.title == "Merged work")
         #expect(merged.url == URL(string: "https://github.com/acme/web/pull/12"))
         #expect(merged.repository == "acme/web")
+        #expect(merged.headRepository == "acme/web")
+        #expect(merged.createdAt == Date(timeIntervalSince1970: 1_790_640_000))
         #expect(merged.headBranch == "feature/merged")
         #expect(merged.baseBranch == "main")
         #expect(merged.state == .merged)
@@ -54,18 +56,22 @@ private let fixture = """
           "id": "PR_12", "number": 12, "title": "Merged work",
           "url": "https://github.com/acme/web/pull/12", "state": "MERGED",
           "mergedAt": "2026-10-01T00:00:00Z", "closedAt": "2026-10-01T00:00:00Z",
+          "createdAt": "2026-09-29T00:00:00Z",
           "additions": 40, "deletions": 5, "changedFiles": 3,
           "headRefName": "feature/merged", "baseRefName": "main",
-          "repository": { "nameWithOwner": "acme/web" }
+          "repository": { "nameWithOwner": "acme/web" },
+          "headRepository": { "nameWithOwner": "acme/web" }
         },
         {},
         {
           "id": "PR_11", "number": 11, "title": "Abandoned work",
           "url": "https://github.com/acme/web/pull/11", "state": "CLOSED",
           "mergedAt": null, "closedAt": "2026-09-30T00:00:00Z",
+          "createdAt": "2026-09-28T00:00:00Z",
           "additions": 1, "deletions": 1, "changedFiles": 1,
           "headRefName": "feature/closed", "baseRefName": "main",
-          "repository": { "nameWithOwner": "acme/web" }
+          "repository": { "nameWithOwner": "acme/web" },
+          "headRepository": null
         }
       ]
     }

@@ -107,6 +107,40 @@ import Testing
         #expect(recent.items.map(\.number) == [1, 2, 3])
     }
 
+    @Test func successfulPagesPublishUpdatedSnapshotsAndFailuresDoNot() async {
+        let pages = Pages([
+            ClosedPullRequestPage(pullRequests: [pullRequest(1)], endCursor: "c1", hasNextPage: true),
+            ClosedPullRequestPage(pullRequests: [pullRequest(2)], endCursor: nil, hasNextPage: false),
+        ])
+        var published: [[Int]] = []
+        let recent = RecentPullRequests(fetchPage: { try pages.fetch($0) }, onChange: { items, _ in
+            published.append(items.map(\.number))
+        })
+
+        await recent.loadIfNeeded()
+        pages.failing = true
+        await recent.loadMore()
+        #expect(published == [[1]])
+        #expect(recent.items.map(\.number) == [1])
+
+        pages.failing = false
+        await recent.loadMore()
+        #expect(published == [[1], [1, 2]])
+    }
+
+    @Test func clearDiscardsARequestAlreadyInFlight() async {
+        let recent = RecentPullRequests { _ in
+            try await Task.sleep(for: .milliseconds(30))
+            return ClosedPullRequestPage(pullRequests: [pullRequest(1)], endCursor: nil, hasNextPage: false)
+        }
+        let load = Task { await recent.loadIfNeeded() }
+        while !recent.isLoading { await Task.yield() }
+        recent.clear()
+        await load.value
+        #expect(recent.items.isEmpty)
+        #expect(!recent.hasLoaded)
+    }
+
     @Test func concurrentLoadMoreFetchesOnce() async {
         let (recent, pages) = makeRecent()
         await recent.loadIfNeeded()

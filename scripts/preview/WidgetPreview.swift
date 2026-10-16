@@ -9,6 +9,10 @@ private struct WidgetSize {
     let height: CGFloat
 
     static let all = [
+        WidgetSize(name: "desktop-small", family: .systemSmall, width: 164, height: 164),
+        WidgetSize(name: "desktop-medium", family: .systemMedium, width: 344, height: 164),
+        WidgetSize(name: "desktop-large", family: .systemLarge, width: 344, height: 344),
+        WidgetSize(name: "desktop-extra-large", family: .systemExtraLarge, width: 704, height: 344),
         WidgetSize(name: "small", family: .systemSmall, width: 170, height: 170),
         WidgetSize(name: "medium", family: .systemMedium, width: 364, height: 170),
         WidgetSize(name: "large", family: .systemLarge, width: 364, height: 382),
@@ -48,11 +52,46 @@ enum WidgetPreview {
             WidgetScenario(name: "search", entry: entry(reviewSource, SampleData.reviewRequestedPullRequests)),
             WidgetScenario(name: "mine-empty", entry: entry(.mine, [])),
             WidgetScenario(name: "search-empty", entry: entry(reviewSource, [])),
-            WidgetScenario(name: "signed-out", entry: PullRequestEntry(date: .now, source: .mine, snapshot: nil, isSignedOut: true)),
+            WidgetScenario(
+                name: "recent",
+                entry: PullRequestEntry(
+                    date: .now,
+                    source: .recent,
+                    snapshot: nil,
+                    recentSnapshot: ClosedPullRequestSnapshot(
+                        pullRequests: SampleData.closedPullRequests,
+                        fetchedAt: .now
+                    )
+                )
+            ),
+            WidgetScenario(
+                name: "recent-empty",
+                entry: PullRequestEntry(
+                    date: .now,
+                    source: .recent,
+                    snapshot: nil,
+                    recentSnapshot: ClosedPullRequestSnapshot(pullRequests: [], fetchedAt: .now)
+                )
+            ),
+            WidgetScenario(name: "recent-uncached", entry: entry(.recent, recentSnapshot: nil)),
+            WidgetScenario(
+                name: "recent-signed-out",
+                entry: PullRequestEntry(date: .now, source: .recent, snapshot: nil, recentSnapshot: nil, isSignedOut: true)
+            ),
+            WidgetScenario(name: "signed-out", entry: PullRequestEntry(date: .now, source: .mine, snapshot: nil, recentSnapshot: nil, isSignedOut: true)),
         ]
     }
 
-    private static func entry(_ source: WidgetSource, _ pullRequests: [PullRequest]) -> PullRequestEntry {
-        PullRequestEntry(date: .now, source: source, snapshot: SampleData.snapshot(of: pullRequests))
+    private static func entry(
+        _ source: WidgetSource,
+        _ pullRequests: [PullRequest] = [],
+        recentSnapshot: ClosedPullRequestSnapshot? = nil
+    ) -> PullRequestEntry {
+        PullRequestEntry(
+            date: .now,
+            source: source,
+            snapshot: source == .recent ? nil : SampleData.snapshot(of: pullRequests),
+            recentSnapshot: recentSnapshot
+        )
     }
 }

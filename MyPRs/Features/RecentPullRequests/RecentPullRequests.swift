@@ -17,11 +17,13 @@ final class RecentPullRequests {
     var hasLoaded: Bool { loadedAt != nil }
 
     @ObservationIgnored private let fetchPage: FetchPage
+    @ObservationIgnored private let onChange: ([ClosedPullRequest], Date) -> Void
     @ObservationIgnored private var endCursor: String?
     @ObservationIgnored private var generation = 0
 
-    init(fetchPage: @escaping FetchPage) {
+    init(fetchPage: @escaping FetchPage, onChange: @escaping ([ClosedPullRequest], Date) -> Void = { _, _ in }) {
         self.fetchPage = fetchPage
+        self.onChange = onChange
     }
 
     func loadIfNeeded(now: Date = .now) async {
@@ -62,6 +64,7 @@ final class RecentPullRequests {
             endCursor = page.endCursor
             hasNextPage = page.hasNextPage
             if reloading { loadedAt = now }
+            onChange(items, now)
         } catch {
             guard startedIn == generation else { return }
             hasFailed = true

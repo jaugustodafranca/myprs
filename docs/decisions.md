@@ -113,3 +113,22 @@ the app, which puts keychain and notification prompts on the user's screen.
 Tests and sample data once carried a real organization's repository names and
 colleagues' logins. The history was rewritten to remove them, and `AGENTS.md`
 now forbids real company data in tests, sample data, docs and PR descriptions.
+
+
+## Related boxes use branch identity and chronological order
+
+A developer can target one PR branch from another without using a stack tool.
+Grouping therefore uses the base and head repository/branch identities returned
+by GitHub. Repository identity prevents unrelated fork branches with the same
+name from being linked. Missing or ambiguous data stays ungrouped.
+
+A tree imposes parent-first order and loses width to indentation. Related boxes
+keep aligned rows, identify the parent in text and sort newest-created first.
+Each box occupies the position of its newest member; this preserves the group
+while keeping alert colors separate from chronological order. Review retains
+saved-search sections. The same grouping logic serves the app and widget.
+
+Recent snapshots and the generic prompt renderer are now shared with the widget.
+The app owns network refreshes and prompt editing; widget actions read shared
+local data. List layouts adapt row count to actual available height rather than
+assuming a single desktop widget size.

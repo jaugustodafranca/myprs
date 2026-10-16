@@ -4,6 +4,7 @@ import SwiftUI
 struct PullRequestRow: View {
     let pullRequest: PullRequest
     var showsAuthor = false
+    var parentNumber: Int? = nil
     @State private var isHovering = false
 
     var body: some View {
@@ -19,6 +20,11 @@ struct PullRequestRow: View {
                     .truncationMode(.tail)
                 BranchLine(head: pullRequest.headBranch, base: pullRequest.baseBranch)
                     .font(.caption.monospaced())
+                if let parentNumber {
+                    Text("Base: #\(parentNumber)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
                 metaLine
                 PullRequestBadges(pullRequest: pullRequest)
             }

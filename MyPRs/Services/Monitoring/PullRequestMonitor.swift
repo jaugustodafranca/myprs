@@ -32,6 +32,7 @@ final class PullRequestMonitor {
     @ObservationIgnored private let tokenStore = TokenStore()
     @ObservationIgnored private let client = GitHubClient()
     @ObservationIgnored private let snapshotStore = SnapshotStore.shared
+    @ObservationIgnored private let recentSnapshotStore = RecentSnapshotStore.shared
     @ObservationIgnored private let notifier = Notifier()
     @ObservationIgnored private let loginFlow = LoginFlow.shared
     @ObservationIgnored private let authWorker = AuthWorker()
@@ -42,10 +43,14 @@ final class PullRequestMonitor {
     init() {
         let client = self.client
         let tokenStore = self.tokenStore
-        recent = RecentPullRequests { cursor in
+        let recentSnapshotStore = RecentSnapshotStore.shared
+        recent = RecentPullRequests(fetchPage: { cursor in
             guard let token = tokenStore.load() else { throw GitHubError.unauthorized }
             return try await client.fetchClosedPullRequests(token: token, after: cursor)
-        }
+        }, onChange: { items, fetchedAt in
+            recentSnapshotStore.save(ClosedPullRequestSnapshot(pullRequests: items, fetchedAt: fetchedAt))
+            WidgetCenter.shared.reloadTimelines(ofKind: AppConfig.widgetKind)
+        })
         refreshInterval = RefreshInterval.restored(from: defaults.double(forKey: Self.intervalKey))
         snapshot = snapshotStore.load()
         isSignedIn = tokenStore.load() != nil
@@ -100,6 +105,7 @@ final class PullRequestMonitor {
         if let token = tokenStore.load() { revokeInBackground(token) }
         tokenStore.delete()
         snapshotStore.clear()
+        recentSnapshotStore.clear()
         recent.clear()
         savedSearches.clearResults()
         snapshot = nil
@@ -124,6 +130,8 @@ final class PullRequestMonitor {
         } catch {
             lastError = "Could not refresh. Will retry."
         }
+        guard isSignedIn else { return }
+        await recent.loadIfNeeded()
         guard isSignedIn else { return }
         apply(await savedSearches.refreshAll(using: searchFetcher(token: token)))
         if lastError == nil { await checkOrganizationAccess(token: token) }

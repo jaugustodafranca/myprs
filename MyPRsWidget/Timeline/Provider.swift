@@ -5,6 +5,7 @@ struct PullRequestEntry: TimelineEntry {
     let date: Date
     let source: WidgetSource
     let snapshot: PullRequestSnapshot?
+    var recentSnapshot: ClosedPullRequestSnapshot? = nil
     var isSignedOut = false
 }
 
@@ -26,7 +27,8 @@ struct Provider: AppIntentTimelineProvider {
         return PullRequestEntry(
             date: Date(),
             source: source,
-            snapshot: loadSnapshot(for: source).map(withTrustedLinksOnly),
+            snapshot: source == .recent ? nil : loadSnapshot(for: source).map(withTrustedLinksOnly),
+            recentSnapshot: source == .recent ? loadRecentSnapshot() : nil,
             isSignedOut: SnapshotStore.shared.load() == nil
         )
     }
@@ -35,10 +37,20 @@ struct Provider: AppIntentTimelineProvider {
         switch source {
         case .mine:
             return SnapshotStore.shared.load()
+        case .recent:
+            return nil
         case .search(let search):
             guard let saved = SavedSearchStore.shared.loadSnapshot(for: search.id) else { return nil }
             return PullRequestSnapshot(login: "", pullRequests: saved.pullRequests, fetchedAt: saved.fetchedAt)
         }
+    }
+
+    private func loadRecentSnapshot() -> ClosedPullRequestSnapshot? {
+        guard let snapshot = RecentSnapshotStore.shared.load() else { return nil }
+        return ClosedPullRequestSnapshot(
+            pullRequests: snapshot.pullRequests.filter { GitHubURL.isTrusted($0.url) },
+            fetchedAt: snapshot.fetchedAt
+        )
     }
 
     private func withTrustedLinksOnly(_ snapshot: PullRequestSnapshot) -> PullRequestSnapshot {

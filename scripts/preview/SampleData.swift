@@ -46,6 +46,16 @@ enum SampleData {
             checks: .failing, passed: 3, total: 5, additions: 214, deletions: 38, files: 7, createdAt: ago(days: 2)
         ),
         pullRequest(
+            486, "Add an idempotency check to checkout retries",
+            repository: "acme/storefront", head: "fix/checkout-retry-idempotency", base: "fix/checkout-session-retry",
+            checks: .running, passed: 2, total: 4, additions: 38, deletions: 6, files: 2, createdAt: ago(hours: 18)
+        ),
+        pullRequest(
+            487, "Cover expired tokens in the checkout retry tests",
+            repository: "acme/storefront", head: "test/checkout-retry-expired-token", base: "fix/checkout-session-retry",
+            checks: .passing, passed: 5, total: 5, additions: 54, deletions: 3, files: 3, createdAt: ago(hours: 12)
+        ),
+        pullRequest(
             471, "Add per-tenant rate limits to the public API",
             repository: "octo/api",
             head: "feature/per-tenant-rate-limits-with-sliding-window-and-burst-allowance-for-enterprise-plans",
@@ -85,6 +95,11 @@ enum SampleData {
             512, "Handle partial refunds in the ledger export",
             repository: "acme/storefront", head: "feature/partial-refunds", author: "mrivera",
             checks: .passing, passed: 5, total: 5, additions: 320, deletions: 41, files: 9, createdAt: ago(hours: 5)
+        ),
+        pullRequest(
+            515, "Add refund validation to the ledger export",
+            repository: "acme/storefront", head: "feature/refund-validation", base: "feature/partial-refunds", author: "alee",
+            checks: .running, passed: 2, total: 4, additions: 83, deletions: 9, files: 4, createdAt: ago(hours: 3)
         ),
         pullRequest(
             508, "Fix timezone drift in the weekly report email",
@@ -139,6 +154,7 @@ enum SampleData {
             title: title,
             url: URL(string: "https://github.com/\(repository)/pull/\(number)")!,
             repository: repository,
+            headRepository: repository,
             isDraft: isDraft,
             checks: checks,
             review: review,

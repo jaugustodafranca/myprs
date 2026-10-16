@@ -52,7 +52,8 @@
 - Shows review status: approved, changes requested or pending
 - Recent tab: your recently merged and closed pull requests
 - Review tab: pull requests waiting on you, from any GitHub search you save (paste a GitHub pull request list link), with an optional notification for new ones
-- Widgets can show your open pull requests or one of your saved searches
+- Related PRs appear in collapsible groups in Open, Review and Recent, inferred from their branches and ordered newest first
+- Widgets show the same related groups for open PRs, Recent or a saved search, with copy-link, copy-branch and copy-prompt actions
 - Copies a ready-to-paste AI review prompt for any PR with one click; the prompt is editable in Settings
 - Opens a PR or copies its link or branch name in one click
 - Updates itself with Sparkle

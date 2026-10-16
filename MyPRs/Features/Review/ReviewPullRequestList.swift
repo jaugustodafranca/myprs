@@ -46,9 +46,15 @@ struct ReviewPullRequestList: View {
 
     @ViewBuilder
     private func rows(of section: ReviewSection) -> some View {
-        ForEach(section.pullRequests) { pullRequest in
-            PullRequestRow(pullRequest: pullRequest, showsAuthor: true)
-            if pullRequest.id != section.pullRequests.last?.id { Divider().padding(.leading, 32) }
+        GroupedPullRequestList(
+            groups: PullRequestGrouping.groups(section.pullRequests),
+            summary: { items in
+                let attentionCount = items.filter(\.needsAttention).count
+                guard attentionCount > 0 else { return nil }
+                return attentionCount == 1 ? "1 PR needs attention" : "\(attentionCount) PRs need attention"
+            }
+        ) { pullRequest, parentNumber in
+            PullRequestRow(pullRequest: pullRequest, showsAuthor: true, parentNumber: parentNumber)
         }
     }
 

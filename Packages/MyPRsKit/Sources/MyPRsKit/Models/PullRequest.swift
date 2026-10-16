@@ -1,11 +1,12 @@
 import Foundation
 
-public struct PullRequest: Codable, Hashable, Identifiable, Sendable {
+public struct PullRequest: Codable, Hashable, GroupablePullRequest, Sendable {
     public let id: String
     public let number: Int
     public let title: String
     public let url: URL
     public let repository: String
+    public let headRepository: String?
     public let isDraft: Bool
     public let checks: CheckStatus
     public let review: ReviewStatus
@@ -33,6 +34,7 @@ public struct PullRequest: Codable, Hashable, Identifiable, Sendable {
         title: String,
         url: URL,
         repository: String,
+        headRepository: String? = nil,
         isDraft: Bool,
         checks: CheckStatus,
         review: ReviewStatus,
@@ -56,6 +58,7 @@ public struct PullRequest: Codable, Hashable, Identifiable, Sendable {
         self.title = title
         self.url = url
         self.repository = repository
+        self.headRepository = headRepository
         self.isDraft = isDraft
         self.checks = checks
         self.review = review

@@ -27,7 +27,9 @@ enum ClosedPullRequestMapper {
             endedAt: endedAt,
             additions: node.additions,
             deletions: node.deletions,
-            changedFiles: node.changedFiles
+            changedFiles: node.changedFiles,
+            createdAt: node.createdAt,
+            headRepository: node.headRepository?.nameWithOwner
         )
     }
 }

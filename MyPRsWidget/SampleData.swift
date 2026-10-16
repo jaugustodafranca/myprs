@@ -5,7 +5,7 @@ extension PullRequestEntry {
     static let sample = entry(samplePullRequests)
     static let calm = entry(samplePullRequests.filter { !$0.needsAttention })
     static let empty = entry([])
-    static let signedOut = PullRequestEntry(date: .now, source: .mine, snapshot: nil, isSignedOut: true)
+    static let signedOut = PullRequestEntry(date: .now, source: .mine, snapshot: nil, recentSnapshot: nil, isSignedOut: true)
     static let reviewSample = entry(reviewPullRequests, source: reviewSearch)
     static let reviewEmpty = entry([], source: reviewSearch)
 
@@ -15,7 +15,8 @@ extension PullRequestEntry {
         PullRequestEntry(
             date: .now,
             source: source,
-            snapshot: PullRequestSnapshot(login: "octo", pullRequests: pullRequests, fetchedAt: .now)
+            snapshot: PullRequestSnapshot(login: "octo", pullRequests: pullRequests, fetchedAt: .now),
+            recentSnapshot: nil
         )
     }
 

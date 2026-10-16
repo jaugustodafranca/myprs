@@ -20,7 +20,7 @@ Give a directory outside the repository, for example `$(mktemp -d)`. Each image 
 | Script | Files | Shows |
 | --- | --- | --- |
 | `render-panel.sh` | `panel-open`, `panel-open-empty`, `panel-recent`, `panel-review`, `panel-settings`, `panel-signed-out` | The real `MenuContentView`, 440 pt wide and as tall as its content |
-| `render-widget.sh` | `widget-<scenario>-<size>` | `EntryView` for the scenarios `mine`, `search`, `mine-empty`, `search-empty`, `signed-out` in the sizes `small` 170x170, `medium` 364x170, `large` 364x382 and `extra-large` 715x382 |
+| `render-widget.sh` | `widget-<scenario>-<size>` | `EntryView` for `mine`, `search`, `recent`, their empty and uncached states, and signed-out states in desktop sizes `desktop-small` 164x164, `desktop-medium` 344x164, `desktop-large` 344x344 and `desktop-extra-large` 704x344, plus the larger preview sizes `small` 170x170, `medium` 364x170, `large` 364x382 and `extra-large` 715x382 |
 
 The editor screens (search and AI prompt) and the organization access banner are not rendered.
 
@@ -35,7 +35,7 @@ together with the files in this folder. The repository sources are never edited.
 | `SnapshotWriter.swift` | Draws a SwiftUI view in an invisible window and writes the PNG |
 | `RunOffscreen.swift` | Runs the preview as a faceless app and exits when it is done |
 | `SampleData.swift` | The pull requests, saved searches and snapshots both previews show |
-| `PanelSampleData.swift` | Closed pull requests for the Recent tab, a type only the app has |
+| `PanelSampleData.swift` | Closed pull requests shared by the Recent tab and widget previews |
 | `PanelStubs.swift` | Stand-ins for `PullRequestMonitor` and the Sparkle `Updater` |
 | `PanelPreview.swift` | Builds the panel scenarios |
 | `WidgetStubs.swift` | `PullRequestEntry.sample`, which `Provider.swift` refers to |
@@ -56,6 +56,7 @@ refactor cannot silently change what is rendered: update the patch in the script
 | panel | `MenuContentView.swift`, `PanelScreen.swift` | `NSScreen.main?.visibleFrame.height ?? ...` becomes `PanelPreviewState.screenHeight` | The panel stops growing at 60% of the screen height; a fixed tall screen gives the same images on every machine and shows the sample lists in full |
 | widget | `EntryView.swift` | `@Environment(\.widgetFamily) private var family` becomes `let family: WidgetFamily` | The family cannot be set in the environment outside a widget host |
 | widget | `PullRequestRowView.swift` | `Link(destination: pullRequest.url)` becomes `Group` | Outside a widget a `Link` paints its label in the system link color |
+| widget | `RecentPullRequestRowView.swift` | `Link(destination: pullRequest.url)` becomes `Group` | Outside a widget a `Link` paints its label in the system link color |
 
 ## Known limits
 

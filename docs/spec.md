@@ -45,22 +45,44 @@ Out of scope for v1: GitLab, multiple accounts.
 - Click opens a window-style panel: a header with the Open · Recent · Review
   tabs (⌘1 / ⌘2 / ⌘3 while the panel is open), the last update time, "Refresh
   now" and a gear that opens Settings inside the panel, then the list. Open lists the
-  PRs (attention first, then most recently updated), each row with "Open" and
+  PRs (newest creation first, with related PRs kept together), each row with "Open" and
   "Copy link". ⌘Q quits and ⌘, opens Settings while the panel is open.
 - Signed out: a single "Sign in with GitHub" button.
 
+### Related pull requests and order
+
+- Open, Review, Recent and list widgets infer dependencies from branches; no
+  GitHub stack metadata or title convention is required. A child's base repository
+  and branch must exactly identify another listed PR's head repository and branch
+  (repository names are case-insensitive, branch names are case-sensitive).
+- Connected PRs appear in a subtle outlined box: repository, root target branch,
+  count, and aligned rows with `Base: #<parent>` when a parent is known. Independent
+  PRs remain plain rows interleaved with boxes. App boxes can be collapsed.
+- Rows within a box are newest-created first. Boxes and independent rows are ordered
+  by their newest creation date, with stable ID tie-breaking. Alerts do not reorder
+  the list. Keeping a box together takes precedence over globally interleaving all
+  of its individual rows by date.
+- Review groups only within each existing saved-search section after deduplication.
+  Recent groups the pages loaded so far; its load-more trigger stays outside boxes.
+- Missing repository identity, missing parents, ambiguous branch matches and cycles
+  must not produce guessed relationships. Historical PRs can only be linked from
+  the branch information GitHub still exposes; deleted forks and retargeted bases
+  may prevent a group from being reconstructed.
+
 ### Recent tab
 
-- Recent lists the user's closed and merged PRs (newest activity first) so an
+- Recent lists the user's closed and merged PRs (newest creation first) so an
   old PR's link or branch is one click away. Rows show a "Merged" or "Closed"
   badge, `head → base`, `repo#number · merged 3d ago`, diff size and file
   count, with the same open / copy branch / copy link actions as Open rows.
-- Loaded lazily the first time the tab opens, 20 at a time. Scrolling to the
-  last row fetches the next page until `hasNextPage` is false. Reopening the
+- The first page is refreshed with the app so the widget can show Recent without opening the tab. The panel loads additional pages, 20 at a time. Scrolling to the
+  footer fetches the next page until `hasNextPage` is false. While any group is
+  collapsed, the footer offers manual "Load more" to avoid eagerly fetching history
+  merely because the collapsed list is short. Reopening the
   tab after more than 10 minutes fetches the first page again.
 - A failed page shows "Couldn't load. Retry" inline.
-- Kept in memory only: never written to the snapshot or shown in the widget.
-  Signing out clears it.
+- The loaded results are cached in `recent-snapshot.json` for the widget.
+  Signing out clears both memory and the cache.
 
 ### Review tab and saved searches
 
@@ -75,7 +97,8 @@ Out of scope for v1: GitLab, multiple accounts.
   several searches is listed under the first one only, and searches with
   nothing to show are left out. Rows are the Open rows plus the author (avatar
   and login). The tab badge is the number of unique PRs, in a neutral colour.
-  The order within a search is GitHub's, so a `sort:` qualifier is respected.
+  Within each search, the display uses newest creation first and related boxes,
+  regardless of a `sort:` qualifier. Search qualifiers still determine the fetched result set.
 - States: "Nothing to review" when every search is empty; "No searches" with an
   "Add Search" button (opens Settings) when there are none; a spinner for a
   search not fetched yet; a "Couldn't load "name". Retry" row for a search
@@ -165,11 +188,13 @@ pass; unknown placeholders stay as written. Keys: `url`, `title`, `repo`
 (owner/name), `number`, `author` (login or "unknown"), `head`, `base`,
 `additions`, `deletions`, `files`, `checks` ("passing 77/77", "failing 3/5",
 "running", "none"; "n/a" for closed pull requests, which also have no author).
-The default template lives in `Features/AIReview/DefaultReviewPrompt.swift`.
+The default template and renderer live in `MyPRsKit` and are shared with the widget.
 
-The custom template is stored in the app's `UserDefaults` (key
+The custom template remains in the app's `UserDefaults` (key
 `reviewPromptTemplate`; absent means the default; saving blank or the default
-removes it). The editor (`.editPrompt`: Back, Save, monospaced text editor,
+removes it), and is synchronized to the App Group for widget actions. Existing
+custom templates are synchronized at app startup. The widget renders the prompt
+using the shared template when the copy action runs. The editor (`.editPrompt`: Back, Save, monospaced text editor,
 clickable placeholder chips that append, "Reset to Default…" with confirmation,
 live preview with a sample pull request) keeps its draft in `PanelNavigation`
 like the search editor.
@@ -177,15 +202,18 @@ like the search editor.
 ### Widget
 
 - Small, medium, large and extra large. Small shows counts, the others a list from the shared cache.
-- Tapping a row opens the PR. Each row has a copy-link button (App Intent).
-- Signed out / empty states with a short message.
+- List widgets keep their header, scoreboard (when shown) and update time visible; they show as many rows as fit and a `+N more` count for the rest.
+- Tapping a row opens the PR. Each list row has copy-link, copy-branch and copy-AI-review-prompt buttons (App Intents), including medium widgets.
+- Signed out / empty states with a short message. A Recent widget without a cache asks for an app refresh.
+- Related boxes are compact and fit within the available widget height. A partially
+  shown group reports its hidden members; the widget also reports the total omitted rows.
 - Configurable: right-click → Edit "Pull requests" → "Show" picks **My pull
-  requests** (default, also for widgets installed before this option) or one of
+  requests** (default), **Recent pull requests**, or one of
   the saved searches by name. Each widget instance has its own source
   (`AppIntentConfiguration`, same kind `MyPRsWidget`; the intent is not
   discoverable in Shortcuts). A deleted search falls back to My pull requests,
   a renamed one shows its new name (`WidgetSource.resolve`).
-- A search widget reads `snapshots/<search id>.json`, keeps GitHub's order, and
+- A search widget reads `snapshots/<search id>.json`, uses chronological related groups, and
   titles itself with the search name. The header pill is a neutral "N to
   review", there is no CI scoreboard, and rows show the author (initials circle
   and login, since widgets cannot reliably load remote avatars). Small shows
@@ -249,6 +277,7 @@ like the search editor.
 | File | Content |
 |---|---|
 | `snapshot.json` | `PullRequestSnapshot`, my open PRs |
+| `recent-snapshot.json` | `ClosedPullRequestSnapshot`, loaded closed/merged PRs |
 | `saved-searches.json` | `[SavedSearch]` in display order (missing → the built-in "Review requested") |
 | `snapshots/<search id>.json` | `SavedSearchSnapshot`, the last result of one saved search, read by the Review tab and by widgets showing that search |
 
@@ -290,6 +319,7 @@ struct PullRequest: Codable, Hashable, Identifiable {
     let changedFiles: Int
     let headBranch: String    // headRefName
     let baseBranch: String    // baseRefName
+    let headRepository: String? // head repository owner/name; nil in older snapshots
     let hasConflicts: Bool    // mergeable == CONFLICTING
     let checksPassed: Int     // CheckRun SUCCESS/NEUTRAL/SKIPPED + StatusContext SUCCESS
     let checksTotal: Int      // all check contexts (first 100)
@@ -345,13 +375,13 @@ enum AppConfig { appGroupID, urlScheme, gitHubClientID, authBaseURL, authCallbac
 
 ### GitHub query
 
-One GraphQL request per refresh for my PRs, then one per saved search. Both
-select the same fields through a fragment (`PullRequestFields`):
+Each refresh fetches my open PRs, Recent when stale, then each saved search.
+Open PRs and saved searches select the same fields through `PullRequestFields`:
 
 ```graphql
 query {
   viewer { login }
-  search(query: "is:pr is:open author:@me archived:false", type: ISSUE, first: 50) {
+  search(query: "is:pr is:open author:@me archived:false sort:created-desc", type: ISSUE, first: 50) {
     nodes { ...PullRequestFields }
   }
 }
@@ -368,6 +398,7 @@ fragment PullRequestFields on PullRequest {
   additions deletions changedFiles headRefName baseRefName mergeable
   author { login avatarUrl }
   repository { nameWithOwner }
+  headRepository { nameWithOwner }
   latestReviews(first: 20) { nodes { state } }
   commits(last: 1) {
     nodes {
@@ -393,8 +424,9 @@ fragment PullRequestFields on PullRequest {
 `ISSUE_ADVANCED` accepts `AND`, `OR` and parentheses, as GitHub's web search
 does, so a copied link works as is.
 
-A snapshot cached by an older version lacks the newer required fields, so it fails to
-decode: `SnapshotStore.load()` returns nil and the next refresh replaces it.
+Snapshots without `headRepository` still decode, but cannot supply parent branch
+identity for grouping until refreshed. A snapshot missing other required fields
+fails to decode; `SnapshotStore.load()` returns nil and the next refresh replaces it.
 
 ### Recent query
 
@@ -403,13 +435,14 @@ previous page's `endCursor`, null for the first page):
 
 ```graphql
 query($after: String) {
-  search(query: "is:pr author:@me is:closed archived:false sort:updated-desc", type: ISSUE, first: 20, after: $after) {
+  search(query: "is:pr author:@me is:closed archived:false sort:created-desc", type: ISSUE, first: 20, after: $after) {
     pageInfo { hasNextPage endCursor }
     nodes {
       ... on PullRequest {
-        id number title url state mergedAt closedAt
+        id number title url state createdAt mergedAt closedAt
         additions deletions changedFiles headRefName baseRefName
         repository { nameWithOwner }
+        headRepository { nameWithOwner }
       }
     }
   }

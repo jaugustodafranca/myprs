@@ -4,5 +4,4 @@ enum RowDetail {
 
     var showsBranch: Bool { self != .compact }
     var showsBadges: Bool { self == .full }
-    var showsCopyBranch: Bool { self == .full }
 }

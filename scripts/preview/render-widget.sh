@@ -25,11 +25,13 @@ patch_staged "$staged" EntryView.swift 's/@Environment(\\.widgetFamily) private 
 
 # Outside a widget a Link paints its label in the system link color; inside one the label keeps its own colors.
 patch_staged "$staged" PullRequestRowView.swift 's/Link(destination: pullRequest.url)/Group/'
+patch_staged "$staged" RecentPullRequestRowView.swift 's/Link(destination: pullRequest.url)/Group/'
 
 compile_preview "$work_dir/widget-preview" "$staged" \
   "$preview_dir/SnapshotWriter.swift" \
   "$preview_dir/RunOffscreen.swift" \
   "$preview_dir/SampleData.swift" \
+  "$preview_dir/PanelSampleData.swift" \
   "$preview_dir/WidgetStubs.swift" \
   "$preview_dir/WidgetPreview.swift"
 
