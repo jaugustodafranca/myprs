@@ -31,7 +31,7 @@ struct GroupedPullRequestList<Item: GroupablePullRequest, Row: View>: View {
                 }
 
                 if index != groups.count - 1 && !group.isRelated && !groups[index + 1].isRelated {
-                    Divider().padding(.leading, 32)
+                    Divider().padding(.leading, 32).padding(.trailing, 14)
                 }
             }
         }
@@ -83,7 +83,7 @@ struct GroupedPullRequestList<Item: GroupablePullRequest, Row: View>: View {
                     ForEach(Array(group.items.enumerated()), id: \.element.id) { index, item in
                         row(item, group.parentNumbers[item.id])
                         if index != group.items.count - 1 {
-                            Divider().padding(.leading, 32)
+                            Divider().padding(.leading, 32).padding(.trailing, 14)
                         }
                     }
                 }
@@ -91,10 +91,10 @@ struct GroupedPullRequestList<Item: GroupablePullRequest, Row: View>: View {
         }
         .background {
             RoundedRectangle(cornerRadius: 9)
-                .fill(Color.primary.opacity(0.025))
+                .fill(Color.clear)
                 .overlay {
                     RoundedRectangle(cornerRadius: 9)
-                        .strokeBorder(Color.primary.opacity(0.13), lineWidth: 1)
+                        .strokeBorder(Color.primary.opacity(0.10), lineWidth: 1)
                 }
         }
         .clipShape(RoundedRectangle(cornerRadius: 9))

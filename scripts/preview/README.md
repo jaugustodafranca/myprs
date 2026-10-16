@@ -69,3 +69,11 @@ refactor cannot silently change what is rendered: update the patch in the script
 Every organization, repository, branch and login in this folder is made up (`acme/storefront`, `octo/api`,
 `northwind/reports`, `jdoe`, `mrivera`, `alee`, `kpatel`). Keep it that way: real company, repository or
 colleague names must never enter this repository, so new samples are invented, never copied from real work.
+
+### Hover and scroll-edge mockups
+
+`panel-open-scroll-hover` and `panel-recent-scroll-hover` use a constrained
+panel height and highlight one fictional PR row. The scrollbar in these two
+images is an illustrative overlay: offscreen snapshots omit the native
+indicator. They demonstrate spacing and corner shapes, not native scroller
+behavior. The overlay and forced hover exist only in the preview harness.

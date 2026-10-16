@@ -47,6 +47,10 @@ Out of scope for v1: GitLab, multiple accounts.
   now" and a gear that opens Settings inside the panel, then the list. Open lists the
   PRs (newest creation first, with related PRs kept together), each row with "Open" and
   "Copy link". ⌘Q quits and ⌘, opens Settings while the panel is open.
+- Lists use equal horizontal content insets, subtle rounded row hover highlights without borders,
+  and native scroll indicators with vertical clearance from the panel edges.
+  Open, Review and Recent list content has 12 pt of top and bottom padding,
+  included in the scrollable content so both ends have breathing room.
 - Signed out: a single "Sign in with GitHub" button.
 
 ### Related pull requests and order
