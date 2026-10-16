@@ -1,3 +1,4 @@
+import MyPRsKit
 import SwiftUI
 
 @main
@@ -23,6 +24,10 @@ struct MyPRsApp: App {
     @State private var updater = Updater()
     @State private var monitor = PullRequestMonitor()
     @State private var navigation = PanelNavigation()
+
+    init() {
+        ReviewPromptStore.standard.synchronizeAppGroup()
+    }
 
     var body: some Scene {
         MenuBarExtra {

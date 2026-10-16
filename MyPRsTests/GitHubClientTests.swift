@@ -59,7 +59,7 @@ import Testing
     }
 
     @Test func openPullRequestsQueryKeepsItsSearch() {
-        #expect(OpenPullRequestsQuery.text.contains(#"search(query: "is:pr is:open author:@me archived:false", type: ISSUE, first: 50)"#))
+        #expect(OpenPullRequestsQuery.text.contains(#"search(query: "is:pr is:open author:@me archived:false sort:created-desc", type: ISSUE, first: 50)"#))
         #expect(OpenPullRequestsQuery.text.contains("...PullRequestFields"))
     }
 

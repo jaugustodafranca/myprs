@@ -47,6 +47,7 @@ struct GitHubResponse: Decodable {
         let reviewDecision: String?
         let author: PullRequestAuthor?
         let repository: Repository
+        let headRepository: Repository?
         let commits: Connection<CommitNode>
         let latestReviews: Connection<Review>
         let reviewThreads: Connection<ReviewThread>

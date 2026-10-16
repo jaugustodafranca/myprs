@@ -1,3 +1,4 @@
+import MyPRsKit
 import SwiftUI
 
 /// Edits the AI review prompt inside the panel. The draft belongs to `PanelNavigation`, so it survives

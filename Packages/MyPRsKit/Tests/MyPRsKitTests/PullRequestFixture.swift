@@ -5,7 +5,8 @@ func makePullRequest(
     id: String = "PR_1",
     checks: CheckStatus = .passing,
     unansweredThreads: Int = 0,
-    updatedAt: Date = Date(timeIntervalSince1970: 1_700_000_000)
+    updatedAt: Date = Date(timeIntervalSince1970: 1_700_000_000),
+    createdAt: Date = Date(timeIntervalSince1970: 1_699_000_000)
 ) -> PullRequest {
     PullRequest(
         id: id,
@@ -18,7 +19,7 @@ func makePullRequest(
         review: .waiting,
         unansweredThreads: unansweredThreads,
         updatedAt: updatedAt,
-        createdAt: Date(timeIntervalSince1970: 1_699_000_000),
+        createdAt: createdAt,
         additions: 10,
         deletions: 2,
         changedFiles: 3,

@@ -5,6 +5,7 @@ import SwiftUI
 struct ReviewSmallView: View {
     let title: String
     let count: Int
+    var label = "to review"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -18,7 +19,7 @@ struct ReviewSmallView: View {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(count)")
                     .font(.system(size: 34, weight: .bold, design: .rounded))
-                Text("to review")
+                Text(label)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.secondary)
             }

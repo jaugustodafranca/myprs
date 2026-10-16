@@ -6,6 +6,7 @@ struct PullRequestRowView: View {
     let pullRequest: PullRequest
     let detail: RowDetail
     var showsAuthor = false
+    var parentNumber: Int? = nil
 
     var body: some View {
         HStack(spacing: 8) {
@@ -27,9 +28,10 @@ struct PullRequestRowView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            copyButton(systemImage: "link", intent: CopyLinkIntent(url: pullRequest.url.absoluteString))
-            if detail.showsCopyBranch {
+            VStack(spacing: 1) {
+                copyButton(systemImage: "link", intent: CopyLinkIntent(url: pullRequest.url.absoluteString))
                 copyButton(systemImage: "arrow.triangle.branch", intent: CopyBranchIntent(branch: pullRequest.headBranch))
+                copyButton(systemImage: "sparkles", intent: CopyPromptIntent(valuesJSON: Self.encodedPromptValues(for: pullRequest) ?? ""))
             }
         }
     }
@@ -62,6 +64,12 @@ struct PullRequestRowView: View {
         HStack(spacing: 8) {
             referenceWithAuthor
                 .foregroundStyle(.secondary)
+            if let parentNumber {
+                Text("Base #\(parentNumber)")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+                    .fixedSize()
+            }
             MetadataLine(pullRequest: pullRequest, asBadges: detail.showsBranch && detail.showsBadges)
         }
     }
@@ -71,8 +79,16 @@ struct PullRequestRowView: View {
             Image(systemName: systemImage)
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
-                .frame(width: 22, height: 22)
+                .frame(width: 18, height: 16)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(systemImage == "link" ? "Copy pull request link" : (systemImage == "sparkles" ? "Copy AI review prompt" : "Copy branch name"))
+        .accessibilityHint("Copies to the clipboard")
+        .help(systemImage == "link" ? "Copy pull request link" : (systemImage == "sparkles" ? "Copy AI review prompt" : "Copy branch name"))
+    }
+
+    private static func encodedPromptValues(for pullRequest: PullRequest) -> String? {
+        guard let data = try? JSONEncoder().encode(ReviewPromptValues.of(pullRequest)) else { return nil }
+        return data.base64EncodedString()
     }
 }

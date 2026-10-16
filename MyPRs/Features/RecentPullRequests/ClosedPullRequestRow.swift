@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ClosedPullRequestRow: View {
     let pullRequest: ClosedPullRequest
+    var parentNumber: Int? = nil
     @State private var isHovering = false
 
     var body: some View {
@@ -14,6 +15,11 @@ struct ClosedPullRequestRow: View {
                     .truncationMode(.tail)
                 BranchLine(head: pullRequest.headBranch, base: pullRequest.baseBranch)
                     .font(.caption.monospaced())
+                if let parentNumber {
+                    Text("Base: #\(parentNumber)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
                 PullRequestMetaLine(repository: pullRequest.repository, number: pullRequest.number, trailing: endedText)
                 badges
             }

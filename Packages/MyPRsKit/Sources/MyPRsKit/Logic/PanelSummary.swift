@@ -15,7 +15,11 @@ public struct PanelSummary {
         failing = pullRequests.filter { $0.checks == .failing }.count
         toAnswer = pullRequests.filter { $0.unansweredThreads > 0 }.count
         ready = pullRequests.filter(\.isReadyToMerge).count
-        mostUrgent = pullRequests.sortedForDisplay().first
+        mostUrgent = pullRequests.sorted { lhs, rhs in
+            if lhs.needsAttention != rhs.needsAttention { return lhs.needsAttention }
+            if lhs.updatedAt != rhs.updatedAt { return lhs.updatedAt > rhs.updatedAt }
+            return lhs.id < rhs.id
+        }.first
     }
 
     public static func text(for pullRequests: [PullRequest]) -> String {

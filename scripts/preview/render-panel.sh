@@ -25,9 +25,7 @@ stage_sources "$staged" \
   "$repo_root/MyPRs/Features/Settings" \
   "$repo_root/MyPRs/Features/SignIn/SignedOutView.swift" \
   "$repo_root/MyPRs/Features/Updates/CheckForUpdatesButton.swift" \
-  "$repo_root/MyPRs/Services/GitHub/ClosedPullRequest.swift" \
   "$repo_root/MyPRs/Services/GitHub/ClosedPullRequestPage.swift" \
-  "$repo_root/MyPRs/Services/GitHub/ClosedState.swift" \
   "$repo_root/MyPRs/Services/GitHub/SavedSearchLink.swift" \
   "$repo_root/MyPRs/Services/Monitoring/NewPullRequestDetector.swift" \
   "$repo_root/MyPRs/Services/Monitoring/NotificationPermission.swift" \

@@ -39,12 +39,14 @@ struct ClosedPullRequestsResponse: Decodable {
         let state: String
         let mergedAt: Date?
         let closedAt: Date?
+        let createdAt: Date
         let additions: Int
         let deletions: Int
         let changedFiles: Int
         let headRefName: String
         let baseRefName: String
         let repository: Repository
+        let headRepository: Repository?
     }
 
     struct Repository: Decodable {

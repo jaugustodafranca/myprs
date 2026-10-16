@@ -1,5 +1,5 @@
-enum DefaultReviewPrompt {
-    static let template = """
+public enum DefaultReviewPrompt {
+    public static let template = """
     Review this pull request: {{url}}
     "{{title}}" by @{{author}} — {{repo}}#{{number}}
     Branch: {{head}} → {{base}} · +{{additions}} −{{deletions}} in {{files}} files · CI: {{checks}}

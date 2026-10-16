@@ -6,6 +6,7 @@ enum PullRequestFields {
       additions deletions changedFiles headRefName baseRefName mergeable
       author { login avatarUrl }
       repository { nameWithOwner }
+      headRepository { nameWithOwner }
       latestReviews(first: 20) { nodes { state } }
       commits(last: 1) {
         nodes {

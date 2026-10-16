@@ -1,4 +1,5 @@
 import Foundation
+import MyPRsKit
 
 struct ClosedPullRequestPage: Sendable {
     let pullRequests: [ClosedPullRequest]

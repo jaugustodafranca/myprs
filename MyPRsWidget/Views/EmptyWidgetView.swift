@@ -9,6 +9,7 @@ struct EmptyWidgetView: View {
     let family: WidgetFamily
     let updatedAt: Date?
     let isSignedOut: Bool
+    var messageText: String?
 
     private var isMedium: Bool { family == .systemMedium }
 
@@ -18,9 +19,26 @@ struct EmptyWidgetView: View {
         if isSignedOut {
             return .signedOut(axis: axis, symbolSize: symbolSize)
         }
+        if let messageText {
+            let subtitle = source == .recent && messageText == "No recent pull requests"
+                ? "Closed and merged pull requests will appear here."
+                : "Open MyPRs on your Mac to update this widget."
+            return EmptyStateView(
+                symbol: "tray", tint: .secondary, title: messageText,
+                subtitle: subtitle, axis: axis, symbolSize: symbolSize
+            )
+        }
         return source == .mine
             ? .allCaughtUp(axis: axis, symbolSize: symbolSize)
             : .nothingToReview(axis: axis, symbolSize: symbolSize)
+    }
+
+    init(source: WidgetSource, family: WidgetFamily, updatedAt: Date?, isSignedOut: Bool, message: String? = nil) {
+        self.source = source
+        self.family = family
+        self.updatedAt = updatedAt
+        self.isSignedOut = isSignedOut
+        self.messageText = message
     }
 
     var body: some View {

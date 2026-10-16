@@ -2,8 +2,8 @@ import Foundation
 import MyPRsKit
 
 /// The values a pull request fills into the review prompt.
-enum ReviewPromptValues {
-    static func of(_ pullRequest: PullRequest) -> [String: String] {
+public enum ReviewPromptValues {
+    public static func of(_ pullRequest: PullRequest) -> [String: String] {
         values(
             url: pullRequest.url, title: pullRequest.title, repository: pullRequest.repository,
             number: pullRequest.number, author: pullRequest.authorLogin,
@@ -14,7 +14,7 @@ enum ReviewPromptValues {
     }
 
     /// Closed pull requests don't carry CI results or an author.
-    static func of(_ pullRequest: ClosedPullRequest) -> [String: String] {
+    public static func of(_ pullRequest: ClosedPullRequest) -> [String: String] {
         values(
             url: pullRequest.url, title: pullRequest.title, repository: pullRequest.repository,
             number: pullRequest.number, author: nil,
@@ -24,7 +24,7 @@ enum ReviewPromptValues {
         )
     }
 
-    static let sample = [
+    public static let sample = [
         "url": "https://github.com/acme/api/pull/128",
         "title": "Add retry budget to the webhook consumer",
         "repo": "acme/api",
@@ -38,7 +38,7 @@ enum ReviewPromptValues {
         "checks": "passing 6/6",
     ]
 
-    static func checksText(_ pullRequest: PullRequest) -> String {
+    public static func checksText(_ pullRequest: PullRequest) -> String {
         let counts = "\(pullRequest.checksPassed)/\(pullRequest.checksTotal)"
         switch pullRequest.checks {
         case .passing: return "passing \(counts)"

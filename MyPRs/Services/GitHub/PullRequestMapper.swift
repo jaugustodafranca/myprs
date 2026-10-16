@@ -18,6 +18,7 @@ enum PullRequestMapper {
             title: node.title,
             url: node.url,
             repository: node.repository.nameWithOwner,
+            headRepository: node.headRepository?.nameWithOwner,
             isDraft: node.isDraft,
             checks: checkStatus(from: rollup?.state),
             review: reviewStatus(from: node.reviewDecision),

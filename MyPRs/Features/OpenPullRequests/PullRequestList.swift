@@ -7,11 +7,15 @@ struct PullRequestList: View {
 
     var body: some View {
         FittingScrollView(maxHeight: maxHeight) {
-            LazyVStack(spacing: 0) {
-                ForEach(pullRequests) { pullRequest in
-                    PullRequestRow(pullRequest: pullRequest)
-                    if pullRequest.id != pullRequests.last?.id { Divider().padding(.leading, 32) }
+            GroupedPullRequestList(
+                groups: PullRequestGrouping.groups(pullRequests),
+                summary: { items in
+                    let attentionCount = items.filter(\.needsAttention).count
+                    guard attentionCount > 0 else { return nil }
+                    return attentionCount == 1 ? "1 PR needs attention" : "\(attentionCount) PRs need attention"
                 }
+            ) { pullRequest, parentNumber in
+                PullRequestRow(pullRequest: pullRequest, parentNumber: parentNumber)
             }
         }
     }

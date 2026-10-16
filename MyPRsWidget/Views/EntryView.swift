@@ -6,13 +6,23 @@ struct EntryView: View {
     @Environment(\.widgetFamily) private var family
     let entry: PullRequestEntry
 
-    private var isSearch: Bool { entry.source != .mine }
+    private var isSearch: Bool { entry.source != .mine && entry.source != .recent }
 
     var body: some View {
-        if let snapshot = entry.snapshot, !snapshot.pullRequests.isEmpty {
+        if entry.isSignedOut {
+            emptyContent(updatedAt: nil)
+        } else if entry.source == .recent, let recent = entry.recentSnapshot {
+            if recent.pullRequests.isEmpty {
+                emptyContent(updatedAt: recent.fetchedAt, message: "No recent pull requests")
+            } else {
+                recentContent(recent)
+            }
+        } else if entry.source == .recent {
+            emptyContent(updatedAt: nil, message: "Refresh to show Recent")
+        } else if let snapshot = entry.snapshot, !snapshot.pullRequests.isEmpty {
             content(for: snapshot)
         } else {
-            emptyContent(updatedAt: entry.snapshot?.fetchedAt)
+            emptyContent(updatedAt: entry.snapshot?.fetchedAt, message: entry.snapshot == nil && !entry.isSignedOut ? "Waiting for the app to refresh" : nil)
         }
     }
 
@@ -40,12 +50,26 @@ struct EntryView: View {
         }
     }
 
-    @ViewBuilder private func emptyContent(updatedAt: Date?) -> some View {
+    @ViewBuilder private func recentContent(_ snapshot: ClosedPullRequestSnapshot) -> some View {
         switch family {
         case .systemSmall:
-            EmptySmallView(source: entry.source, isSignedOut: entry.isSignedOut)
+            ReviewSmallView(title: entry.source.title, count: snapshot.pullRequests.count, label: "recent")
+                .widgetURL(snapshot.pullRequests.first?.url)
+        case .systemLarge:
+            RecentListView(snapshot: snapshot, rowLimit: 5)
+        case .systemExtraLarge:
+            RecentListView(snapshot: snapshot, rowLimit: 6)
         default:
-            EmptyWidgetView(source: entry.source, family: family, updatedAt: updatedAt, isSignedOut: entry.isSignedOut)
+            RecentListView(snapshot: snapshot, rowLimit: 3)
+        }
+    }
+
+    @ViewBuilder private func emptyContent(updatedAt: Date?, message: String? = nil) -> some View {
+        switch family {
+        case .systemSmall:
+            EmptySmallView(source: entry.source, isSignedOut: entry.isSignedOut, message: message)
+        default:
+            EmptyWidgetView(source: entry.source, family: family, updatedAt: updatedAt, isSignedOut: entry.isSignedOut, message: message)
         }
     }
 }

@@ -14,6 +14,10 @@ import Testing
         #expect(WidgetSource.resolve(id: WidgetSource.mineID, in: [reviews]) == .mine)
     }
 
+    @Test func recentIDResolvesToRecent() {
+        #expect(WidgetSource.resolve(id: WidgetSource.recentID, in: [reviews]) == .recent)
+    }
+
     @Test func searchIDResolvesToThatSearch() {
         let source = WidgetSource.resolve(id: mentions.id.uuidString, in: [reviews, mentions])
         #expect(source == .search(mentions))
@@ -38,7 +42,7 @@ import Testing
 
     @Test func choicesListMineThenSearchesInOrder() {
         let titles = WidgetSource.choices(in: [reviews, mentions]).map(\.title)
-        #expect(titles == ["Pull requests", "Review requested", "Mentions"])
+        #expect(titles == ["Pull requests", "Recent pull requests", "Review requested", "Mentions"])
     }
 
     @Test func reviewPillCountsAndHidesWhenEmpty() {
