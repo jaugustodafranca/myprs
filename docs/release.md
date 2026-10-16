@@ -110,3 +110,16 @@ and run (keep the SPM version in `project.yml` on the same release):
   a missing profile, create a Developer ID provisioning profile for the app and
   the widget in the developer portal and install it in the workflow.
 - Sparkle's nested helpers are re-signed by Xcode during export.
+
+## Widget still shows the previous version after an update
+
+First check the app and embedded widget versions in their Info.plist files.
+If both are current but chronod reports `Bundle version did not match`, an old
+widget extension process may have survived the update. Compare its start time
+with the installation time before changing any caches.
+
+Quit only the stale `MyPRsWidget` process, re-register `/Applications/MyPRs.app`
+with LaunchServices (`lsregister -f`), then restart `chronod`. This preserves
+widget placement and configuration. Confirm `Reload success` for the affected
+widget in chronod logs. Do not clear the entire WidgetKit database or restart
+the app for this condition.

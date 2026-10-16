@@ -58,6 +58,9 @@ Out of scope for v1: GitLab, multiple accounts.
 - Connected PRs appear in a subtle outlined box: repository, root target branch,
   count, and aligned rows with `Base: #<parent>` when a parent is known. Independent
   PRs remain plain rows interleaved with boxes. App boxes can be collapsed.
+  Box headers put repository and target on the first line, counts on a secondary
+  line. Dividers separate adjacent plain rows and expanded box contents only;
+  spacing and the box outline separate groups from their neighbors.
 - Rows within a box are newest-created first. Boxes and independent rows are ordered
   by their newest creation date, with stable ID tie-breaking. Alerts do not reorder
   the list. Keeping a box together takes precedence over globally interleaving all

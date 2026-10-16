@@ -35,6 +35,10 @@ stage_sources "$staged" \
 # Pick the tab to show: the panel has no input to switch tabs offscreen.
 patch_staged "$staged" MenuContentView.swift 's/@State private var tab = PanelTab.open/@State private var tab = PanelPreviewState.tab/'
 
+# Exercise collapsed boxes without adding preview state to the production view.
+patch_staged "$staged" GroupedPullRequestList.swift 's/@State private var collapsedGroupIDs: Set<String> = \[\]/@State private var collapsedGroupIDs: Set<String>/'
+patch_staged "$staged" GroupedPullRequestList.swift 's/self.groups = groups/self.groups = groups; self._collapsedGroupIDs = State(initialValue: PanelPreviewState.collapseGroups ? Set(groups.filter { $0.isRelated }.map { $0.id }) : [])/'
+
 # The panel is capped at 60% of the screen height; use a fixed height so renders match across machines.
 screen_height='NSScreen.main?.visibleFrame.height ?? PanelSize.defaultScreenHeight'
 patch_staged "$staged" MenuContentView.swift "s/$screen_height/PanelPreviewState.screenHeight/g"
