@@ -33,7 +33,7 @@ final class PullRequestMonitor {
     @ObservationIgnored private let client = GitHubClient()
     @ObservationIgnored private let snapshotStore = SnapshotStore.shared
     @ObservationIgnored private let recentSnapshotStore = RecentSnapshotStore.shared
-    @ObservationIgnored private let notifier = Notifier()
+    @ObservationIgnored private let notifier = Notifier.shared
     @ObservationIgnored private let loginFlow = LoginFlow.shared
     @ObservationIgnored private let authWorker = AuthWorker()
     @ObservationIgnored private let defaults = UserDefaults.standard
