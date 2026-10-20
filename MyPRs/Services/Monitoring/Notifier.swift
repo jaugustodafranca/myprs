@@ -5,10 +5,10 @@ import UserNotifications
 
 @MainActor
 final class Notifier: NSObject, UNUserNotificationCenterDelegate {
+    static let shared = Notifier()
     private let center = UNUserNotificationCenter.current()
 
-    override init() {
-        super.init()
+    func registerAsDelegate() {
         center.delegate = self
     }
 
@@ -23,39 +23,62 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
 
     func notify(_ changes: [PullRequestChange]) {
         for change in changes {
-            let content = UNMutableNotificationContent()
-            content.title = change.kind == .checksFailed ? "CI failed" : "New comment"
-            content.body = "\(change.pullRequest.repository)#\(change.pullRequest.number) · \(change.pullRequest.title)"
-            content.userInfo = ["url": change.pullRequest.url.absoluteString]
+            let content = Self.content(for: change)
             center.add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
         }
     }
 
     func notifyNewToReview(_ pullRequests: [PullRequest]) {
         for pullRequest in pullRequests {
-            let content = UNMutableNotificationContent()
-            content.title = "New PR to review"
-            content.body = Self.reviewBody(for: pullRequest)
-            content.userInfo = ["url": pullRequest.url.absoluteString]
+            let content = Self.reviewContent(for: pullRequest)
             center.add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
         }
     }
 
-    nonisolated static func reviewBody(for pullRequest: PullRequest) -> String {
-        let body = "\(pullRequest.repository)#\(pullRequest.number) · \(pullRequest.title)"
-        guard let author = pullRequest.authorLogin else { return body }
-        return "\(body) · by \(author)"
+    nonisolated static func content(for change: PullRequestChange) -> UNMutableNotificationContent {
+        let content = baseContent(for: change.pullRequest)
+        content.title = change.kind == .checksFailed ? "CI failed" : "New review comment"
+        return content
+    }
+
+    nonisolated static func reviewContent(for pullRequest: PullRequest) -> UNMutableNotificationContent {
+        let content = baseContent(for: pullRequest)
+        content.title = "New PR to review"
+        if let author = pullRequest.authorLogin {
+            content.body += " · by \(author)"
+        }
+        return content
+    }
+
+    nonisolated private static func baseContent(for pullRequest: PullRequest) -> UNMutableNotificationContent {
+        let content = UNMutableNotificationContent()
+        content.subtitle = pullRequest.title
+        content.body = "\(pullRequest.repository) #\(pullRequest.number)"
+        content.userInfo = ["url": pullRequest.url.absoluteString]
+        return content
+    }
+
+    nonisolated static func destination(
+        actionIdentifier: String,
+        userInfo: [AnyHashable: Any]
+    ) -> URL? {
+        guard
+            actionIdentifier == UNNotificationDefaultActionIdentifier,
+            let string = userInfo["url"] as? String,
+            let url = URL(string: string),
+            GitHubURL.isTrusted(url)
+        else { return nil }
+        return url
     }
 
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        guard
-            let string = response.notification.request.content.userInfo["url"] as? String,
-            let url = URL(string: string),
-            GitHubURL.isTrusted(url)
-        else { return }
+        guard let url = Self.destination(
+            actionIdentifier: response.actionIdentifier,
+            userInfo: response.notification.request.content.userInfo
+        ) else { return }
         await MainActor.run { _ = NSWorkspace.shared.open(url) }
     }
 

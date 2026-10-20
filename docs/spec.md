@@ -21,6 +21,12 @@ approved. Open or copy a PR link in one click.
   demand.
 - Native notification when a PR's CI goes from not failing to failing, and when
   its unanswered thread count goes up.
+  The event is the notification title ("CI failed" or "New review comment"),
+  the PR title is the subtitle, and `<repo> #<n>` is the body. URLs stay in
+  the notification payload, never in its visible text. Clicking opens the PR
+  in the default browser if `GitHubURL.isTrusted`; dismissing does nothing.
+  A single retained notification delegate is registered before app launch
+  finishes, including when a click launches the app.
 - A Review tab listing other people's PRs found by the user's saved GitHub
   searches, with optional notifications for new ones.
 - Notifies the user when a new version is available and installs it (Sparkle).
@@ -134,8 +140,9 @@ turns it into the query that is run, shown live under the field:
   failing search only marks that search as failed. Saving an added or edited
   search fetches it right away.
 - For a search with `notifies`, a PR whose id was not in that search's
-  previous result sends "New PR to review" with
-  `<repo>#<n> · <title> · by <author>`. The baseline is only results fetched
+  previous result sends "New PR to review" with the PR title as subtitle and
+  `<repo> #<n> · by <author>` as body (author omitted if unknown).
+  The baseline is only results fetched
   during this run of the app, so the first fetch of a search (also after
   launch, or after its query changed) never notifies. A PR found by several
   notifying searches notifies once. Clicking opens the PR if
