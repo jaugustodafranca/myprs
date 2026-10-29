@@ -18,7 +18,9 @@ struct MetadataLine: View {
     private func line(_ items: [MetadataItem]) -> some View {
         HStack(spacing: asBadges ? 4 : 8) {
             ForEach(items) { item in
-                if asBadges {
+                if asBadges && (item.kind == .unanswered || item.kind == .conflicts ||
+                    (item.kind == .checks && pullRequest.checks == .failing) ||
+                    (item.kind == .review && pullRequest.review == .changesRequested)) {
                     item.content
                         .foregroundStyle(item.color)
                         .padding(.horizontal, 5)

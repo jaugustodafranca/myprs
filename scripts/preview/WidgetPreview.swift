@@ -49,6 +49,14 @@ enum WidgetPreview {
         let reviewSource = WidgetSource.search(SampleData.reviewRequestedSearch)
         return [
             WidgetScenario(name: "mine", entry: entry(.mine, SampleData.openPullRequests)),
+            WidgetScenario(name: "mine-single", entry: entry(.mine, Array(SampleData.openPullRequests.suffix(1)))),
+            WidgetScenario(name: "search-single", entry: entry(reviewSource, Array(SampleData.reviewRequestedPullRequests.prefix(1)))),
+            WidgetScenario(
+                name: "recent-single",
+                entry: entry(.recent, recentSnapshot: ClosedPullRequestSnapshot(
+                    pullRequests: Array(SampleData.closedPullRequests.prefix(1)), fetchedAt: .now
+                ))
+            ),
             WidgetScenario(name: "search", entry: entry(reviewSource, SampleData.reviewRequestedPullRequests)),
             WidgetScenario(name: "mine-empty", entry: entry(.mine, [])),
             WidgetScenario(name: "search-empty", entry: entry(reviewSource, [])),

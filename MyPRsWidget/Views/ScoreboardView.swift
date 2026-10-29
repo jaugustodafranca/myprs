@@ -27,6 +27,10 @@ struct ScoreboardView: View {
         .frame(maxWidth: isInline ? nil : .infinity)
         .padding(.vertical, isInline ? 2 : 4)
         .padding(.horizontal, isInline ? 8 : 0)
-        .background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 8))
+        .background {
+            if count > 0 {
+                RoundedRectangle(cornerRadius: 8).fill(.fill.quaternary)
+            }
+        }
     }
 }

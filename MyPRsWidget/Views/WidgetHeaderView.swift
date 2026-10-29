@@ -15,7 +15,6 @@ struct WidgetHeaderView: View {
             Spacer(minLength: 4)
             if let inlineScoreboard {
                 ScoreboardView(summary: inlineScoreboard, isInline: true)
-                Spacer(minLength: 4)
             }
             if let pill {
                 StatusPillView(pill: pill)
