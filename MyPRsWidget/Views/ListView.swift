@@ -35,8 +35,14 @@ struct ListView: View {
     var body: some View {
         ViewThatFits(in: .vertical) {
             ForEach(Array((0...min(rowLimit, totalRows)).reversed()), id: \.self) { rowCount in
-                content(rowCount: rowCount)
-                    .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 0) {
+                    content(rowCount: rowCount)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    WidgetListFooter(omittedCount: totalRows - rowCount, updatedAt: snapshot.fetchedAt)
+                        .padding(.top, 8)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }
@@ -60,8 +66,6 @@ struct ListView: View {
                     }
                 }
             }
-            WidgetListFooter(omittedCount: totalRows - rowCount, updatedAt: snapshot.fetchedAt)
         }
     }
-
 }

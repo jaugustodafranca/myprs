@@ -216,7 +216,11 @@ like the search editor.
 ### Widget
 
 - Small, medium, large and extra large. Small shows counts, the others a list from the shared cache.
-- List widgets keep their header, scoreboard (when shown) and update time visible; they show as many rows as fit and a `+N more` count for the rest.
+- List widgets anchor their header and rows at the top and the update time at the
+  bottom, including when only one PR is present. They keep the scoreboard (when
+  shown) visible, show as many rows as fit and a `+N more` count for the rest.
+  Zero counters have no tile background; expanded row metadata uses badge
+  backgrounds only for failing CI, unanswered threads, requested changes and conflicts.
 - Tapping a row opens the PR. Each list row has copy-link, copy-branch and copy-AI-review-prompt buttons (App Intents), including medium widgets.
 - Signed out / empty states with a short message. A Recent widget without a cache asks for an app refresh.
 - Related boxes are compact and fit within the available widget height. A partially

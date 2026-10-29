@@ -20,7 +20,7 @@ Give a directory outside the repository, for example `$(mktemp -d)`. Each image 
 | Script | Files | Shows |
 | --- | --- | --- |
 | `render-panel.sh` | `panel-open`, `panel-open-collapsed`, `panel-recent-collapsed`, `panel-open-empty`, `panel-recent`, `panel-review`, `panel-settings`, `panel-signed-out` | The real `MenuContentView`, 440 pt wide and as tall as its content |
-| `render-widget.sh` | `widget-<scenario>-<size>` | `EntryView` for `mine`, `search`, `recent`, their empty and uncached states, and signed-out states in desktop sizes `desktop-small` 164x164, `desktop-medium` 344x164, `desktop-large` 344x344 and `desktop-extra-large` 704x344, plus the larger preview sizes `small` 170x170, `medium` 364x170, `large` 364x382 and `extra-large` 715x382 |
+| `render-widget.sh` | `widget-<scenario>-<size>` | `EntryView` for `mine`, `search`, `recent`, single-PR variants, their empty and uncached states, and signed-out states in desktop sizes `desktop-small` 164x164, `desktop-medium` 344x164, `desktop-large` 344x344 and `desktop-extra-large` 704x344, plus the larger preview sizes `small` 170x170, `medium` 364x170, `large` 364x382 and `extra-large` 715x382 |
 
 The editor screens (search and AI prompt) and the organization access banner are not rendered.
 

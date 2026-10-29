@@ -21,16 +21,21 @@ struct RecentListView: View {
     var body: some View {
         ViewThatFits(in: .vertical) {
             ForEach(Array((0...min(rowLimit, totalRows)).reversed()), id: \.self) { rowCount in
-                VStack(alignment: .leading, spacing: 7) {
-                    WidgetHeaderView(title: WidgetSource.recentTitle, pill: nil)
-                    ForEach(visibleGroups(rowCount), id: \.group.id) { part in
-                        WidgetPullRequestGroup(group: part.group, visibleItems: part.visible, omittedCount: part.omitted) { pullRequest, parentNumber in
-                            RecentPullRequestRowView(pullRequest: pullRequest, parentNumber: parentNumber)
+                VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        WidgetHeaderView(title: WidgetSource.recentTitle, pill: nil)
+                        ForEach(visibleGroups(rowCount), id: \.group.id) { part in
+                            WidgetPullRequestGroup(group: part.group, visibleItems: part.visible, omittedCount: part.omitted) { pullRequest, parentNumber in
+                                RecentPullRequestRowView(pullRequest: pullRequest, parentNumber: parentNumber)
+                            }
                         }
                     }
+                    .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
                     WidgetListFooter(omittedCount: totalRows - rowCount, updatedAt: snapshot.fetchedAt)
+                        .padding(.top, 7)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
