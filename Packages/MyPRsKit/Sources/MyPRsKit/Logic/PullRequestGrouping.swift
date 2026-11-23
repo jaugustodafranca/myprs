@@ -27,7 +27,14 @@ public enum PullRequestGrouping {
         parentByChild = parentByChild.filter { !cyclicIDs.contains($0.key) && !cyclicIDs.contains($0.value) }
 
         var childrenByParent: [String: [String]] = [:]
-        for (child, parent) in parentByChild { childrenByParent[parent, default: []].append(child) }
+        let chronologicalItems = uniqueItems.sorted { lhs, rhs in
+            if lhs.createdAt != rhs.createdAt { return lhs.createdAt > rhs.createdAt }
+            return lhs.id < rhs.id
+        }
+        for child in chronologicalItems {
+            guard let parent = parentByChild[child.id] else { continue }
+            childrenByParent[parent, default: []].append(child.id)
+        }
 
         let roots = uniqueItems.filter { parentByChild[$0.id] == nil }
         let built = roots.map { root -> PullRequestGroup<Item> in
@@ -35,12 +42,9 @@ public enum PullRequestGrouping {
             var stack = [root.id]
             while let current = stack.popLast() {
                 descendantIDs.append(current)
-                stack.append(contentsOf: childrenByParent[current] ?? [])
+                stack.append(contentsOf: (childrenByParent[current] ?? []).reversed())
             }
-            let groupItems = descendantIDs.compactMap { itemByID[$0] }.sorted { lhs, rhs in
-                if lhs.createdAt != rhs.createdAt { return lhs.createdAt > rhs.createdAt }
-                return lhs.id < rhs.id
-            }
+            let groupItems = descendantIDs.compactMap { itemByID[$0] }
             var parents: [String: Int] = [:]
             for id in descendantIDs {
                 guard let parentID = parentByChild[id], let parent = itemByID[parentID] else { continue }

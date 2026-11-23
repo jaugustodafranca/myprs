@@ -115,18 +115,20 @@ colleagues' logins. The history was rewritten to remove them, and `AGENTS.md`
 now forbids real company data in tests, sample data, docs and PR descriptions.
 
 
-## Related boxes use branch identity and chronological order
+## Related boxes use branch identity and dependency order
 
 A developer can target one PR branch from another without using a stack tool.
 Grouping therefore uses the base and head repository/branch identities returned
 by GitHub. Repository identity prevents unrelated fork branches with the same
 name from being linked. Missing or ambiguous data stays ungrouped.
 
-A tree imposes parent-first order and loses width to indentation. Related boxes
-keep aligned rows, identify the parent in text and sort newest-created first.
-Each box occupies the position of its newest member; this preserves the group
-while keeping alert colors separate from chronological order. Review retains
-saved-search sections. The same grouping logic serves the app and widget.
+Related boxes keep aligned rows and identify the parent in text without indentation.
+Originally their rows were sorted newest-created first, but this split dependency
+chains when PR creation dates differed from branch order. Rows now follow the root
+and then each child's complete subtree. Siblings use newest creation date and stable
+ID tie-breaking. Each box still occupies the position of its newest member;
+alerts do not change ordering. Review retains saved-search sections. The same
+grouping logic serves the app and widget.
 
 Recent snapshots and the generic prompt renderer are now shared with the widget.
 The app owns network refreshes and prompt editing; widget actions read shared
