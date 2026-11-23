@@ -3,7 +3,7 @@ import Foundation
 import Testing
 
 @Suite struct PullRequestGroupingTests {
-    @Test func groupsAChainAndOrdersItsItemsByCreationDate() {
+    @Test func groupsAChainInDependencyOrderRegardlessOfCreationDate() {
         let root = branchPR(id: "root", number: 1, head: "root", base: "main", created: 10)
         let child = branchPR(id: "child", number: 2, head: "child", base: "root", created: 30)
         let grandchild = branchPR(id: "grandchild", number: 3, head: "grandchild", base: "child", created: 20)
@@ -12,11 +12,43 @@ import Testing
 
         #expect(groups.count == 1)
         #expect(groups[0].id == "root")
-        #expect(groups[0].items.map(\.id) == ["child", "grandchild", "root"])
+        #expect(groups[0].items.map(\.id) == ["root", "child", "grandchild"])
         #expect(groups[0].parentNumbers == ["child": 1, "grandchild": 2])
         #expect(groups[0].isRelated)
         #expect(groups[0].repository == "acme/storefront")
         #expect(groups[0].baseBranch == "main")
+    }
+
+    @Test func ordersTwelvePullRequestsFromBaseToTip() {
+        let chain = (0..<12).map { index in
+            branchPR(
+                id: "pr-\(index)", number: index + 1, head: "branch-\(index)",
+                base: index == 0 ? "main" : "branch-\(index - 1)",
+                created: TimeInterval((index * 7) % 12)
+            )
+        }
+        let input = [8, 2, 11, 5, 0, 9, 3, 7, 1, 10, 6, 4].map { chain[$0] }
+        let groups = PullRequestGrouping.groups(input)
+
+        #expect(groups.count == 1)
+        #expect(groups[0].items.map(\.id) == chain.map(\.id))
+        #expect(groups[0].parentNumbers.count == 11)
+        for index in 1..<12 {
+            #expect(groups[0].parentNumbers["pr-\(index)"] == index)
+        }
+    }
+
+    @Test func keepsEachBranchTogetherAndOrdersSiblingsByDateThenID() {
+        let root = branchPR(id: "root", number: 1, head: "root", base: "main", created: 100)
+        let older = branchPR(id: "older", number: 2, head: "older", base: "root", created: 10)
+        let alpha = branchPR(id: "alpha", number: 3, head: "alpha", base: "root", created: 20)
+        let zulu = branchPR(id: "zulu", number: 4, head: "zulu", base: "root", created: 20)
+        let leaf = branchPR(id: "leaf", number: 5, head: "leaf", base: "alpha", created: 1)
+        let items = [older, zulu, leaf, root, alpha]
+        let expected = ["root", "alpha", "leaf", "zulu", "older"]
+
+        #expect(PullRequestGrouping.groups(items)[0].items.map(\.id) == expected)
+        #expect(PullRequestGrouping.groups(Array(items.reversed()))[0].items.map(\.id) == expected)
     }
 
     @Test func groupsForksAndSiblingsButKeepsSameBaseBranchesIndependent() {

@@ -71,7 +71,9 @@ Out of scope for v1: GitLab, multiple accounts.
   Box headers put repository and target on the first line, counts on a secondary
   line. Dividers separate adjacent plain rows and expanded box contents only;
   spacing and the box outline separate groups from their neighbors.
-- Rows within a box are newest-created first. Boxes and independent rows are ordered
+- Rows within a box follow dependencies: the root first, then each child and its
+  descendants before the next sibling. Siblings are newest-created first, with
+  stable ID tie-breaking. Boxes and independent rows are ordered
   by their newest creation date, with stable ID tie-breaking. Alerts do not reorder
   the list. Keeping a box together takes precedence over globally interleaving all
   of its individual rows by date.
