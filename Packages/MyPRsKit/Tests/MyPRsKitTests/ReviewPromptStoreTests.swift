@@ -17,6 +17,34 @@ import Testing
         #expect(widgetCache.string(forKey: "reviewPromptTemplate") == nil)
     }
 
+    @Test func customFormattingSurvivesSavingAndRenderingForPanelAndWidget() {
+        let widgetCache = isolatedDefaults()
+        let panel = ReviewPromptStore(defaults: isolatedDefaults(), cacheDefaults: widgetCache)
+        let widget = ReviewPromptStore(defaults: widgetCache)
+        let template = """
+
+        Review {{repo}}
+
+        - First item
+          continued on purpose
+        - Second item
+
+        ```swift
+        if ready {
+            runChecks()
+        }
+        ```
+
+        """
+        panel.save(template)
+
+        let expected = template.replacingOccurrences(of: "{{repo}}", with: "acme/storefront")
+        for store in [panel, widget] {
+            #expect(store.template == template)
+            #expect(ReviewPromptTemplate.render(store.template, values: ["repo": "acme/storefront"]) == expected)
+        }
+    }
+
     @Test func migrationCopiesTheExistingAppPreferenceIntoTheWidgetCache() {
         let preferences = isolatedDefaults()
         let widgetCache = isolatedDefaults()

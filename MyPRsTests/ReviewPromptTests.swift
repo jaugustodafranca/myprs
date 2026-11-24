@@ -17,10 +17,19 @@ import Testing
         #expect(ReviewPromptTemplate.render("{{title}}", values: ["title": "{{url}}", "url": "u"]) == "{{url}}")
     }
 
-    @Test func defaultTemplateUsesOnlyKnownPlaceholders() {
+    @Test func defaultPromptRendersEachParagraphAndListItemOnItsOwnLine() {
         let rendered = ReviewPromptTemplate.render(DefaultReviewPrompt.template, values: ReviewPromptValues.sample)
-        #expect(!rendered.contains("{{"))
-        #expect(rendered.hasPrefix("Review this pull request: https://github.com/acme/api/pull/128"))
+        #expect(rendered == """
+        Review this pull request: https://github.com/acme/api/pull/128
+
+        acme/api#128 — Add retry budget to the webhook consumer
+        - Author: @mrivera
+        - Branch: feature/retry-budget → main
+        - Changes: +214 −38 in 7 files
+        - CI: passing 6/6
+
+        Use the GitHub CLI to read the description, diff, and existing review comments.
+        """)
     }
 
     @Test func buildsValuesFromAnOpenPullRequest() {
