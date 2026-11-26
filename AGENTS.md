@@ -98,8 +98,9 @@ Rules for agents:
   `AppEnvironment.isRunningTests` is true the launcher runs a bare
   `TestHostApp` instead of `MyPRsApp`, so nothing touches the Keychain, App
   Group, notifications, Sparkle or widgets; keep it that way.
-- To show how a screen looks, render it with `scripts/preview` (see its README)
-  and send the PNG instead of building and launching the app.
+- For every UI change, render the affected screen locally with `scripts/preview`.
+  Inspect the PNG for layout and readability, including long or repeated content
+  when relevant, and show the maintainer the image for UI/UX review.
 
 ## Data that never enters the repository
 

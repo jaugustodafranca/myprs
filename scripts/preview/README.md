@@ -11,6 +11,7 @@ It needs the Xcode command line tools with the macOS 26 SDK, like the app itself
 
 ```bash
 scripts/preview/render-panel.sh <output-dir>    # the panel, about 25 seconds
+scripts/preview/render-panel.sh <output-dir> --failed-checks  # PR rows and popover contents for one and eight failures
 scripts/preview/render-widget.sh <output-dir>   # the widget, about 25 seconds
 ```
 

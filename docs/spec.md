@@ -46,8 +46,12 @@ Out of scope for v1: GitLab, multiple accounts.
   statuses use their context and creation time. Success, neutral and skipped
   count as passed. Any kept failure (including cancellation) makes CI failing,
   otherwise unfinished checks make it running. No checks gives none.
-  The badge shows passed/total beside the merge state. Failed checks show
-  their names and failed commit statuses also show their descriptions.
+  The passed/total badge shares a baseline with secondary text for merge
+  states other than `CLEAN`, such as “Merge blocked”. Hovering over the badge
+  shows GitHub's original merge state, including `CLEAN`. In Open and Review,
+  clicking a failing badge with a disclosure chevron opens a scrollable popover
+  with the full check names and status descriptions. The PR row keeps its height
+  as more checks fail.
 - **Review status** — `reviewDecision`: `APPROVED` → approved,
   `CHANGES_REQUESTED` → changesRequested, anything else → waiting.
 - **Unanswered thread** — a review thread that is not resolved and whose last
