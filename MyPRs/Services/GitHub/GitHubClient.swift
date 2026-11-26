@@ -15,14 +15,64 @@ struct GitHubClient {
         let payload = try await fetchPullRequestPayload(token: token, query: OpenPullRequestsQuery.text)
         return PullRequestSnapshot(
             login: payload.viewer.login,
-            pullRequests: PullRequestMapper.pullRequests(from: payload),
+            pullRequests: try await pullRequests(from: payload, token: token),
             fetchedAt: Date()
         )
     }
 
     func fetchPullRequests(matching searchQuery: String, token: String) async throws -> [PullRequest] {
         let payload = try await fetchPullRequestPayload(token: token, query: SavedSearchQuery.text, variables: ["q": searchQuery])
-        return PullRequestMapper.pullRequests(from: payload)
+        return try await pullRequests(from: payload, token: token)
+    }
+
+    private func pullRequests(from payload: GitHubResponse.DataPayload, token: String) async throws -> [PullRequest] {
+        var results: [PullRequest] = []
+        for node in payload.search.nodes.compactMap(\.pullRequest) where GitHubURL.isTrusted(node.url) {
+            let (contexts, mergeState) = try await fetchChecks(for: node, token: token)
+            results.append(PullRequestMapper.pullRequest(from: node, viewerLogin: payload.viewer.login,
+                                                         checks: CheckSummary(contexts), mergeStateStatus: mergeState))
+        }
+        return results
+    }
+
+    private struct CheckVariables: Encodable {
+        let owner: String
+        let name: String
+        let number: Int
+        var after: String?
+    }
+
+    private func fetchChecks(for node: GitHubResponse.PullRequestNode, token: String) async throws
+        -> ([GitHubResponse.CheckContext], String?) {
+        guard let oid = node.commits.nodes.last?.commit.oid else { return ([], nil) }
+        let repository = node.repository.nameWithOwner.split(separator: "/")
+        guard repository.count == 2 else { throw GitHubError.badResponse }
+        var variables = CheckVariables(owner: String(repository[0]), name: String(repository[1]), number: node.number)
+        var contexts: [GitHubResponse.CheckContext] = []
+        var cursors: Set<String> = []
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        while true {
+            let query = try request(token: token, query: PullRequestChecksQuery.text, variables: variables)
+            let (data, response) = try await session.data(for: query)
+            try validate(response)
+            guard let body = try? decoder.decode(PullRequestChecksResponse.self, from: data),
+                  body.errors == nil, let pr = body.data?.repository?.pullRequest,
+                  let commit = pr.commits.nodes.last?.commit, commit.oid == oid else {
+                throw GitHubError.badResponse
+            }
+            guard let page = commit.statusCheckRollup?.contexts else {
+                guard variables.after == nil else { throw GitHubError.badResponse }
+                return ([], pr.mergeStateStatus)
+            }
+            contexts.append(contentsOf: page.nodes)
+            guard page.pageInfo.hasNextPage else { return (contexts, pr.mergeStateStatus) }
+            guard let cursor = page.pageInfo.endCursor, cursors.insert(cursor).inserted else {
+                throw GitHubError.badResponse
+            }
+            variables.after = cursor
+        }
     }
 
     private func fetchPullRequestPayload(token: String, query: String, variables: [String: String?] = [:]) async throws -> GitHubResponse.DataPayload {
@@ -75,7 +125,7 @@ struct GitHubClient {
         return !Set(granted).isDisjoint(with: ["read:org", "write:org", "admin:org"])
     }
 
-    private func request(token: String, query: String, variables: [String: String?] = [:]) throws -> URLRequest {
+    private func request<Variables: Encodable>(token: String, query: String, variables: Variables = [String: String?]()) throws -> URLRequest {
         var request = URLRequest(url: Self.endpoint)
         request.httpMethod = "POST"
         request.setValue("bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -84,9 +134,9 @@ struct GitHubClient {
         return request
     }
 
-    private struct RequestBody: Encodable {
+    private struct RequestBody<Variables: Encodable>: Encodable {
         let query: String
-        let variables: [String: String?]
+        let variables: Variables
     }
 
     private func validate(_ response: URLResponse) throws {

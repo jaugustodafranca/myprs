@@ -35,14 +35,20 @@ Out of scope for v1: GitLab, multiple accounts.
 
 ### Definitions
 
-- **CI status** — the `statusCheckRollup` of the PR's last commit:
-  `SUCCESS` → passing, `FAILURE`/`ERROR` → failing, `PENDING`/`EXPECTED` →
-  running, missing → none.
+- **CI status** uses all check contexts of the head commit. For each workflow
+  name and event, keep the run with the latest creation time, breaking ties by
+  database ID. Within each event, keep the latest attempt per job name by
+  start time, then completion time. External checks use their name, and commit
+  statuses use their context and creation time. Success, neutral and skipped
+  count as passed. Any kept failure (including cancellation) makes CI failing,
+  otherwise unfinished checks make it running. No checks gives none.
+  The badge shows passed/total beside the merge state. Failed checks show
+  their names and failed commit statuses also show their descriptions.
 - **Review status** — `reviewDecision`: `APPROVED` → approved,
   `CHANGES_REQUESTED` → changesRequested, anything else → waiting.
 - **Unanswered thread** — a review thread that is not resolved and whose last
   comment was not written by the signed-in user.
-- **Needs attention** — a PR with failing CI or at least one unanswered thread.
+- **Needs attention** — a PR with failing CI, a merge conflict, or at least one unanswered thread.
 
 ### Menu bar
 
@@ -340,13 +346,15 @@ struct PullRequest: Codable, Hashable, Identifiable {
     let headBranch: String    // headRefName
     let baseBranch: String    // baseRefName
     let headRepository: String? // head repository owner/name; nil in older snapshots
-    let hasConflicts: Bool    // mergeable == CONFLICTING
+    let hasConflicts: Bool    // mergeable == CONFLICTING or mergeStateStatus == DIRTY
     let checksPassed: Int     // CheckRun SUCCESS/NEUTRAL/SKIPPED + StatusContext SUCCESS
-    let checksTotal: Int      // all check contexts (first 100)
+    let checksTotal: Int      // retained check results across all pages
+    let mergeStateStatus: String?
+    let failedChecks: [String]?
     let approvals: Int        // latestReviews with state APPROVED
     let authorLogin: String?  // nil in snapshots saved before authors were fetched
     let authorAvatarURL: URL? // only https://avatars.githubusercontent.com
-    var needsAttention: Bool { checks == .failing || unansweredThreads > 0 }
+    var needsAttention: Bool { checks == .failing || hasConflicts || unansweredThreads > 0 }
 }
 enum CheckStatus: String, Codable { case passing, failing, running, none }
 enum ReviewStatus: String, Codable { case approved, changesRequested, waiting }
@@ -420,26 +428,17 @@ fragment PullRequestFields on PullRequest {
   repository { nameWithOwner }
   headRepository { nameWithOwner }
   latestReviews(first: 20) { nodes { state } }
-  commits(last: 1) {
-    nodes {
-      commit {
-        statusCheckRollup {
-          state
-          contexts(first: 100) {
-            nodes {
-              ... on CheckRun { conclusion }
-              ... on StatusContext { state }
-            }
-          }
-        }
-      }
-    }
-  }
+  commits(last: 1) { nodes { commit { oid } } }
   reviewThreads(first: 100) {
     nodes { isResolved comments(last: 1) { nodes { author { login } } } }
   }
 }
 ```
+
+For each PR, `PullRequestChecksQuery` fetches the merge state and all head
+commit contexts in pages of 100. The client verifies the commit OID against
+the search result on every page. A head change fails the refresh so the last
+snapshot stays in place until the next refresh.
 
 `ISSUE_ADVANCED` accepts `AND`, `OR` and parentheses, as GitHub's web search
 does, so a copied link works as is.

@@ -10,7 +10,12 @@ import Testing
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let response = try decoder.decode(GitHubResponse.self, from: Data(fixture.utf8))
-        pullRequests = PullRequestMapper.pullRequests(from: try #require(response.data))
+        let payload = try #require(response.data)
+        pullRequests = payload.search.nodes.compactMap(\.pullRequest).map { node in
+            let contexts = node.commits.nodes.last?.commit.statusCheckRollup?.contexts.nodes ?? []
+            return PullRequestMapper.pullRequest(from: node, viewerLogin: payload.viewer.login,
+                                                checks: CheckSummary(contexts), mergeStateStatus: nil)
+        }
     }
 
     @Test func skipsNodesThatAreNotPullRequests() {
@@ -58,7 +63,7 @@ import Testing
 
     @Test func countsPassedAndTotalChecksAcrossCheckRunsAndStatusContexts() {
         #expect(pullRequests.map(\.checksPassed) == [4, 1, 0, 0, 0])
-        #expect(pullRequests.map(\.checksTotal) == [5, 3, 0, 0, 1])
+        #expect(pullRequests.map(\.checksTotal) == [4, 3, 1, 0, 1])
     }
 
     @Test func countsOnlyApprovedLatestReviews() {
@@ -81,7 +86,7 @@ private let fixture = #"""
           "headRefName": "feature/one", "baseRefName": "main", "mergeable": "MERGEABLE",
           "latestReviews": { "nodes": [{ "state": "APPROVED" }, { "state": "COMMENTED" }, { "state": "APPROVED" }] },
           "repository": { "nameWithOwner": "acme/web" },
-          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "SUCCESS", "contexts": { "nodes": [{ "conclusion": "SUCCESS" }, { "conclusion": "NEUTRAL" }, { "conclusion": "SKIPPED" }, { "state": "SUCCESS" }, { "conclusion": "FAILURE" }] } } } } ] },
+          "commits": { "nodes": [ { "commit": { "oid":"abc", "statusCheckRollup": { "state": "SUCCESS", "contexts": { "pageInfo":{"hasNextPage":false}, "nodes": [{ "name":"job-SUCCESS", "conclusion": "SUCCESS" }, { "name":"job-NEUTRAL", "conclusion": "NEUTRAL" }, { "name":"job-SKIPPED", "conclusion": "SKIPPED" }, { "context":"status-SUCCESS", "state": "SUCCESS" }] } } } } ] },
           "reviewThreads": { "nodes": [] }
         },
         {
@@ -93,7 +98,7 @@ private let fixture = #"""
           "headRefName": "feature/one", "baseRefName": "main", "mergeable": "CONFLICTING",
           "latestReviews": { "nodes": [{ "state": "CHANGES_REQUESTED" }] },
           "repository": { "nameWithOwner": "acme/web" },
-          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "FAILURE", "contexts": { "nodes": [{ "conclusion": "SUCCESS" }, { "state": "FAILURE" }, { "state": "PENDING" }] } } } } ] },
+          "commits": { "nodes": [ { "commit": { "oid":"abc", "statusCheckRollup": { "state": "FAILURE", "contexts": { "pageInfo":{"hasNextPage":false}, "nodes": [{ "name":"job-SUCCESS", "conclusion": "SUCCESS" }, { "context":"status-FAILURE", "state": "FAILURE" }, { "context":"status-PENDING", "state": "PENDING" }] } } } } ] },
           "reviewThreads": { "nodes": [
             { "isResolved": false, "comments": { "nodes": [ { "author": { "login": "reviewer" } } ] } },
             { "isResolved": false, "comments": { "nodes": [ { "author": { "login": "me" } } ] } },
@@ -110,7 +115,7 @@ private let fixture = #"""
           "headRefName": "feature/one", "baseRefName": "main", "mergeable": "UNKNOWN",
           "latestReviews": { "nodes": [] },
           "repository": { "nameWithOwner": "acme/api" },
-          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "PENDING", "contexts": { "nodes": [] } } } } ] },
+          "commits": { "nodes": [ { "commit": { "oid":"abc", "statusCheckRollup": { "state": "PENDING", "contexts": { "pageInfo":{"hasNextPage":false}, "nodes": [{ "name":"build", "status":"IN_PROGRESS" }] } } } } ] },
           "reviewThreads": { "nodes": [] }
         },
         {
@@ -122,7 +127,7 @@ private let fixture = #"""
           "headRefName": "feature/one", "baseRefName": "main", "mergeable": "MERGEABLE",
           "latestReviews": { "nodes": [] },
           "repository": { "nameWithOwner": "acme/api" },
-          "commits": { "nodes": [ { "commit": { "statusCheckRollup": null } } ] },
+          "commits": { "nodes": [ { "commit": { "oid":"abc", "statusCheckRollup": null } } ] },
           "reviewThreads": { "nodes": [] }
         },
         {
@@ -134,7 +139,7 @@ private let fixture = #"""
           "headRefName": "feature/one", "baseRefName": "main", "mergeable": "MERGEABLE",
           "latestReviews": { "nodes": [] },
           "repository": { "nameWithOwner": "acme/api" },
-          "commits": { "nodes": [ { "commit": { "statusCheckRollup": { "state": "ERROR", "contexts": { "nodes": [{ "state": "ERROR" }] } } } } ] },
+          "commits": { "nodes": [ { "commit": { "oid":"abc", "statusCheckRollup": { "state": "ERROR", "contexts": { "pageInfo":{"hasNextPage":false}, "nodes": [{ "context":"status-ERROR", "state": "ERROR" }] } } } } ] },
           "reviewThreads": { "nodes": [
             { "isResolved": false, "comments": { "nodes": [ { "author": null } ] } }
           ] }
