@@ -13,9 +13,9 @@ enum PullRequestChecksQuery {
                 nodes {
                   __typename
                   ... on CheckRun {
-                    name status conclusion startedAt completedAt
+                    name status conclusion startedAt completedAt databaseId
                     isRequired(pullRequestNumber: $number)
-                    checkSuite { workflowRun { databaseId runNumber event createdAt workflow { name } } }
+                    checkSuite { createdAt workflowRun { id databaseId runNumber event createdAt workflow { name } } }
                   }
                   ... on StatusContext {
                     context state description createdAt isRequired(pullRequestNumber: $number)

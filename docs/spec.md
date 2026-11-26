@@ -37,8 +37,12 @@ Out of scope for v1: GitLab, multiple accounts.
 
 - **CI status** uses all check contexts of the head commit. For each workflow
   name and event, keep the run with the latest creation time, breaking ties by
-  database ID. Within each event, keep the latest attempt per job name by
-  start time, then completion time. External checks use their name, and commit
+  database ID (or run number if a tied run lacks a database ID). Within each
+  event, keep the latest attempt per job name by start time, then completion
+  time. A queued retry can lack a start time. Compare its check ID with the
+  preceding attempts, or use the suite creation time when IDs are missing.
+  If neither distinguishes the attempts, keep a pending attempt visible.
+  External checks use their name, and commit
   statuses use their context and creation time. Success, neutral and skipped
   count as passed. Any kept failure (including cancellation) makes CI failing,
   otherwise unfinished checks make it running. No checks gives none.
@@ -499,7 +503,7 @@ data plus an error with `type: "FORBIDDEN"` and a path
 ### Branch
 
 The UI offers copying every PR's literal head branch name. It also offers
-`git checkout <headBranch>` for nonempty names made solely of ASCII letters,
+`git checkout <headBranch> --` for nonempty names made solely of ASCII letters,
 digits, periods, underscores, slashes and hyphens, with no leading hyphen.
 
 ### Errors

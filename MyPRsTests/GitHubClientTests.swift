@@ -67,12 +67,15 @@ import Testing
     private typealias Context = [String: Any]
 
     private func job(_ name: String, _ conclusion: String, run: Int?, event: String = "pull_request",
-                     start: Int = 1) -> Context {
+                     start: Int = 1, hasRunDatabaseID: Bool = true) -> Context {
         var result: Context = ["__typename": "CheckRun", "name": name, "conclusion": conclusion,
                                "status": "COMPLETED", "startedAt": "2026-01-01T00:00:0\(start)Z"]
         if let run {
-            result["checkSuite"] = ["workflowRun": ["databaseId": run, "runNumber": run, "event": event,
-                "createdAt": "2026-01-01T00:00:00Z", "workflow": ["name": "Build"]]]
+            let workflowRun: Context = [
+                "id": "run-\(run)", "databaseId": hasRunDatabaseID ? run as Any : NSNull(),
+                "runNumber": run, "event": event, "createdAt": "2026-01-01T00:00:00Z", "workflow": ["name": "Build"]
+            ]
+            result["checkSuite"] = ["createdAt": "2026-01-01T00:00:00Z", "workflowRun": workflowRun] as Context
         }
         return result
     }
@@ -114,6 +117,38 @@ import Testing
     @Test func rerunReplacesFailedAttempt() async throws {
         let pr = try await fetch([[job("lint", "SUCCESS", run: 1, start: 2), job("lint", "FAILURE", run: 1)]])
         #expect(pr.checks == .passing && pr.checksTotal == 1)
+    }
+
+    @Test func workflowRunsWithNullDatabaseIDsRemainDistinct() async throws {
+        let old = job("old gate", "FAILURE", run: 9, hasRunDatabaseID: false)
+        let current = job("build", "SUCCESS", run: 10, hasRunDatabaseID: false)
+        let numbered = job("old gate", "FAILURE", run: 9)
+        for checks in [[old, current], [current, old], [numbered, current]] {
+            let pr = try await fetch([checks])
+            #expect(pr.checks == .passing && pr.checksTotal == 1)
+        }
+    }
+
+    @Test func queuedRerunWithNoStartTimeCountsOnlyTheNewestAttempt() async throws {
+        var failed = job("lint", "FAILURE", run: 1)
+        failed["databaseId"] = 41
+        var queued = failed
+        queued["conclusion"] = NSNull()
+        queued["status"] = "QUEUED"
+        queued["startedAt"] = NSNull()
+        queued["databaseId"] = 42
+        for checks in [[queued, failed], [failed, queued]] {
+            let pr = try await fetch([checks])
+            #expect(pr.checks == .running && pr.checksTotal == 1)
+            #expect(!pr.needsAttention)
+        }
+        queued["databaseId"] = 40
+        let pr = try await fetch([[failed, queued]])
+        #expect(pr.checks == .failing && pr.checksTotal == 1)
+
+        queued["databaseId"] = NSNull()
+        let ambiguous = try await fetch([[queued, failed]])
+        #expect(ambiguous.checks == .running && ambiguous.checksTotal == 1)
     }
 
     @Test func currentCancellationFails() async throws {

@@ -90,6 +90,7 @@ struct GitHubResponse: Decodable {
     }
 
     struct CheckContext: Decodable {
+        let databaseId: Int64?
         let name: String?
         let status: String?
         let conclusion: String?
@@ -103,11 +104,14 @@ struct GitHubResponse: Decodable {
     }
 
     struct CheckSuite: Decodable {
+        let createdAt: Date
         let workflowRun: WorkflowRun?
     }
 
     struct WorkflowRun: Decodable {
-        let databaseId: Int64
+        let id: String
+        let databaseId: Int64?
+        let runNumber: Int
         let createdAt: Date
         let event: String
         let workflow: Workflow
