@@ -11,6 +11,8 @@ final class PullRequestMonitor {
     private(set) var isRefreshing = false
     private(set) var isSigningIn = false
     private(set) var lastError: String?
+    private(set) var signOutError: String?
+    let revocations = TokenRevocations()
     private(set) var organizationAccess = OrganizationAccess()
     private(set) var notificationPermission = NotificationPermission.unknown
 
@@ -38,6 +40,7 @@ final class PullRequestMonitor {
     @ObservationIgnored private let authWorker = AuthWorker()
     @ObservationIgnored private let defaults = UserDefaults.standard
     @ObservationIgnored private var timerTask: Task<Void, Never>?
+    @ObservationIgnored private var sessionGeneration = 0
     @ObservationIgnored private var lastOrganizationCheck: Date?
 
     init() {
@@ -62,17 +65,23 @@ final class PullRequestMonitor {
     }
 
     func signIn() async {
-        guard !isSigningIn else { return }
+        guard !isSignedIn, !isSigningIn else { return }
+        let generation = sessionGeneration
         lastError = nil
         isSigningIn = true
         defer { isSigningIn = false }
         do {
             let token = try await loginFlow.signIn()
+            guard generation == sessionGeneration else {
+                revocations.start(token: token, worker: authWorker)
+                return
+            }
             try storeOrRevoke(token)
             isSignedIn = true
             startTimer()
             Task { await requestNotificationsIfNeeded() }
         } catch let error as LoginError {
+            guard generation == sessionGeneration else { return }
             lastError = error.errorDescription
         } catch let error as TokenStoreError {
             lastError = error.errorDescription
@@ -86,24 +95,36 @@ final class PullRequestMonitor {
         do {
             try tokenStore.save(token)
         } catch {
-            revokeInBackground(token)
+            revocations.start(token: token, worker: authWorker)
             throw error
         }
     }
 
-    private func revokeInBackground(_ token: String) {
-        let authWorker = self.authWorker
-        Task { await authWorker.revoke(token) }
-    }
-
     func cancelSignIn() {
+        sessionGeneration += 1
         loginFlow.cancel()
     }
 
     func signOut() {
+        disconnect(revoke: true)
+    }
+
+    private func disconnect(revoke: Bool) {
+        do {
+            let token = revoke ? try tokenStore.read() : nil
+            try tokenStore.delete()
+            if let token {
+                revocations.start(token: token, worker: authWorker)
+            }
+        } catch {
+            signOutError = error.localizedDescription
+            return
+        }
+        signOutError = nil
+        sessionGeneration += 1
         timerTask?.cancel()
-        if let token = tokenStore.load() { revokeInBackground(token) }
-        tokenStore.delete()
+        isRefreshing = false
+        notifier.clear()
         snapshotStore.clear()
         recentSnapshotStore.clear()
         recent.clear()
@@ -117,23 +138,28 @@ final class PullRequestMonitor {
     }
 
     func refresh() async {
-        guard let token = tokenStore.load(), !isRefreshing else { return }
+        guard isSignedIn, !isRefreshing, let token = tokenStore.load() else { return }
+        let generation = sessionGeneration
         isRefreshing = true
-        defer { isRefreshing = false }
+        defer { if generation == sessionGeneration { isRefreshing = false } }
 
         do {
-            try await refreshOpenPullRequests(token: token)
+            try await refreshOpenPullRequests(token: token, generation: generation)
         } catch GitHubError.unauthorized {
-            signOut()
-            lastError = "Your GitHub session expired. Sign in again."
+            guard generation == sessionGeneration else { return }
+            disconnect(revoke: false)
+            lastError = signOutError ?? "Your GitHub session expired. Sign in again."
             return
         } catch {
+            guard generation == sessionGeneration else { return }
             lastError = "Could not refresh. Will retry."
         }
-        guard isSignedIn else { return }
+        guard generation == sessionGeneration else { return }
         await recent.loadIfNeeded()
-        guard isSignedIn else { return }
-        apply(await savedSearches.refreshAll(using: searchFetcher(token: token)))
+        guard generation == sessionGeneration else { return }
+        let searches = await savedSearches.refreshAll(using: searchFetcher(token: token))
+        guard generation == sessionGeneration else { return }
+        apply(searches)
         if lastError == nil { await checkOrganizationAccess(token: token) }
         await checkNotificationPermission()
     }
@@ -165,9 +191,9 @@ final class PullRequestMonitor {
         await checkNotificationPermission()
     }
 
-    private func refreshOpenPullRequests(token: String) async throws {
+    private func refreshOpenPullRequests(token: String, generation: Int) async throws {
         let fresh = try await client.fetchOpenPullRequests(token: token)
-        guard isSignedIn else { return }
+        guard generation == sessionGeneration else { return }
         let changes = ChangeDetector.changes(from: snapshot?.pullRequests ?? [], to: fresh.pullRequests)
         notifier.notify(changes)
         let pullRequestsChanged = snapshot?.pullRequests != fresh.pullRequests
@@ -186,8 +212,11 @@ final class PullRequestMonitor {
     }
 
     func refreshSearch(_ id: UUID) async {
-        guard let token = tokenStore.load() else { return }
-        apply(await savedSearches.refresh(id, using: searchFetcher(token: token)))
+        guard isSignedIn, let token = tokenStore.load() else { return }
+        let generation = sessionGeneration
+        let result = await savedSearches.refresh(id, using: searchFetcher(token: token))
+        guard generation == sessionGeneration else { return }
+        apply(result)
     }
 
     func deleteSearch(_ id: UUID) {
@@ -215,7 +244,8 @@ final class PullRequestMonitor {
 
     private func checkOrganizationAccess(token: String, force: Bool = false) async {
         if !force, let last = lastOrganizationCheck, Date().timeIntervalSince(last) < Self.organizationCheckInterval { return }
-        guard let access = try? await client.fetchOrganizationAccess(token: token), isSignedIn else { return }
+        let generation = sessionGeneration
+        guard let access = try? await client.fetchOrganizationAccess(token: token), generation == sessionGeneration else { return }
         lastOrganizationCheck = Date()
         organizationAccess = access
     }

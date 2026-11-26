@@ -71,7 +71,9 @@ struct ClosedPullRequestRow: View {
         Button("Copy link") { Pasteboard.copy(pullRequest.url.absoluteString) }
         Button("Copy branch name") { Pasteboard.copy(pullRequest.headBranch) }
         Button("Copy AI Review Prompt") { Pasteboard.copy(reviewPrompt) }
-        Button("Copy git checkout command") { Pasteboard.copy("git checkout \(pullRequest.headBranch)") }
+        if let command = CheckoutCommand.forBranch(pullRequest.headBranch) {
+            Button("Copy git checkout command") { Pasteboard.copy(command) }
+        }
     }
 
     private var reviewPrompt: String {

@@ -67,12 +67,14 @@ allowed by hash; a test fails if the script and `PAGE_SCRIPT_HASH` drift apart.
 - Secret scanning and push protection: on.
 - Dependabot: alerts and security updates on; version updates come from
   `.github/dependabot.yml`.
-- Environment `release`: requires approval from the owner, and its deployment
-  policy only allows tags matching `v*`. The release job does not start, and
-  no secret is read, before the approval.
+- Environment `release` requires owner approval and only accepts `v*` tags.
+- The active default branch rule requires a pull request and successful
+  `app` and `worker` GitHub Actions checks before changes land on `main`.
 - Tag ruleset "Protect release tags": creating, updating and deleting `v*`
   tags is blocked for everyone except repository admins.
-- Actions secrets (repository level): the six listed in `docs/release.md`.
+- The six signing and notarization credentials belong in the `release`
+  environment. Check both scopes with `scripts/release-secrets.sh check`.
+  The migration from the original repository entries is in `docs/release.md`.
 
 ## Apple
 

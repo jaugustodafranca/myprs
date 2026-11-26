@@ -34,6 +34,10 @@ struct SmallView: View {
                 Text("\(summary.toAnswer) to answer")
                     .foregroundStyle(.orange)
             }
+            if summary.conflicts > 0 && summary.failing == 0 && summary.toAnswer == 0 {
+                Text("\(summary.conflicts) with conflicts")
+                    .foregroundStyle(.orange)
+            }
         } else {
             Text("\u{2713} All good")
                 .foregroundStyle(.green)

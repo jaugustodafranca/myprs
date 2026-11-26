@@ -42,12 +42,47 @@ import Testing
     @Test func revokesToken() async throws {
         AuthWorkerStub.respond(status: 204, body: "")
 
-        await worker.revoke("gho_abc")
+        #expect(await worker.revoke("gho_abc"))
 
         let request = try #require(AuthWorkerStub.lastRequest)
         #expect(request.url?.absoluteString == "https://auth.test/revoke")
         let body = try JSONDecoder().decode([String: String].self, from: AuthWorkerStub.lastBody ?? Data())
         #expect(body == ["access_token": "gho_abc"])
+    }
+
+    @Test func distinguishesRemoteFailureFromConfirmedRevocation() async {
+        AuthWorkerStub.respond(status: 502, body: #"{"error":"revoke_failed"}"#)
+        #expect(await !worker.revoke("gho_abc"))
+    }
+
+    @Test func rejectsTokenInAnErrorResponse() async {
+        AuthWorkerStub.respond(status: 500, body: #"{"access_token":"unexpected"}"#)
+        await #expect(throws: LoginError.exchangeFailed) {
+            try await worker.exchange(code: "abc", verifier: "v")
+        }
+    }
+
+    @MainActor @Test(arguments: [204, 502])
+    func remembersUnconfirmedSignOutAcrossLaunches(status: Int) async throws {
+        let suite = "MyPRsTests.revocations.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let revocations = TokenRevocations(defaults: defaults)
+        AuthWorkerStub.respond(status: status, body: "")
+
+        let request = revocations.start(token: "test-token", worker: worker)
+        #expect(!revocations.needsReview)
+        revocations.acknowledge()
+        #expect(TokenRevocations(defaults: defaults).needsReview)
+        let values = try #require(defaults.persistentDomain(forName: suite)?.values.first as? [String])
+        #expect(values.count == 1)
+        #expect(values.allSatisfy { UUID(uuidString: $0) != nil })
+
+        await request.value
+        let restored = TokenRevocations(defaults: defaults)
+        #expect(restored.needsReview == (status != 204))
+        restored.acknowledge()
+        #expect(!TokenRevocations(defaults: defaults).needsReview)
     }
 }
 

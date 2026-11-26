@@ -12,6 +12,11 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         center.delegate = self
     }
 
+    func clear() {
+        center.removeAllPendingNotificationRequests()
+        center.removeAllDeliveredNotifications()
+    }
+
     func authorizationStatus() async -> UNAuthorizationStatus {
         await center.notificationSettings().authorizationStatus
     }

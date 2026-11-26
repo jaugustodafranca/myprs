@@ -97,13 +97,30 @@ async function handleRevoke(request: Request, env: Env): Promise<Response> {
 async function readJSON(request: Request): Promise<Record<string, unknown> | Response> {
   const mediaType = (request.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
   if (mediaType !== "application/json") return json({ error: "unsupported_media_type" }, 415);
-  const text = await request.text();
-  if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) return json({ error: "payload_too_large" }, 413);
+  if (Number(request.headers.get("content-length")) > MAX_BODY_BYTES) return json({ error: "payload_too_large" }, 413);
+  if (!request.body) return json({ error: "invalid_request" }, 400);
+  const reader = request.body.getReader();
+  const bytes = new Uint8Array(MAX_BODY_BYTES);
+  let length = 0;
   try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value.byteLength > MAX_BODY_BYTES - length) {
+        // The request is already too large even if its connection has closed.
+        await reader.cancel().catch(() => {});
+        return json({ error: "payload_too_large" }, 413);
+      }
+      bytes.set(value, length);
+      length += value.byteLength;
+    }
+    const text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: false }).decode(bytes.subarray(0, length));
     const body: unknown = JSON.parse(text);
     if (typeof body === "object" && body !== null && !Array.isArray(body)) return body as Record<string, unknown>;
   } catch {
     // Reported as invalid_request below.
+  } finally {
+    reader.releaseLock();
   }
   return json({ error: "invalid_request" }, 400);
 }
@@ -123,7 +140,7 @@ async function exchangeCodeForToken(code: string, codeVerifier: string, env: Env
       }),
     });
     const body = (await response.json()) as { access_token?: unknown; error?: unknown };
-    if (typeof body.access_token === "string" && body.access_token) return { accessToken: body.access_token };
+    if (response.ok && typeof body.access_token === "string" && body.access_token) return { accessToken: body.access_token };
     if (typeof body.error === "string" && ERROR_PATTERN.test(body.error)) return { error: body.error };
     return { error: "exchange_failed" };
   } catch {

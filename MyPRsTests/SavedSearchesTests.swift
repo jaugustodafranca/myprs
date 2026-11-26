@@ -28,6 +28,20 @@ import Testing
         #expect(searches.snapshots[team.id]?.pullRequests.map(\.id) == ["A"])
     }
 
+    @Test func signingOutDuringFirstSearchDiscardsTheWholeBatch() async {
+        let searches = SavedSearches(store: store)
+        var requests = 0
+        let result = await searches.refreshAll { _ in
+            requests += 1
+            searches.clearResults()
+            return [makePullRequest(id: "old-account")]
+        }
+        #expect(requests == 1)
+        #expect(!result.didChange)
+        #expect(searches.snapshots.isEmpty)
+        #expect(store.loadSnapshot(for: quiet.id) == nil)
+    }
+
     @Test func notifiesNewPullRequestsOfNotifyingSearchesOnly() async {
         let searches = SavedSearches(store: store)
         _ = await searches.refreshAll(using: fetch(["is:pr team": ["A"], "is:pr quiet": ["Q"]]))

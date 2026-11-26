@@ -37,9 +37,12 @@ final class SavedSearches {
     // MARK: Fetching
 
     func refreshAll(using fetch: Fetch) async -> SavedSearchRefresh {
+        let startedIn = generation
         var outcome = SavedSearchRefresh()
         for search in searches {
-            merge(await refresh(search, using: fetch), into: &outcome)
+            let result = await refresh(search, using: fetch)
+            guard startedIn == generation else { return SavedSearchRefresh() }
+            merge(result, into: &outcome)
         }
         return outcome
     }

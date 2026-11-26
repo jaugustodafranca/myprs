@@ -34,10 +34,9 @@ the workflow run number.
   (`shasum -a 256` of the official `Sparkle-<version>.tar.xz`) and the SPM version in
   `project.yml` together.
 - The release job declares `environment: release`. That environment requires
-  approval from the owner and only allows `v*` tags to deploy; a tag ruleset
-  restricts creating `v*` tags to admins. The job does not start (and no secret
-  is exposed) until the owner approves the deployment. The release secrets are
-  still repository-level secrets; only the gate lives on the environment.
+  owner approval and accepts only `v*` tags. A tag ruleset restricts creating
+  those tags to admins. Store signing credentials in this environment. A copy at
+  repository scope is available to other trusted workflows without this approval.
 
 ## Signed appcast
 
@@ -46,7 +45,9 @@ Sparkle only accepts a feed carrying an EdDSA signature (made with the same key
 as the DMG, verified against `SUPublicEDKey`) and verifies the archive signature
 before extracting it. `make-appcast.sh` writes the unsigned feed, then the
 workflow runs `sign_update --ed-key-file - appcast.xml`, which embeds the
-signature as a trailing `sparkle-signatures` XML comment. Any later edit of
+signature as a trailing `sparkle-signatures` XML comment. Before publishing,
+the workflow verifies the signed feed with Sparkle and checks the DMG signature
+and length against the feed and the public key embedded in the built app. Any later edit of
 `appcast.xml` invalidates it, so re-run `sign_update` after changing the file.
 Versions before this change do not require a signed feed and ignore the comment.
 
@@ -61,7 +62,7 @@ through Finder, so it needs a GUI session (GitHub macOS runners have one).
 
 ## Secrets
 
-Add these under GitHub repo Settings > Secrets and variables > Actions.
+Store these under Settings > Environments > release > Environment secrets.
 
 | Secret | What it is |
 |---|---|
@@ -71,6 +72,35 @@ Add these under GitHub repo Settings > Secrets and variables > Actions.
 | `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID shown on the API keys page |
 | `APP_STORE_CONNECT_KEY_P8_BASE64` | The downloaded `AuthKey_XXXX.p8`, as base64 |
 | `SPARKLE_PRIVATE_KEY` | Sparkle EdDSA private key |
+
+### Move an existing installation to environment secrets
+
+Run `scripts/release-secrets.sh check` as the maintainer. It reads names in
+both scopes and reports missing or broadly available entries. The GitHub API
+cannot return a stored value. The original install used repository secrets.
+
+To stage the original credentials, run this in a local terminal when no release
+is in progress. It requires macOS, an authenticated GitHub CLI, jq and the
+Sparkle tools for the project's pinned version.
+
+```sh
+scripts/release-secrets.sh stage /path/to/DeveloperID.p12 /path/to/AuthKey_ID.p8 /path/to/Sparkle/bin
+```
+
+The two hidden prompts are for the P12 export password and the issuer ID
+from App Store Connect > Users and Access > Integrations. If the password is
+unavailable, export the same Developer ID identity from Keychain Access with a
+new password. The script checks the team, certificate, notarization history and
+existing Sparkle public key before uploading. It uses the original Sparkle key
+from the login keychain, and macOS may ask the maintainer to authorize the export.
+Re-run staging after a partial upload.
+
+Environment entries take precedence over repository entries of the same name.
+Use `migrate` in place of `stage` to also remove the six repository copies
+after local validation and successful upload of all six entries. The script
+checks for concurrent changes to the source entries before deleting and
+verifies both scopes afterward. If you prefer to test a protected release first,
+use `stage`, then remove its six repository copies after the release succeeds.
 
 ### Developer ID certificate
 

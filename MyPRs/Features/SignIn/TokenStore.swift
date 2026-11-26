@@ -42,17 +42,28 @@ struct TokenStore {
     }
 
     func load() -> String? {
+        try? read()
+    }
+
+    func read() throws -> String? {
         var query = identity
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         var result: AnyObject?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecItemNotFound { return nil }
+        guard status == errSecSuccess else { throw TokenStoreError(operation: "read", status: status) }
+        guard let data = result as? Data, let token = String(data: data, encoding: .utf8) else {
+            throw TokenStoreError(operation: "read", status: errSecDecode)
+        }
+        return token
     }
 
-    func delete() {
-        SecItemDelete(identity as CFDictionary)
+    func delete() throws {
+        let status = SecItemDelete(identity as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw TokenStoreError(operation: "delete", status: status)
+        }
     }
 
     private func add(_ data: Data) throws {

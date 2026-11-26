@@ -67,10 +67,10 @@ Requires macOS 14 or later. After the first install, updates arrive automaticall
 
 ## Sign in & privacy
 
-- Sign in with GitHub through a standard browser redirect. The app requests the `repo` scope to read private repositories and `read:org` to see which of your organizations have not approved MyPRs.
+- Sign in with GitHub in your browser. MyPRs reads pull requests. GitHub's OAuth `repo` scope also permits writes wherever your account can write. The app requests `read:org` to check organization access.
 - Your token is stored in the macOS Keychain.
-- The app talks only to `api.github.com`.
-- A tiny Cloudflare Worker holds the OAuth client secret and stores nothing. Sign-in uses PKCE: the browser only ever carries a one-time code, and the app exchanges it for the token directly with the Worker over HTTPS. Signing out revokes the token on GitHub.
+- MyPRs fetches pull request data directly from the GitHub API. Sparkle checks GitHub Releases for app updates.
+- A Cloudflare Worker holds the OAuth client secret. The browser carries a one-time code, and the app exchanges it with the Worker over HTTPS using PKCE. Signing out deletes the local token and asks GitHub to revoke it. If revocation is unconfirmed, MyPRs links to your GitHub authorization settings.
 - GitHub hides pull requests from organizations that restrict third-party apps until they approve MyPRs. The panel shows a banner with a **Request access** button for each such organization. You can also use **Organization access…** in the settings to open [your authorized apps page](https://github.com/settings/connections/applications/Ov23li7Ghr091fkSv2eG) and grant access.
 
 ## Build from source

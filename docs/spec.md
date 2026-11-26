@@ -224,6 +224,8 @@ like the search editor.
 ### Widget
 
 - Small, medium, large and extra large. Small shows counts, the others a list from the shared cache.
+- When merge conflicts are the only outstanding issue, the widget summary shows
+  how many PRs have conflicts. The failing CI count only includes failed checks.
 - List widgets anchor their header and rows at the top and the update time at the
   bottom, including when only one PR is present. They keep the scoreboard (when
   shown) visible, show as many rows as fit and a `+N more` count for the rest.
@@ -290,8 +292,12 @@ like the search editor.
   token in the Keychain (if the Keychain refuses it, the fresh token is revoked
   and an error is shown). A leaked code is useless without the verifier.
   Starting a new sign-in cancels a pending one.
-- **Sign-out** asks the Worker to revoke the token (fire and forget, failures
-  ignored), then deletes it locally.
+- **Sign-out** removes the local token, cached results and app notifications. A
+  Keychain error is shown in Settings. The app asks the Worker to revoke the
+  token and keeps a non-secret attempt ID until the Worker confirms revocation
+  or the user dismisses the notice. The notice links to GitHub authorization
+  settings and survives an offline sign-out or app restart. Responses from
+  a previous session cannot update results or sign out a later session.
 - **App** talks to GitHub directly with the token. It is the only process that
   holds the token and does network calls.
 - **Widget** never calls the network. It reads `snapshot.json` from the App
@@ -319,7 +325,7 @@ Files are written atomically with permissions `0600`.
 | Team | Zaintech LTDA, `688YYDN5Z4`, Developer ID |
 | URL scheme | `myprs` |
 | Worker | `myprs-auth`, served at `https://myprs-auth.zaintech.com.br` |
-| OAuth scopes | `repo` (read private repos), `read:org` (list organization memberships for the access check) |
+| OAuth scopes | `repo` (permits read and write within the user's existing access), `read:org` (organization access check) |
 | Update feed | `https://github.com/jaugustodafranca/myprs/releases/latest/download/appcast.xml` |
 
 The app is not sandboxed (Developer ID distribution, needed for Sparkle without
@@ -492,8 +498,9 @@ data plus an error with `type: "FORBIDDEN"` and a path
 
 ### Branch
 
-The UI offers copying the PR's head branch name and the command
-`git checkout <headBranch>`.
+The UI offers copying every PR's literal head branch name. It also offers
+`git checkout <headBranch>` for nonempty names made solely of ASCII letters,
+digits, periods, underscores, slashes and hyphens, with no leading hyphen.
 
 ### Errors
 
