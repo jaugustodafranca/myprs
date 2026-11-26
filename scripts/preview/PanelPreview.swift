@@ -24,6 +24,17 @@ enum PanelPreview {
         defer { try? FileManager.default.removeItem(at: searchDirectory) }
         let store = makeSearchStore(in: searchDirectory)
 
+        if CommandLine.arguments.dropFirst(2).contains("--failed-checks") {
+            let checks = await makeMonitor(openPullRequests: SampleData.checkFailureExamples, searchStore: store)
+            try await writer.write(panel(of: checks), named: "panel-failed-checks", width: width)
+            for example in SampleData.checkFailureExamples {
+                if let failures = example.failedChecks {
+                    try await writer.write(FailedChecksView(failures: failures), named: "failed-checks-\(failures.count)", width: FailedChecksView.width)
+                }
+            }
+            return
+        }
+
         let open = await makeMonitor(openPullRequests: SampleData.openPullRequests, searchStore: store)
         try await writer.write(panel(of: open, tab: .open), named: "panel-open", width: width)
         try await writer.write(panel(of: open, tab: .recent), named: "panel-recent", width: width)

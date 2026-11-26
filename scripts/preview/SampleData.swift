@@ -37,6 +37,30 @@ enum SampleData {
         PullRequestSnapshot(login: login, pullRequests: pullRequests, fetchedAt: ago(minutes: 2))
     }
 
+    static let checkFailureExamples = [
+        pullRequest(
+            524, "Update the order summary layout", repository: "acme/storefront", head: "feat/order-summary",
+            checks: .failing, passed: 19, total: 20, mergeState: "BLOCKED",
+            failures: ["Visual comparisons — The order summary changed on 6 of 84 screens."],
+            review: .approved, approvals: 2, additions: 126, deletions: 40, files: 8, createdAt: ago(hours: 3)
+        ),
+        pullRequest(
+            519, "Add discounts to the checkout form", repository: "acme/storefront", head: "feat/checkout-discounts",
+            checks: .failing, passed: 12, total: 20, mergeState: "BLOCKED",
+            failures: [
+                "API integration tests", "Accessibility checks", "Build storefront", "Checkout browser tests",
+                "Discount validation", "Mobile checkout tests", "Type checks",
+                "Visual comparisons — The discount field wraps on narrow checkout screens.",
+            ],
+            review: .approved, approvals: 1, additions: 248, deletions: 62, files: 14, createdAt: ago(hours: 6)
+        ),
+        pullRequest(
+            518, "Cache the product catalog", repository: "acme/storefront", head: "perf/catalog-cache",
+            checks: .passing, passed: 20, total: 20, mergeState: "CLEAN", review: .approved, approvals: 1,
+            additions: 35, deletions: 9, files: 3, createdAt: ago(hours: 7)
+        ),
+    ]
+
     // MARK: Pull requests of the signed-in user
 
     static let openPullRequests = [
@@ -138,6 +162,8 @@ enum SampleData {
         checks: CheckStatus,
         passed: Int = 0,
         total: Int = 0,
+        mergeState: String? = nil,
+        failures: [String]? = nil,
         review: ReviewStatus = .waiting,
         approvals: Int = 0,
         threads: Int = 0,
@@ -169,6 +195,8 @@ enum SampleData {
             hasConflicts: conflicts,
             checksPassed: passed,
             checksTotal: total,
+            mergeStateStatus: mergeState,
+            failedChecks: failures,
             approvals: approvals,
             authorLogin: author
         )

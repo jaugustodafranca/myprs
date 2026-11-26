@@ -57,5 +57,5 @@ compile_preview "$work_dir/panel-preview" "$staged" \
   "$preview_dir/PanelStubs.swift" \
   "$preview_dir/PanelPreview.swift"
 
-"$work_dir/panel-preview" "$output_dir"
+"$work_dir/panel-preview" "$@"
 echo "Panel previews written to $output_dir"
