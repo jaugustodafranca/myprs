@@ -10,6 +10,8 @@ final class PullRequestMonitor {
     var isRefreshing = false
     var isSigningIn = false
     var lastError: String?
+    var signOutError: String?
+    let revocations = PreviewRevocations()
     var organizationAccess = OrganizationAccess()
     var notificationPermission = NotificationPermission.allowed
     var refreshInterval = RefreshInterval.standard
@@ -36,6 +38,11 @@ final class PullRequestMonitor {
     func checkOrganizationAccess(force: Bool = false) async {}
     func checkNotificationPermission() async {}
     func allowNotifications() async {}
+}
+
+struct PreviewRevocations {
+    let needsReview = false
+    func acknowledge() {}
 }
 
 /// Stands in for the Sparkle-backed updater.

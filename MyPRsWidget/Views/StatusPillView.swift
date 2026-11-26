@@ -18,7 +18,7 @@ struct StatusPillView: View {
     private var color: Color {
         switch pill.tone {
         case .failing: .red
-        case .toAnswer: .orange
+        case .toAnswer, .conflict: .orange
         case .clear: .green
         case .neutral: .secondary
         }

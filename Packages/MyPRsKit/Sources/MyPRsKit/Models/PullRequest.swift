@@ -21,12 +21,14 @@ public struct PullRequest: Codable, Hashable, GroupablePullRequest, Sendable {
     public let hasConflicts: Bool
     public let checksPassed: Int
     public let checksTotal: Int
+    public let mergeStateStatus: String?
+    public let failedChecks: [String]?
     public let approvals: Int
     /// Nil in snapshots saved before authors were fetched.
     public let authorLogin: String?
     public let authorAvatarURL: URL?
 
-    public var needsAttention: Bool { checks == .failing || unansweredThreads > 0 }
+    public var needsAttention: Bool { checks == .failing || hasConflicts || unansweredThreads > 0 }
 
     public init(
         id: String,
@@ -49,6 +51,8 @@ public struct PullRequest: Codable, Hashable, GroupablePullRequest, Sendable {
         hasConflicts: Bool,
         checksPassed: Int,
         checksTotal: Int,
+        mergeStateStatus: String? = nil,
+        failedChecks: [String]? = nil,
         approvals: Int,
         authorLogin: String? = nil,
         authorAvatarURL: URL? = nil
@@ -73,6 +77,8 @@ public struct PullRequest: Codable, Hashable, GroupablePullRequest, Sendable {
         self.hasConflicts = hasConflicts
         self.checksPassed = checksPassed
         self.checksTotal = checksTotal
+        self.mergeStateStatus = mergeStateStatus
+        self.failedChecks = failedChecks
         self.approvals = approvals
         self.authorLogin = authorLogin
         self.authorAvatarURL = authorAvatarURL

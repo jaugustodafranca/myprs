@@ -5,15 +5,17 @@ public struct PanelSummary {
     public let open: Int
     public let failing: Int
     public let toAnswer: Int
+    public let conflicts: Int
     public let ready: Int
     public let mostUrgent: PullRequest?
 
-    public var needsAttention: Bool { failing > 0 || toAnswer > 0 }
+    public var needsAttention: Bool { failing > 0 || toAnswer > 0 || conflicts > 0 }
 
     public init(_ pullRequests: [PullRequest]) {
         open = pullRequests.count
         failing = pullRequests.filter { $0.checks == .failing }.count
         toAnswer = pullRequests.filter { $0.unansweredThreads > 0 }.count
+        conflicts = pullRequests.filter(\.hasConflicts).count
         ready = pullRequests.filter(\.isReadyToMerge).count
         mostUrgent = pullRequests.sorted { lhs, rhs in
             if lhs.needsAttention != rhs.needsAttention { return lhs.needsAttention }
@@ -33,10 +35,11 @@ public struct PanelSummary {
 }
 
 extension PanelSummary {
-    public init(open: Int, failing: Int, toAnswer: Int, ready: Int) {
+    public init(open: Int, failing: Int, toAnswer: Int, ready: Int, conflicts: Int = 0) {
         self.open = open
         self.failing = failing
         self.toAnswer = toAnswer
+        self.conflicts = conflicts
         self.ready = ready
         mostUrgent = nil
     }

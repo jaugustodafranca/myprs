@@ -8,21 +8,7 @@ enum PullRequestFields {
       repository { nameWithOwner }
       headRepository { nameWithOwner }
       latestReviews(first: 20) { nodes { state } }
-      commits(last: 1) {
-        nodes {
-          commit {
-            statusCheckRollup {
-              state
-              contexts(first: 100) {
-                nodes {
-                  ... on CheckRun { conclusion }
-                  ... on StatusContext { state }
-                }
-              }
-            }
-          }
-        }
-      }
+      commits(last: 1) { nodes { commit { oid } } }
       reviewThreads(first: 100) {
         nodes { isResolved comments(last: 1) { nodes { author { login } } } }
       }

@@ -2,7 +2,7 @@ import Foundation
 
 /// The single most important status of the pull requests, shown as a pill in the widget header.
 public struct StatusPill {
-    public enum Tone { case failing, toAnswer, clear, neutral }
+    public enum Tone { case failing, toAnswer, conflict, clear, neutral }
 
     public let text: String
     public let tone: Tone
@@ -13,6 +13,8 @@ public struct StatusPill {
             self.init(text: "\(summary.failing) failing", tone: .failing)
         } else if summary.toAnswer > 0 {
             self.init(text: "\(summary.toAnswer) to answer", tone: .toAnswer)
+        } else if summary.conflicts > 0 {
+            self.init(text: "\(summary.conflicts) with conflicts", tone: .conflict)
         } else if summary.ready > 0 {
             self.init(text: "All clear", tone: .clear)
         } else {

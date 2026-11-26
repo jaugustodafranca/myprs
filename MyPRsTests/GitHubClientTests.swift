@@ -1,4 +1,5 @@
 import Foundation
+import MyPRsKit
 @testable import MyPRs
 import Testing
 
@@ -63,6 +64,134 @@ import Testing
         #expect(OpenPullRequestsQuery.text.contains("...PullRequestFields"))
     }
 
+    private typealias Context = [String: Any]
+
+    private func job(_ name: String, _ conclusion: String, run: Int?, event: String = "pull_request",
+                     start: Int = 1, hasRunDatabaseID: Bool = true) -> Context {
+        var result: Context = ["__typename": "CheckRun", "name": name, "conclusion": conclusion,
+                               "status": "COMPLETED", "startedAt": "2026-01-01T00:00:0\(start)Z"]
+        if let run {
+            let workflowRun: Context = [
+                "id": "run-\(run)", "databaseId": hasRunDatabaseID ? run as Any : NSNull(),
+                "runNumber": run, "event": event, "createdAt": "2026-01-01T00:00:00Z", "workflow": ["name": "Build"]
+            ]
+            result["checkSuite"] = ["createdAt": "2026-01-01T00:00:00Z", "workflowRun": workflowRun] as Context
+        }
+        return result
+    }
+
+    private func fetch(_ pages: [[Context]], mergeState: String = "CLEAN") async throws -> PullRequest {
+        let search = searchBody.replacingOccurrences(of: #""commits":{"nodes":[]}"#,
+            with: #""commits":{"nodes":[{"commit":{"oid":"abc"}}]}"#)
+        let total = pages.reduce(0) { $0 + $1.count }
+        let bodies = try pages.enumerated().map { index, nodes in
+            let more = index + 1 < pages.count
+            let page: Context = ["nodes": nodes, "totalCount": total,
+                                 "pageInfo": ["hasNextPage": more, "endCursor": "cursor-\(index)"]]
+            let commit: Context = ["oid": "abc", "statusCheckRollup": ["contexts": page]]
+            let pr: Context = ["mergeStateStatus": mergeState, "commits": ["nodes": [["commit": commit]]]]
+            let json = ["data": ["repository": ["pullRequest": pr]]]
+            return String(decoding: try JSONSerialization.data(withJSONObject: json), as: UTF8.self)
+        }
+        StubURLProtocol.respond(status: 200, body: search)
+        StubURLProtocol.nextBodies = bodies
+        let snapshot = try await client.fetchOpenPullRequests(token: "token")
+        return try #require(snapshot.pullRequests.first)
+    }
+
+    @Test func supersededRunCountsNowhere() async throws {
+        let pr = try await fetch([[job("gate", "SUCCESS", run: 2), job("build", "CANCELLED", run: 1),
+                                   job("gate", "FAILURE", run: 1)]])
+        #expect(pr.checks == .passing)
+        #expect(pr.checksPassed == 1 && pr.checksTotal == 1)
+        #expect(!pr.needsAttention)
+        #expect(pr.mergeStateStatus == "CLEAN")
+    }
+
+    @Test func newestFailureNamesTheJob() async throws {
+        let pr = try await fetch([[job("lint", "FAILURE", run: 2), job("lint", "SUCCESS", run: 1)]])
+        #expect(pr.checks == .failing && pr.needsAttention)
+        #expect(pr.failedChecks == ["lint"])
+    }
+
+    @Test func rerunReplacesFailedAttempt() async throws {
+        let pr = try await fetch([[job("lint", "SUCCESS", run: 1, start: 2), job("lint", "FAILURE", run: 1)]])
+        #expect(pr.checks == .passing && pr.checksTotal == 1)
+    }
+
+    @Test func workflowRunsWithNullDatabaseIDsRemainDistinct() async throws {
+        let old = job("old gate", "FAILURE", run: 9, hasRunDatabaseID: false)
+        let current = job("build", "SUCCESS", run: 10, hasRunDatabaseID: false)
+        let numbered = job("old gate", "FAILURE", run: 9)
+        for checks in [[old, current], [current, old], [numbered, current]] {
+            let pr = try await fetch([checks])
+            #expect(pr.checks == .passing && pr.checksTotal == 1)
+        }
+    }
+
+    @Test func queuedRerunWithNoStartTimeCountsOnlyTheNewestAttempt() async throws {
+        var failed = job("lint", "FAILURE", run: 1)
+        failed["databaseId"] = 41
+        var queued = failed
+        queued["conclusion"] = NSNull()
+        queued["status"] = "QUEUED"
+        queued["startedAt"] = NSNull()
+        queued["databaseId"] = 42
+        for checks in [[queued, failed], [failed, queued]] {
+            let pr = try await fetch([checks])
+            #expect(pr.checks == .running && pr.checksTotal == 1)
+            #expect(!pr.needsAttention)
+        }
+        queued["databaseId"] = 40
+        let pr = try await fetch([[failed, queued]])
+        #expect(pr.checks == .failing && pr.checksTotal == 1)
+
+        queued["databaseId"] = NSNull()
+        let ambiguous = try await fetch([[queued, failed]])
+        #expect(ambiguous.checks == .running && ambiguous.checksTotal == 1)
+    }
+
+    @Test func currentCancellationFails() async throws {
+        let pr = try await fetch([[job("slow", "CANCELLED", run: 2)]])
+        #expect(pr.checks == .failing && pr.failedChecks == ["slow"])
+    }
+
+    @Test func countsKeptChecksAcrossAll159Contexts() async throws {
+        let first = (1...100).map { job("job-\($0)", "FAILURE", run: 1) }
+        let second = (1...59).map { job("job-\($0)", "SUCCESS", run: 2) }
+        let pr = try await fetch([first, second])
+        #expect(pr.checks == .passing && pr.checksPassed == 59 && pr.checksTotal == 59)
+        let data = try #require(StubURLProtocol.lastRequestBody)
+        let body = try #require(try JSONSerialization.jsonObject(with: data) as? Context)
+        let variables = try #require(body["variables"] as? Context)
+        #expect(variables["after"] as? String == "cursor-0")
+        #expect(variables["number"] as? Int == 7)
+    }
+
+    @Test func newestStatusShowsFailureDescription() async throws {
+        let detail = "Visual differences in 188 of 2072 screens"
+        let failed: Context = ["__typename": "StatusContext", "context": "Meticulous Tests", "state": "FAILURE",
+                               "description": detail, "createdAt": "2026-01-02T00:00:00Z"]
+        let passed: Context = ["__typename": "StatusContext", "context": "Meticulous Tests",
+                               "state": "SUCCESS", "createdAt": "2026-01-01T00:00:00Z"]
+        let pr = try await fetch([[failed, passed]])
+        #expect(pr.checks == .failing && pr.checksTotal == 1)
+        #expect(pr.failedChecks == ["Meticulous Tests — " + detail])
+    }
+
+    @Test func sameWorkflowKeepsPushAndPullRequestResults() async throws {
+        let pr = try await fetch([[job("lint", "FAILURE", run: 1, event: "push"),
+                                   job("lint", "SUCCESS", run: 2)]])
+        #expect(pr.checks == .failing && pr.checksPassed == 1 && pr.checksTotal == 2)
+    }
+
+    @Test func latestExternalCheckPassesButConflictNeedsAttention() async throws {
+        let pr = try await fetch([[job("scan", "SUCCESS", run: nil, start: 2),
+                                   job("scan", "FAILURE", run: nil)]], mergeState: "DIRTY")
+        #expect(pr.checks == .passing && pr.checksTotal == 1)
+        #expect(pr.hasConflicts && pr.needsAttention)
+    }
+
     private let searchBody = #"""
     {"data":{"viewer":{"login":"me"},"search":{"nodes":[{
       "id":"PR_7","number":7,"title":"Review me","url":"https://github.com/acme/web/pull/7","isDraft":false,
@@ -91,6 +220,7 @@ import Testing
 
 private final class StubURLProtocol: URLProtocol {
     nonisolated(unsafe) private static var status = 200
+    nonisolated(unsafe) static var nextBodies: [String] = []
     nonisolated(unsafe) private static var body = ""
     nonisolated(unsafe) static var lastRequest: URLRequest?
     nonisolated(unsafe) static var lastRequestBody: Data?
@@ -98,6 +228,7 @@ private final class StubURLProtocol: URLProtocol {
     nonisolated(unsafe) private static var headers: [String: String] = [:]
 
     static func respond(status: Int, body: String, headers: [String: String] = [:]) {
+        nextBodies = []
         self.status = status
         self.body = body
         self.headers = headers
@@ -112,6 +243,7 @@ private final class StubURLProtocol: URLProtocol {
         let response = HTTPURLResponse(url: request.url!, statusCode: Self.status, httpVersion: nil, headerFields: Self.headers)!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: Data(Self.body.utf8))
+        if !Self.nextBodies.isEmpty { Self.body = Self.nextBodies.removeFirst() }
         client?.urlProtocolDidFinishLoading(self)
     }
 

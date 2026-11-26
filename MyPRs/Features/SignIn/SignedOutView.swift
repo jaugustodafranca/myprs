@@ -11,7 +11,7 @@ struct SignedOutView: View {
             Text("Your open pull requests, one click away.")
                 .font(.headline)
                 .multilineTextAlignment(.center)
-            Text("Sign in to see CI status, reviews and unanswered comments for every PR you authored.")
+            Text("MyPRs reads your pull requests. GitHub also grants repository write access wherever your account can write.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -34,6 +34,9 @@ struct SignedOutView: View {
                     .font(.caption)
                     .foregroundStyle(.red)
                     .multilineTextAlignment(.center)
+            }
+            if monitor.revocations.needsReview {
+                RevocationNotice(acknowledge: monitor.revocations.acknowledge)
             }
             Divider()
             Button("Quit MyPRs") { NSApplication.shared.terminate(nil) }

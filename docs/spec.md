@@ -35,14 +35,24 @@ Out of scope for v1: GitLab, multiple accounts.
 
 ### Definitions
 
-- **CI status** — the `statusCheckRollup` of the PR's last commit:
-  `SUCCESS` → passing, `FAILURE`/`ERROR` → failing, `PENDING`/`EXPECTED` →
-  running, missing → none.
+- **CI status** uses all check contexts of the head commit. For each workflow
+  name and event, keep the run with the latest creation time, breaking ties by
+  database ID (or run number if a tied run lacks a database ID). Within each
+  event, keep the latest attempt per job name by start time, then completion
+  time. A queued retry can lack a start time. Compare its check ID with the
+  preceding attempts, or use the suite creation time when IDs are missing.
+  If neither distinguishes the attempts, keep a pending attempt visible.
+  External checks use their name, and commit
+  statuses use their context and creation time. Success, neutral and skipped
+  count as passed. Any kept failure (including cancellation) makes CI failing,
+  otherwise unfinished checks make it running. No checks gives none.
+  The badge shows passed/total beside the merge state. Failed checks show
+  their names and failed commit statuses also show their descriptions.
 - **Review status** — `reviewDecision`: `APPROVED` → approved,
   `CHANGES_REQUESTED` → changesRequested, anything else → waiting.
 - **Unanswered thread** — a review thread that is not resolved and whose last
   comment was not written by the signed-in user.
-- **Needs attention** — a PR with failing CI or at least one unanswered thread.
+- **Needs attention** — a PR with failing CI, a merge conflict, or at least one unanswered thread.
 
 ### Menu bar
 
@@ -218,6 +228,8 @@ like the search editor.
 ### Widget
 
 - Small, medium, large and extra large. Small shows counts, the others a list from the shared cache.
+- When merge conflicts are the only outstanding issue, the widget summary shows
+  how many PRs have conflicts. The failing CI count only includes failed checks.
 - List widgets anchor their header and rows at the top and the update time at the
   bottom, including when only one PR is present. They keep the scoreboard (when
   shown) visible, show as many rows as fit and a `+N more` count for the rest.
@@ -284,8 +296,12 @@ like the search editor.
   token in the Keychain (if the Keychain refuses it, the fresh token is revoked
   and an error is shown). A leaked code is useless without the verifier.
   Starting a new sign-in cancels a pending one.
-- **Sign-out** asks the Worker to revoke the token (fire and forget, failures
-  ignored), then deletes it locally.
+- **Sign-out** removes the local token, cached results and app notifications. A
+  Keychain error is shown in Settings. The app asks the Worker to revoke the
+  token and keeps a non-secret attempt ID until the Worker confirms revocation
+  or the user dismisses the notice. The notice links to GitHub authorization
+  settings and survives an offline sign-out or app restart. Responses from
+  a previous session cannot update results or sign out a later session.
 - **App** talks to GitHub directly with the token. It is the only process that
   holds the token and does network calls.
 - **Widget** never calls the network. It reads `snapshot.json` from the App
@@ -313,7 +329,7 @@ Files are written atomically with permissions `0600`.
 | Team | Zaintech LTDA, `688YYDN5Z4`, Developer ID |
 | URL scheme | `myprs` |
 | Worker | `myprs-auth`, served at `https://myprs-auth.zaintech.com.br` |
-| OAuth scopes | `repo` (read private repos), `read:org` (list organization memberships for the access check) |
+| OAuth scopes | `repo` (permits read and write within the user's existing access), `read:org` (organization access check) |
 | Update feed | `https://github.com/jaugustodafranca/myprs/releases/latest/download/appcast.xml` |
 
 The app is not sandboxed (Developer ID distribution, needed for Sparkle without
@@ -340,13 +356,15 @@ struct PullRequest: Codable, Hashable, Identifiable {
     let headBranch: String    // headRefName
     let baseBranch: String    // baseRefName
     let headRepository: String? // head repository owner/name; nil in older snapshots
-    let hasConflicts: Bool    // mergeable == CONFLICTING
+    let hasConflicts: Bool    // mergeable == CONFLICTING or mergeStateStatus == DIRTY
     let checksPassed: Int     // CheckRun SUCCESS/NEUTRAL/SKIPPED + StatusContext SUCCESS
-    let checksTotal: Int      // all check contexts (first 100)
+    let checksTotal: Int      // retained check results across all pages
+    let mergeStateStatus: String?
+    let failedChecks: [String]?
     let approvals: Int        // latestReviews with state APPROVED
     let authorLogin: String?  // nil in snapshots saved before authors were fetched
     let authorAvatarURL: URL? // only https://avatars.githubusercontent.com
-    var needsAttention: Bool { checks == .failing || unansweredThreads > 0 }
+    var needsAttention: Bool { checks == .failing || hasConflicts || unansweredThreads > 0 }
 }
 enum CheckStatus: String, Codable { case passing, failing, running, none }
 enum ReviewStatus: String, Codable { case approved, changesRequested, waiting }
@@ -420,26 +438,17 @@ fragment PullRequestFields on PullRequest {
   repository { nameWithOwner }
   headRepository { nameWithOwner }
   latestReviews(first: 20) { nodes { state } }
-  commits(last: 1) {
-    nodes {
-      commit {
-        statusCheckRollup {
-          state
-          contexts(first: 100) {
-            nodes {
-              ... on CheckRun { conclusion }
-              ... on StatusContext { state }
-            }
-          }
-        }
-      }
-    }
-  }
+  commits(last: 1) { nodes { commit { oid } } }
   reviewThreads(first: 100) {
     nodes { isResolved comments(last: 1) { nodes { author { login } } } }
   }
 }
 ```
+
+For each PR, `PullRequestChecksQuery` fetches the merge state and all head
+commit contexts in pages of 100. The client verifies the commit OID against
+the search result on every page. A head change fails the refresh so the last
+snapshot stays in place until the next refresh.
 
 `ISSUE_ADVANCED` accepts `AND`, `OR` and parentheses, as GitHub's web search
 does, so a copied link works as is.
@@ -493,8 +502,9 @@ data plus an error with `type: "FORBIDDEN"` and a path
 
 ### Branch
 
-The UI offers copying the PR's head branch name and the command
-`git checkout <headBranch>`.
+The UI offers copying every PR's literal head branch name. It also offers
+`git checkout <headBranch> --` for nonempty names made solely of ASCII letters,
+digits, periods, underscores, slashes and hyphens, with no leading hyphen.
 
 ### Errors
 

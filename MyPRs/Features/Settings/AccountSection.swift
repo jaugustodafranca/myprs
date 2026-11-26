@@ -14,6 +14,12 @@ struct AccountSection: View {
             } else {
                 LabeledContent("GitHub", value: "Not signed in")
             }
+            if let error = monitor.signOutError {
+                Text(error).foregroundStyle(.red)
+            }
+            if monitor.revocations.needsReview {
+                RevocationNotice(acknowledge: monitor.revocations.acknowledge)
+            }
             HStack {
                 Spacer()
                 if monitor.isSignedIn {

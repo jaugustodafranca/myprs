@@ -8,17 +8,19 @@ struct AuthWorker {
 
     func exchange(code: String, verifier: String) async throws -> String {
         let request = post("token", body: ["code": code, "code_verifier": verifier])
-        guard let (data, _) = try? await session.data(for: request),
+        guard let (data, response) = try? await session.data(for: request),
+              let http = response as? HTTPURLResponse,
               let body = try? JSONDecoder().decode(TokenResponse.self, from: data)
         else { throw LoginError.exchangeFailed }
 
-        if let token = body.accessToken, !token.isEmpty { return token }
+        if http.statusCode == 200, let token = body.accessToken, !token.isEmpty { return token }
         throw body.error.map(LoginError.denied) ?? LoginError.exchangeFailed
     }
 
-    /// Best effort: signing out must work offline, so failures are ignored.
-    func revoke(_ token: String) async {
-        _ = try? await session.data(for: post("revoke", body: ["access_token": token]))
+    func revoke(_ token: String) async -> Bool {
+        let request = post("revoke", body: ["access_token": token])
+        guard let (_, response) = try? await session.data(for: request) else { return false }
+        return (response as? HTTPURLResponse)?.statusCode == 204
     }
 
     private func post(_ path: String, body: [String: String]) -> URLRequest {

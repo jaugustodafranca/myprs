@@ -9,16 +9,24 @@ struct PullRequestBadges: View {
     }
 
     var body: some View {
-        FlowLayout(spacing: 5) {
-            checksBadge
-            DiffBadge(additions: pullRequest.additions, deletions: pullRequest.deletions)
-            FilesBadge(count: pullRequest.changedFiles)
-            if pullRequest.unansweredThreads > 0 {
-                Badge(text: "\(pullRequest.unansweredThreads) to answer", symbol: "bubble.left.fill", color: .orange)
+        VStack(alignment: .leading, spacing: 4) {
+            FlowLayout(spacing: 5) {
+                checksBadge
+                if let mergeState = pullRequest.mergeStateStatus {
+                    Text(mergeState).font(.caption2).foregroundStyle(.secondary)
+                }
+                DiffBadge(additions: pullRequest.additions, deletions: pullRequest.deletions)
+                FilesBadge(count: pullRequest.changedFiles)
+                if pullRequest.unansweredThreads > 0 {
+                    Badge(text: "\(pullRequest.unansweredThreads) to answer", symbol: "bubble.left.fill", color: .orange)
+                }
+                reviewBadge
+                if pullRequest.hasConflicts {
+                    Badge(text: "Conflicts", symbol: "exclamationmark.triangle.fill", color: .red)
+                }
             }
-            reviewBadge
-            if pullRequest.hasConflicts {
-                Badge(text: "Conflicts", symbol: "exclamationmark.triangle.fill", color: .red)
+            ForEach(Array((pullRequest.failedChecks ?? []).enumerated()), id: \.offset) { _, failure in
+                Text(failure).font(.caption2).foregroundStyle(.red)
             }
         }
     }
@@ -30,7 +38,7 @@ struct PullRequestBadges: View {
             switch pullRequest.checks {
             case .passing: Badge(text: progress, symbol: "checkmark", color: .green)
             case .failing: Badge(text: progress, symbol: "xmark", color: .red)
-            case .running: Badge(text: "running", symbol: "clock", color: .secondary)
+            case .running: Badge(text: "running \(progress)", symbol: "clock", color: .secondary)
             case .none: EmptyView()
             }
         }

@@ -235,6 +235,28 @@ describe("POST /token", () => {
     expect(await response.json()).toEqual({ error: "payload_too_large" });
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it.each([false, true])("stops at the byte limit when stream cancellation fails: %s", async (cancellationFails) => {
+    const fetchMock = mockGitHub({});
+    const cancel = vi.fn(async () => {
+      if (cancellationFails) throw new Error("stream closed");
+    });
+    let chunksRead = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        chunksRead++;
+        controller.enqueue(new Uint8Array(chunksRead === 1 ? 4096 : 1));
+        if (chunksRead === 3) controller.close();
+      },
+      cancel,
+    }, { highWaterMark: 0 });
+    const init = { method: "POST", headers: { "content-type": "application/json" }, body, duplex: "half" };
+    const response = await worker.fetch(new Request("https://auth.example.com/token", init), env);
+    expect(response.status).toBe(413);
+    expect(chunksRead).toBe(2);
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("POST /revoke", () => {

@@ -71,18 +71,54 @@ struct GitHubResponse: Decodable {
     }
 
     struct Commit: Decodable {
+        let oid: String
         let statusCheckRollup: StatusCheckRollup?
     }
 
     struct StatusCheckRollup: Decodable {
-        let state: String
-        let contexts: Connection<CheckContext>
+        let contexts: CheckPage
     }
 
-    /// A `CheckRun` has `conclusion`; a `StatusContext` has `state`.
+    struct CheckPage: Decodable {
+        let nodes: [CheckContext]
+        let pageInfo: PageInfo
+    }
+
+    struct PageInfo: Decodable {
+        let hasNextPage: Bool
+        let endCursor: String?
+    }
+
     struct CheckContext: Decodable {
+        let databaseId: Int64?
+        let name: String?
+        let status: String?
         let conclusion: String?
+        let startedAt: Date?
+        let completedAt: Date?
+        let checkSuite: CheckSuite?
+        let context: String?
         let state: String?
+        let description: String?
+        let createdAt: Date?
+    }
+
+    struct CheckSuite: Decodable {
+        let createdAt: Date
+        let workflowRun: WorkflowRun?
+    }
+
+    struct WorkflowRun: Decodable {
+        let id: String
+        let databaseId: Int64?
+        let runNumber: Int
+        let createdAt: Date
+        let event: String
+        let workflow: Workflow
+    }
+
+    struct Workflow: Decodable {
+        let name: String
     }
 
     struct Review: Decodable {
